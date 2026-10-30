@@ -478,8 +478,7 @@ table.stats tr.explain .rule { color: var(--ink); opacity: .75; }
 .hpsum .bar { height: 10px; border-radius: 5px; background: var(--line); overflow: hidden; position: relative; }
 .hpsum .bar i { position: absolute; inset: 0 auto 0 0; transition: width .3s ease; }
 .arena-wrap { overflow-x: auto; padding: 2px; }
-.cam { position: relative; width: 100%; min-width: 340px; aspect-ratio: 10 / 6; border-radius: 14px; overflow: hidden; }
-.arena { position: absolute; inset: 0; transform-origin: 0 0; border-radius: 14px; overflow: hidden;
+.arena { position: relative; width: 100%; min-width: 340px; aspect-ratio: 10 / 6; border-radius: 14px; overflow: hidden;
   background:
     radial-gradient(ellipse at 50% 50%, color-mix(in srgb, var(--sand) 92%, white) 0%, var(--sand) 55%, color-mix(in srgb, var(--sand) 80%, var(--ink)) 100%);
   box-shadow: inset 0 0 0 6px var(--wall), inset 0 0 0 8px color-mix(in srgb, var(--wall) 60%, var(--ink)), inset 0 10px 30px rgba(0, 0, 0, .25); }
@@ -495,32 +494,26 @@ table.stats tr.explain .rule { color: var(--ink); opacity: .75; }
 .fx .proj-g { filter: drop-shadow(0 .4px 0 rgba(0,0,0,.35)); }
 .fx .impact { fill: none; stroke-width: .5; } .fx .impact.s0 { stroke: var(--bronze); } .fx .impact.s1 { stroke: var(--pompeii); }
 .fx .shot-trail { fill: none; stroke-width: .45; stroke-dasharray: .6 1.1; opacity: .7; } .fx .shot-trail.s0 { stroke: var(--bronze); } .fx .shot-trail.s1 { stroke: var(--pompeii); }
-/* Phone battle: the arena stands on end and takes the screen; the scoreboard waits below the controls. */
-.cam.portrait { aspect-ratio: 6 / 10; min-width: 0; width: min(100%, calc((100svh - 232px) * .6)); margin: 0 auto; }
-.arena.portrait .grid { background-size: calc(100% / 6) 10%; }
-.arena.portrait .midline { top: calc(50% - 1px); bottom: auto; left: 0; right: 0; width: auto; height: 2px; }
-.arena.portrait .bt { width: calc(100% / 6); height: 10%; }
-.arena.portrait .hitfx { width: 15%; } .arena.portrait .hitfx.fx-crit { width: 20%; }
-.arena.portrait { --z: 1; transition: transform .7s cubic-bezier(.3, .7, .3, 1); will-change: transform; }
-.arena.portrait .floater { font-size: calc(19px / var(--z)); } .arena.portrait .floater.crit { font-size: calc(25px / var(--z)); }
-.arena.portrait .bt .gs { font-size: calc(11px / var(--z)); }
-.arena.portrait .bt .disc.has-art { width: 128%; height: 130%; margin-bottom: 6%; }
-.arena.portrait .bt .hpbar { height: calc(6px / var(--z)); }
-@media (max-width: 899px) {
-  .battle { padding-top: calc(8px + env(safe-area-inset-top, 0px)); padding-left: max(10px, env(safe-area-inset-left, 0px)); padding-right: max(10px, env(safe-area-inset-right, 0px)); }
-  .battle-inner { gap: 8px; }
-  .b-title { font-size: 17px; } .b-title .vs { font-size: 13px; margin: 0 5px; }
+.turn-hint { display: none; }
+@media (orientation: portrait) and (max-width: 600px) { .turn-hint { display: block; margin: 0; font-size: 13px; color: var(--muted); text-align: center; } }
+/* Phone held sideways: the arena takes the full height; title, play-by-play and controls sit in a narrow rail. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .battle { overflow: hidden; padding: calc(6px + env(safe-area-inset-top, 0px)) max(8px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); }
+  .battle-inner { max-width: none; height: 100%; display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; gap: 6px 10px; }
   .b-main { display: contents; }
-  .b-head { order: 0; } .b-stage { order: 1; } .b-controls { order: 2; } .score { order: 3; } .battle-inner > .note { order: 4; }
-  .b-stage { gap: 8px; }
+  .b-stage { grid-column: 1; grid-row: 1 / span 3; gap: 0; }
+  .b-head { grid-column: 2; grid-row: 1; align-items: flex-start; }
+  .b-title { font-size: 15px; line-height: 1.25; } .b-title .vs { display: block; margin: 0; font-size: 12px; }
+  .score, .battle-inner > .note, .b-stage .upnext { display: none; }
   .arena-wrap { padding: 0; overflow: visible; }
-  .b-stage .caption { min-height: 0; height: 86px; overflow: hidden; align-content: flex-start; padding: 6px 10px; font-size: 14px; }
-  .b-stage .upnext { display: none; }
-  .b-controls { position: sticky; bottom: 0; z-index: 6; background: var(--ground); padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0px)); flex-wrap: nowrap; gap: 6px; }
-  .b-controls input[type=range], .b-controls .b-turn, .b-controls #b-logbtn, .b-controls [data-v="0.5"] { display: none; }
-  .b-controls .btn { padding-left: 11px; padding-right: 11px; }
-  .b-controls .seg-ctl button { padding: 6px 10px; }
-  .b-controls [data-act="b-end"] { margin-left: auto; } .b-controls .wide-only { display: none; }
+  .arena { min-width: 0; width: auto; height: calc(100svh - 12px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+  .b-stage .caption { grid-column: 2; position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 3; min-height: 0; padding: 4px 8px; font-size: 13px; gap: 6px;
+    background: color-mix(in srgb, var(--panel) 86%, transparent); backdrop-filter: blur(3px); }
+  .b-controls { grid-column: 2; grid-row: 3; flex-direction: column; align-items: stretch; flex-wrap: nowrap; gap: 6px; }
+  .b-controls input[type=range], .b-controls .b-turn, .b-controls #b-logbtn { display: none; }
+  .b-controls .seg-ctl button { flex: 1; padding: 6px 4px; }
+  .b-controls .wide-only { display: none; }
+  .b-controls > .btn[data-act="b-prev"], .b-controls > .btn[data-act="b-next"] { display: none; }
 }
 .bt { position: absolute; width: 10%; height: calc(100% / 6); display: grid; place-items: center; transition: left .35s ease, top .35s ease, opacity .35s, filter .35s; z-index: 1; }
 .bt .disc { width: 74%; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; color: var(--panel); border: 3px solid; box-shadow: 0 3px 0 rgba(0, 0, 0, .18); }
@@ -2700,8 +2693,6 @@ function startBattle(key) {
   battle.res = battle.mySide === 0 ? GE.simulate(state.team, opp, battle.seed, { log: true }) : GE.simulate(opp, state.team, battle.seed, { log: true });
   battle.frames = buildFrames(battle.res);
   battle.idx = 0;
-  // Phones: stand the arena on end, your side at the bottom, so the fight fills the screen.
-  battle.portrait = window.matchMedia('(max-width: 899px)').matches;
   const el = document.getElementById('battle');
   const res = battle.res, me = battle.mySide;
   const tokens = res.start.map((s) => {
@@ -2712,8 +2703,9 @@ function startBattle(key) {
     <div class="b-head"><div class="b-title"><span class="you">${esc(state.team.name)}</span><span class="vs">against</span><span class="them">${esc(opp.name)}</span></div>
       <button class="close-x" data-act="close-battle" aria-label="Leave the arena">×</button></div>
     <div class="b-main"><div class="b-stage">
-    <div class="arena-wrap"><div class="cam ${battle.portrait ? 'portrait' : ''}" id="cam"><div class="arena ${battle.portrait ? 'portrait' : ''} ${ARENA_FLOOR(state.arenaId) ? 'has-floor' : ''}" id="arena" ${ARENA_FLOOR(state.arenaId) ? `style="background-image:url(${ARENA_FLOOR(state.arenaId)})"` : ''}><div class="grid"></div><div class="midline"></div>${tokens}
-      <svg class="fx" id="fx" viewBox="${battle.portrait ? '0 0 60 100' : '0 0 100 60'}" preserveAspectRatio="none" aria-hidden="true"></svg></div></div></div>
+    <p class="turn-hint">Turn your phone sideways for the full arena.</p>
+    <div class="arena-wrap"><div class="arena ${ARENA_FLOOR(state.arenaId) ? 'has-floor' : ''}" id="arena" ${ARENA_FLOOR(state.arenaId) ? `style="background-image:url(${ARENA_FLOOR(state.arenaId)})"` : ''}><div class="grid"></div><div class="midline"></div>${tokens}
+      <svg class="fx" id="fx" viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true"></svg></div></div>
     <div class="caption" id="caption" aria-live="polite"></div>
     <div class="upnext" id="upnext"></div>
     <div id="b-result"></div>
@@ -2759,29 +2751,7 @@ function projectileKind(aid, len) {
   return 'arrow';
 }
 const res0 = () => battle.res;
-// Grid cell -> screen cell. Landscape: your side on the left. Portrait: your side at the bottom.
-function cell(s) {
-  const x = battle.mySide === 0 ? s.x : GRID_W - 1 - s.x;
-  return battle.portrait ? { c: s.y, r: GRID_W - 1 - x } : { c: x, r: s.y };
-}
-const COLS_N = () => (battle.portrait ? GRID_H : GRID_W), ROWS_N = () => (battle.portrait ? GRID_W : GRID_H);
-function center(s) { const p = cell(s); return { x: (p.c + 0.5) * 10, y: (p.r + 0.5) * 10 }; }
-// The camera (phones): follows the fight, framing everyone still standing, and leans in as they close.
-function aimCamera(snaps) {
-  const el = document.getElementById('arena'); if (!el || !battle.portrait) return;
-  const W = COLS_N(), H = ROWS_N();
-  let c0 = W, c1 = 0, r0 = H, r1 = 0, n = 0;
-  for (const snap of snaps) for (const s of snap) { if (!s.alive) continue; n++; const p = cell(s); c0 = Math.min(c0, p.c); c1 = Math.max(c1, p.c + 1); r0 = Math.min(r0, p.r); r1 = Math.max(r1, p.r + 1); }
-  let z = 1, ox = 0, oy = 0;
-  if (n) {
-    r0 -= 0.8; r1 += 0.5; c0 -= 0.6; c1 += 0.6; // room for sprites, which stand taller than their cell
-    z = Math.max(1, Math.min(1.7, W / (c1 - c0), H / (r1 - r0)));
-    const vw = W / z, vh = H / z;
-    ox = Math.max(0, Math.min(W - vw, (c0 + c1) / 2 - vw / 2)); oy = Math.max(0, Math.min(H - vh, (r0 + r1) / 2 - vh / 2));
-  }
-  el.style.transform = `scale(${z.toFixed(3)}) translate(${(-ox / W * 100).toFixed(2)}%, ${(-oy / H * 100).toFixed(2)}%)`;
-  el.style.setProperty('--z', z.toFixed(3));
-}
+function center(s) { const me = battle.mySide; const x = me === 0 ? s.x : GRID_W - 1 - s.x; return { x: (x + 0.5) * 10, y: (s.y + 0.5) * 10 }; }
 function showFrame(idx, animate = true) {
   const res = battle.res, f = battle.frames[idx];
   const prevSnap = idx > 0 ? battle.frames[idx - 1].snap : f.snap;
@@ -2792,12 +2762,10 @@ function showFrame(idx, animate = true) {
   const heals = f.ev.filter((e) => e.kind === 'heal' && e.aid !== undefined && e.tid !== undefined && e.aid !== e.tid);
   const involved = new Set([f.actor, ...f.movers, ...attacks.map((e) => e.tid), ...heals.map((e) => e.tid)].filter((v) => v !== null && v !== undefined));
   const focus = f.actor !== null || f.movers.length > 0;
-  aimCamera(idx > 0 ? [f.snap, prevSnap] : [f.snap]);
   f.snap.forEach((s, uid) => {
     const el = document.getElementById('bt-' + uid); if (!el) return;
-    const p = cell(s);
-    el.style.left = pct(p.c, COLS_N()) + '%';
-    el.style.top = pct(p.r, ROWS_N()) + '%';
+    el.style.left = pct(X(s.x), GRID_W) + '%';
+    el.style.top = pct(s.y, GRID_H) + '%';
     el.classList.toggle('dead', !s.alive && !(prevSnap[uid].alive && animate));
     el.classList.remove('hit', 'acting', 'target', 'lunge');
     el.classList.toggle('idle', focus && !involved.has(uid) && s.alive);
@@ -2859,9 +2827,8 @@ function showFrame(idx, animate = true) {
       const d = Math.max(Math.abs(a.x - t.x), Math.abs(a.y - t.y));
       if (d <= 2) {
         const el = document.getElementById('bt-' + f.actor);
-        const pa = cell(a), pt = cell(t);
-        el.style.setProperty('--lx', ((pt.c - pa.c) * 32) + '%');
-        el.style.setProperty('--ly', ((pt.r - pa.r) * 32) + '%');
+        el.style.setProperty('--lx', ((X(t.x) - X(a.x)) * 32) + '%');
+        el.style.setProperty('--ly', ((t.y - a.y) * 32) + '%');
         void el.offsetWidth; el.classList.add('lunge');
       }
     }
@@ -2879,14 +2846,13 @@ function showFrame(idx, animate = true) {
       const s = f.snap[e.tid];
       const fl = document.createElement('span');
       fl.className = 'floater ' + cls; fl.textContent = txt;
-      const ps = cell(s);
-      fl.style.left = pct(ps.c + 0.5, COLS_N()) + '%'; fl.style.top = (pct(ps.r, ROWS_N()) - 2) + '%';
+      fl.style.left = pct(X(s.x) + 0.5, GRID_W) + '%'; fl.style.top = (pct(s.y, GRID_H) - 2) + '%';
       const flDelay = (projDelay[e.tid] || 0.18) + k * 0.12;
       // Impact effect by damage type
       const fxKind = e.kind === 'heal' ? 'heal' : e.kind === 'attack' && e.outcome !== 'miss' ? (e.outcome === 'crit' ? 'crit' : e.outcome === 'block' ? 'block' : e.dmgType === 'slash' ? 'slash' : e.dmgType === 'pierce' ? 'pierce' : 'blunt') : null;
       if (fxKind && ART.fx && ART.fx[fxKind]) {
         const im = document.createElement('img'); im.className = 'hitfx fx-' + fxKind; im.src = ART.fx[fxKind]; im.alt = '';
-        im.style.left = pct(ps.c + 0.5, COLS_N()) + '%'; im.style.top = pct(ps.r + 0.35, ROWS_N()) + '%';
+        im.style.left = pct(X(s.x) + 0.5, GRID_W) + '%'; im.style.top = pct(s.y + 0.35, GRID_H) + '%';
         if (res.start[e.aid] && res.start[e.aid].side !== battle.mySide && fxKind !== 'heal') im.style.setProperty('--flip', '-1');
         im.style.animationDelay = Math.max(0, flDelay - 0.08) + 's';
         arenaEl.appendChild(im); setTimeout(() => im.remove(), (flDelay + 0.9) * 1000);
