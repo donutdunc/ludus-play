@@ -1165,6 +1165,7 @@ table.cmp td { font-family: var(--f-num); font-size: 16px; } table.cmp td.win { 
 .lineup-tog.on { background: var(--bronze); border-color: var(--bronze); color: #fff; }
 .c-xp { min-width: 110px; } .xpbar { display: block; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; margin-bottom: 2px; } .xpbar i { display: block; height: 100%; background: var(--verd); }
 .c-who[data-act] { cursor: pointer; }
+.gate-rule { margin: -4px 0 10px; font-family: "IM Fell English", Georgia, serif; font-style: italic; font-size: 15px; }
 .gc { border: 1px solid var(--line); border-radius: 12px; background: var(--raise); padding: 12px; display: flex; flex-direction: column; gap: 8px; }
 .gc.sold { opacity: .5; } .gc.legend { border-color: var(--bronze); box-shadow: 0 0 0 2px color-mix(in srgb, var(--bronze) 35%, transparent); }
 .gc-top { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 12px; align-items: center; }
@@ -2007,7 +2008,7 @@ function renderHomeView() {
   document.getElementById('view-home').innerHTML = `
     <div class="home-scene">${purseHTML()}${yardHTML()}</div>
     <div class="home-side">${magnusHTML(note)}${boutsHTML()}${recentHTML()}
-      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 11:11 AM</span></p>` : ''}
+      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 11:14 AM</span></p>` : ''}
     </div>`;
   startHomeClock();
 }
@@ -2196,6 +2197,7 @@ function boardStock() {
 function hire(key) {
   const st = boardStock(); const c = st.list.find((x) => x.key === key);
   if (!c || st.hired.includes(key)) return 'Already gone.';
+  if (st.hired.length) return 'You took your pick. New faces at the next refresh.';
   if (c.duplicate) return `${c.name} is already yours. Take the Legacy instead.`;
   if (career.coin < c.price) return `${c.name} wants ${c.price} coin; the strongbox has ${career.coin}.`;
   career.coin -= c.price; career.hired = { win: st.win, keys: [...st.hired, key] };
@@ -2208,6 +2210,7 @@ function hire(key) {
 function takeLegacy(key, kind) {
   const st = boardStock(); const c = st.list.find((x) => x.key === key);
   if (!c || !c.duplicate || st.hired.includes(key)) return 'Already taken.';
+  if (st.hired.length) return 'You took your pick. New faces at the next refresh.';
   const u = career.stable.find((x) => x.castId === c.cast.id); if (!u) return 'Not in your barracks.';
   const opts = GE.legacyOptions(c.stars, u.legacy || []); if (!opts.includes(kind)) return 'Not on offer.';
   career.hired = { win: st.win, keys: [...st.hired, key] };
@@ -2287,7 +2290,7 @@ function renderStableView() {
   // A gate card says who this is, how they fight and what they bring: a page of the fighter sheet, not a line.
   const ROLE = { front: 'Front line', back: 'Back line', beast: 'Beast', large: 'Large' };
   const cards = bd.list.map((c) => {
-    const t = UNITS[c.template]; const gone = bd.hired.includes(c.key);
+    const t = UNITS[c.template]; const took = bd.hired.includes(c.key); const walked = !took && bd.hired.length > 0; const gone = took || walked;
     const r = GE.resolveUnit({ template: c.template, stars: c.stars, equip: starterKit(c.template) });
     const pts = GE.starCost(t.cost, c.stars);
     const owner = c.duplicate && career.stable.find((u) => u.castId === c.cast.id);
@@ -2298,7 +2301,7 @@ function renderStableView() {
       ...r.traits.map((id) => ({ n: (TRAITS[id] || {}).name || id, tag: 'always on', d: (TRAITS[id] || {}).description || '' }))].slice(0, 2);
     const wpn = r.weapon ? `${r.weapon.damage} ${r.weapon.type}${r.weapon.range > 1 ? `, range ${r.weapon.range}` : ''}` : '';
     const buy = owner ? `<span class="btn-row">${legacy.map((l) => `<button class="btn small" data-act="legacy" data-key="${c.key}" data-k="${l}" ${gone ? 'disabled' : ''}>${LEG[l]}</button>`).join('')}</span>`
-      : `<button class="w-buy" data-act="hire" data-key="${c.key}" ${gone || career.coin < c.price ? 'disabled' : ''}>${gone ? 'Hired' : cn(c.price)}</button>`;
+      : `<button class="w-buy" data-act="hire" data-key="${c.key}" ${gone || career.coin < c.price ? 'disabled' : ''}>${took ? 'Hired' : walked ? 'Walked on' : cn(c.price)}</button>`;
     return `<div class="gc ${gone ? 'sold' : ''} ${c.five ? 'legend' : ''}">
       <div class="gc-top"><span class="gc-por cat-${category(t)}">${unitIcon(t, c.stars, c.cast && c.cast.id)}</span>
         <div class="gc-who"><b>${owner ? `${esc(c.name)}'s old rival` : esc(c.name)}</b><span class="gc-sub">${'★'.repeat(c.stars)} ${esc(t.name)} · <span class="gc-role">${ROLE[category(t)]}</span></span>
@@ -2314,6 +2317,7 @@ function renderStableView() {
   document.getElementById('view-ledger').innerHTML = `
     ${offers ? `<div class="block"><div class="block-head"><h2>Asking to join</h2></div><div class="wares">${offers}</div></div>` : ''}
     <div class="block"><div class="block-head"><h2>The gate</h2><span class="sub"><span class="purse-chip">Strongbox <b class="num">${cn(career.coin)}</b></span> · new faces in ${clock(bd.next - Date.now())}</span></div>
+      <p class="gate-rule">${bd.hired.length ? 'You took your pick. The rest have moved on.' : 'Take one. The others won\'t wait.'}</p>
       <div class="wares">${cards}</div>
       <p class="note">New hires land in the Barracks. Field and place them on the <button class="linkish" data-act="view" data-v="arena">Arena</button> page.</p></div>`;
 }
