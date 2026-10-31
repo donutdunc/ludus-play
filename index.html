@@ -525,6 +525,8 @@ table.stats td.final { font-weight: 600; }
 .sh-tile.empty { border-style: dashed; background: transparent; box-shadow: none; } .sh-tile.empty .ti { opacity: .28; } .sh-tile.empty .tn small { margin: 0; }
 .sh-tile.picking { border-color: var(--bronze); box-shadow: inset 3px 0 0 var(--rc), 0 0 0 3px var(--bronze-soft); }
 .sh-tile.previewing { border-color: var(--verd); border-style: solid; } .sh-tile.previewing .ti { animation: tile-pop .28s cubic-bezier(.3,1.6,.5,1); }
+.sh-tile.glow { border-color: var(--bronze); border-style: solid; animation: tile-glow 1.8s ease-in-out infinite; } .sh-tile.glow .ti { opacity: .6; }
+@keyframes tile-glow { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--bronze) 50%, transparent); } 50% { box-shadow: 0 0 0 5px transparent, 0 0 14px color-mix(in srgb, var(--bronze) 35%, transparent); } }
 .sh-tile.invalid { border-color: var(--pompeii); } .sh-tile[disabled] { opacity: .45; }
 .sh-tile.pop .ti { animation: tile-pop .32s cubic-bezier(.3,1.6,.5,1); }
 @keyframes tile-pop { 0% { transform: scale(1); } 45% { transform: scale(1.12); } 100% { transform: scale(1); } }
@@ -1685,7 +1687,7 @@ function magnusNote() {
     if (!st.met) return { text: `You'll be the nephew. I'm Magnus; I trained for your uncle for twenty years. He left you three things: ${lead}, me, and ${DEBT_START} denarii owed to Vettius the moneylender.`, btn: 'And now?', act: 'story', k: 'met' };
     if (career.fights === 1 && !st.gladius) return { text: `${lead} didn't lose because he's slow. He lost because he's swinging a stick. Your uncle's gladius is in the storeroom. It's cracked, but it'll hold for one more bout.`, btn: `Give it to ${lead}`, act: 'story-gladius' };
     if (career.fights === 1) return { text: `The kobold's still in the gutter, still laughing. Go again.`, btn: null };
-    if (career.fights === 2 && !st.storeroom) return { text: `The gladius snapped, but it held long enough. Your uncle never threw anything away, and the storeroom is full of odds and ends. Kit ${lead} out with whatever the arena's points allow.`, btn: 'Open the storeroom', act: 'story-storeroom' };
+    if (career.fights === 2 && !st.storeroom) return { text: `The storeroom is full of odds and ends. See what ${lead} can use.`, btn: 'Open the storeroom', act: 'story-storeroom' };
     if (career.fights === 2) return { text: `A starving dog this time. Fast and mean, and it'll lunge from two tiles off, so don't blink. Watch the name that flashes by a fighter: that's a special move, and each fighter has one on a cooldown. When ${lead} gets hit, he can Dig In.`, btn: null };
     if (stable.length < 2) return { text: `Word gets around. The Tavern Cellar will have us, but they fight in pairs. ${lead} needs someone beside him, and there are a few hopefuls at the gate.`, btn: 'See who\'s at the gate', act: 'view', v: 'ledger' };
     if (career.fights === 3) return { text: `${stable[1].name} and ${lead}, against two farmhands who drank their wages. Keep them close together.`, btn: null };
@@ -3054,8 +3056,9 @@ function renderFighterView() {
     const it = ITEMS[(b.equip || {})[s]]; const sv = viol.filter((v) => v.slot === s);
     const blocked = s === 'off' && GE.isTwoHanded(b.equip && b.equip.main);
     if (!it) {
+      const glow = careerNav && story().glow && !blocked && Object.values(ITEMS).some((x) => x.slot === s && ownedCount(x.id) > equippedCount(x.id) && x.cost <= arena().cap - cost.total && !GE.itemLocks(t, x, s, { arena: arena(), equip: b.equip }).length);
       const nat = s === 'main' ? (t.naturalWeapon ? t.naturalWeapon.name : 'Fists') : '';
-      return `<button class="sh-tile empty ${pickSlot === s ? 'picking' : ''}" data-act="pick-slot" data-slot="${s}" ${blocked ? 'disabled' : ''} title="${esc(SLOT_LABELS[s])}${nat ? ': ' + esc(nat) : ''}">
+      return `<button class="sh-tile empty ${glow ? 'glow' : ''} ${pickSlot === s ? 'picking' : ''}" data-act="pick-slot" data-slot="${s}" ${blocked ? 'disabled' : ''} title="${esc(SLOT_LABELS[s])}${nat ? ': ' + esc(nat) : ''}">
         <span class="ti">${slotIcon(s)}</span><span class="tn">${s === 'main' && !blocked ? `${r.weapon.damage}<small>dmg</small>` : `<small>${blocked ? 'two hands' : esc(SLOT_LABELS[s].toLowerCase())}</small>`}</span></button>`;
     }
     return `<button class="sh-tile rar-${it.rarity} ${pickSlot === s ? 'picking' : ''} ${sv.length ? 'invalid' : ''}" data-act="pick-slot" data-slot="${s}" data-tile="${s}" title="${esc(it.name)} · ${esc(sv.length ? sv[0].message : itemStat(it))}">
@@ -4025,9 +4028,9 @@ document.addEventListener('click', (e) => {
       career.armory = career.armory || {};
       const odds = Object.values(ITEMS).filter((it) => it.cost === 1 && !it.anchor && !it.quest && ['head', 'hands', 'feet', 'trinket', 'boon'].includes(it.slot));
       for (const it of odds) career.armory[it.id] = (career.armory[it.id] || 0) + 1;
-      story().storeroom = true; ledger(`Cleared out the storeroom: ${odds.length} odds and ends`, 0);
+      story().storeroom = true; story().glow = true; ledger(`Cleared out the storeroom: ${odds.length} odds and ends`, 0);
       saveCareer(); state.view = 'fighter'; state.sel = 0; state.picker = null; state.scrollTo = 'loadout'; window.scrollTo(0, 0);
-      toast(`${odds.length} pieces from the storeroom are in the armory. Tap an empty slot.`); break;
+      break;
     }
     case 'pay-debt': {
       const amt = Math.min(debtStep(), career.debt);
@@ -4104,7 +4107,7 @@ document.addEventListener('click', (e) => {
     case 'toggle-locked': state.hideLocked = !state.hideLocked; break;
     case 'vtest': if (!state.picker || state.picker.unit < 0) { toast('Field this fighter to test options against the field.'); return; } runVariants(); return;
     case 'rfilter': state.recruitFilter = btn.dataset.v; break;
-    case 'equip': applyEquip(pbOf(state.picker), state.picker.slot, btn.dataset.id); state.popTile = state.picker.slot; if (!wide() && state.view !== 'fighter') state.picker = null; break;
+    case 'equip': applyEquip(pbOf(state.picker), state.picker.slot, btn.dataset.id); if (career.started && story().glow) { delete story().glow; saveCareer(); } state.popTile = state.picker.slot; if (!wide() && state.view !== 'fighter') state.picker = null; break;
     case 'unequip': applyEquip(pbOf(state.picker), state.picker.slot, null); if (!wide() && state.view !== 'fighter') state.picker = null; break;
     case 'recruit':
       if (state.picker && state.picker.mode === 'companion') addUnit(btn.dataset.id, state.picker.unit); else addUnit(btn.dataset.id);
