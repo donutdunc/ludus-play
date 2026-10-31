@@ -261,6 +261,16 @@ body[data-view="academy"] #top .purse, body[data-view="academy"] #top .top-contr
 .fc-perks { gap: 4px; flex-wrap: wrap; } .chip-perk { font-size: 11.5px; padding: 2px 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--raise, var(--panel)); white-space: nowrap; }
 .chip-perk.empty { border-style: dashed; color: var(--muted); } .chip-perk.scar:not(.empty) { border-color: color-mix(in srgb, var(--pompeii) 45%, var(--line)); } .chip-perk.title:not(.empty) { font-style: italic; }
 .oicon img, .lslot .li img { width: 30px; height: 30px; object-fit: contain; }
+.stat-row { cursor: pointer; } .more-i { font-size: 11px; color: var(--muted); margin-left: 2px; }
+.purse-chip { color: var(--ink); } .purse-chip b { color: var(--bronze); font-size: 15px; }
+.ludus-card.splash { position: fixed; inset: 0; z-index: 60; border-radius: 0; margin: 0; display: grid; place-items: center; padding: 24px; background: radial-gradient(ellipse at 50% 35%, #2a1d12, #0d0907 70%); }
+.lc-in { max-width: 520px; } .lc-go { margin-top: 26px; font: inherit; font-size: 16px; letter-spacing: .12em; text-transform: uppercase; color: #17110c; background: #d9b36a; border: 0; border-radius: 999px; padding: 12px 26px; cursor: pointer; animation: lc-in 2.4s ease-out both; }
+.ludus-card { background: #17110c; color: #efe2c8; border-radius: 14px; padding: 26px 22px 22px; margin-bottom: 14px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,.35); animation: lc-in 1.4s ease-out both; }
+.lc-word { font-family: var(--f-display, Georgia, serif); font-size: clamp(44px, 12vw, 72px); letter-spacing: .14em; text-transform: uppercase; color: #d9b36a; line-height: 1; }
+.lc-say { font-size: 14px; color: #b9a585; margin-top: 6px; letter-spacing: .04em; }
+.lc-def { font-family: var(--f-display, Georgia, serif); font-size: 18px; line-height: 1.45; margin: 16px auto 8px; max-width: 34ch; }
+.lc-you { font-size: 15px; color: #c98a6a; margin: 0; font-style: italic; }
+@keyframes lc-in { from { opacity: 0; transform: translateY(8px); letter-spacing: .3em; } }
 .lslot.perk-scar:not(.empty) .itm { color: var(--pompeii); } .lslot.perk-title:not(.empty) .itm { font-style: italic; } .lslot .li { font-size: 18px; color: var(--muted); }
 .scar-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
 .scar { display: grid; gap: 2px; text-align: left; padding: 7px 9px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); }
@@ -1305,13 +1315,25 @@ try { for (const k of ['ludus-roster-v3', 'ludus-career-v2', 'ludus-career-v3'])
 function newCareer() { return { rung: 0, beaten: {}, coin: 0, renown: 0, fights: 0, last: null, afkAt: Date.now(), started: false, seenRung: 0, ledger: [], chronicle: [], drills: [], story: {}, debt: DEBT_START }; }
 // The uncle's debt to Vettius: the first hour's running goal.
 const DEBT_START = 200, DEBT_STEP = 25;
+// Pay one off and Vettius finds another page in the uncle's ledger, each more absurd. Each paid
+// ledger unlocks a spot in the yard that makes the school better without being core to fighting.
+const LEDGERS = [
+  { owed: 200, letter: '', unlock: null },
+  { owed: 2500, letter: "Vettius is back with a second ledger. \"Your uncle also bought a bear from me. On credit. The bear is gone; the credit is not.\"", unlock: 'mine', name: 'The Old Mine', does: 'An ore seam under the yard: a lump of ore every few small bouts.' },
+  { owed: 40000, letter: "\"Your uncle promised me the bathhouse concession at the Rat-Pit. He did not own the Rat-Pit. A promise is a promise.\"", unlock: 'baths', name: 'The Bathhouse', does: 'Hot water and a masseur: every drill finishes a quarter faster.' },
+  { owed: 750000, letter: "\"Your uncle wagered the Provincial Circuit on a three-legged horse. The horse won. The bookmaker has fled. You owe me the bookmaker's share.\"", unlock: 'villa', name: "The Patron's Villa", does: 'Rich patrons visit: every purse is a quarter larger.' },
+  { owed: 12000000, letter: "\"Your uncle promised the Senate a naval battle in the Grand Colosseum. Someone has to pay for the water.\"", unlock: 'statue', name: "Your Uncle's Statue", does: 'A statue of the old fraud in the yard: +2 renown for every win.' },
+];
+const ledgerAt = (n) => n < LEDGERS.length ? LEDGERS[n] : { owed: LEDGERS[LEDGERS.length - 1].owed * 20 ** (n - LEDGERS.length + 1), letter: `"Ah. There is another page." Vettius's grandson reads it aloud. Even he laughs.`, unlock: null };
+const debtStep = () => Math.max(DEBT_STEP, Math.round(ledgerAt(career.debtTier || 0).owed / 8 / 5) * 5);
+const hasSpot = (k) => (career.spots || []).includes(k);
 function loadCareer() { try { const c = JSON.parse(localStorage.getItem(CAREER_KEY) || 'null'); if (c && typeof c.rung === 'number') return { ...newCareer(), ...c }; } catch (e) { /* storage unavailable */ } return newCareer(); }
 const career = loadCareer();
 function saveCareer() { try { localStorage.setItem(CAREER_KEY, JSON.stringify(career)); } catch (e) { /* ignore */ } }
 // career.rung is the furthest arena that will have you; career.at is the one you've chosen to fight in (any up to it).
 const atIdx = () => Math.min(LADDER.length - 1, career.rung, career.at ?? career.rung);
 const rung = () => LADDER[atIdx()];
-const winPay = (i) => 10 + i * 10, lossPay = (i) => 2 + i * 2, afkPay = (i, w) => (w ? 5 + i * 5 : 1 + i);
+const winPay = (i) => Math.round((10 + i * 10) * (hasSpot('villa') ? 1.25 : 1)), lossPay = (i) => 2 + i * 2, afkPay = (i, w) => (w ? 5 + i * 5 : 1 + i);
 const nextSquad = () => rung().squads.find((k) => !career.beaten[k]) || rung().squads[0];
 const clock = (ms) => { const m = Math.max(0, Math.ceil(ms / 1000)); const h = Math.floor(m / 3600); return h ? `${h}h ${Math.floor((m % 3600) / 60)}m` : `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`; };
 const hhmm = (t) => new Date(t).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
@@ -1341,7 +1363,7 @@ function startDrill(i, stat) {
   if (career.coin < q.coin) return `A drill costs ${q.coin} coin; the strongbox has ${career.coin}.`;
   if (q.ore && (career.ore || 0) < q.ore) return 'A Mastered drill needs a lump of ore from the deep arenas.';
   career.coin -= q.coin; if (q.ore) career.ore -= q.ore; career.drilled = true;
-  career.drills.push({ name: b.name, template: b.template, stat, start: Date.now(), end: Date.now() + q.min * 60000 / SPEED() });
+  career.drills.push({ name: b.name, template: b.template, stat, start: Date.now(), end: Date.now() + q.min * 60000 * (hasSpot('baths') ? 0.75 : 1) / SPEED() });
   ledger(`Paid the drill-master: ${b.name}, ${STAT_LABEL[stat]}`, -q.coin);
   saveCareer(); return '';
 }
@@ -1428,7 +1450,7 @@ function runAfk() {
   for (let i = 0; i < due; i++) {
     const k = rung().squads[i % rung().squads.length];
     const r = GE.simulate(state.team, squadTeam(k), Math.floor(Math.random() * 1e9));
-    const w = r.winner === 0; wins += w; coin += pay(w); if (w && atIdx() >= 5) career.ore = (career.ore || 0) + 1;
+    const w = r.winner === 0; wins += w; coin += pay(w); if (w && atIdx() >= 5) career.ore = (career.ore || 0) + 1; if (hasSpot('mine') && i % 3 === 2) career.ore = (career.ore || 0) + 1;
     lines.push({ t: career.afkAt + (i + 1) * afkMs(), text: `${w ? 'Beat' : 'Lost to'} ${squadTeam(k).name}`, coin: pay(w) });
   }
   career.coin += coin; career.afkAt += due * afkMs(); career.lastAfk = { k: rung().squads[(due - 1) % rung().squads.length], seed: Math.floor(Math.random() * 1e9) };
@@ -1540,7 +1562,9 @@ function magnusNote() {
   }
   if (!career.drills.length && career.coin >= 3) return { text: `${career.coin} in the strongbox and the posts are empty.`, btn: 'To the training posts', act: 'open-fighter' };
   if (c.remaining > 0 && a.cap <= 52 && !seen['spare-' + career.rung]) return { text: `The ${aName(a)} would let us bring a little more. ${marketOpen() ? 'A cheap piece from Hasdrubal, or another body from the gate.' : 'Even junk counts: a stick or some rags in an empty hand.'}`, btn: 'Noted', act: 'seen', k: 'spare-' + career.rung };
-  if (career.debt > 0 && career.coin >= DEBT_STEP + 10 && !seen['debt-' + Math.floor(career.fights / 4)]) return { text: `Vettius's man was at the gate again. ${DEBT_STEP} keeps him patient; we still owe ${career.debt}.`, btn: `Pay ${DEBT_STEP}`, act: 'pay-debt', k: 'debt-' + Math.floor(career.fights / 4) };
+  const lt = career.debtTier || 0;
+  if (lt > 0 && !seen['ledger-' + lt]) { const L = ledgerAt(lt); return { text: `${L.letter} He wants ${career.debt.toLocaleString()} denarii.${L.unlock ? ` Pay it and the ${L.name.replace(/^The /, '').toLowerCase()} is ours.` : ''}`, btn: 'Of course he does', act: 'seen', k: 'ledger-' + lt }; }
+  if (career.debt > 0 && career.coin >= debtStep() + 10 && !seen['debt-' + lt + '-' + Math.floor(career.fights / 4)]) return { text: `Vettius's man was at the gate again. ${debtStep().toLocaleString()} keeps him patient; we still owe ${career.debt.toLocaleString()}.`, btn: `Pay ${debtStep().toLocaleString()}`, act: 'pay-debt', k: 'debt-' + lt + '-' + Math.floor(career.fights / 4) };
   if (!rung().squads.length) return { text: `No squads booked at the ${aName(a)} yet. The bouts keep paying while we wait.`, btn: null };
   const left = rung().squads.filter((x) => !career.beaten[x]).length;
   return { text: left > 1 ? `${(NUMW[left] || left).replace(/^./, (m) => m.toUpperCase())} more crews to beat before the next arena takes us.` : 'One more win and we move up.', btn: null };
@@ -1618,7 +1642,11 @@ function magnusHTML(note) {
   const L = ART.ludus || {};
   if (!career.started) {
     const first = squadTeam(LADDER[0].squads[0]);
-    return `<div class="paper bill2 home-bill"><span class="nail"></span>
+    return `${state.introSeen ? '' : `<div class="ludus-card splash" role="dialog" aria-label="Ludus"><div class="lc-in"><div class="lc-word">Ludus</div><div class="lc-say">lū·dus <i>(n.)</i>, pl. <i>lūdī</i></div>
+      <p class="lc-def">A school for gladiators. A house where men, beasts and worse are bought cheap, trained hard, and sold to the crowd one bloody evening at a time.</p>
+      <p class="lc-you">Your uncle ran one. He died owing money. It is yours now.</p>
+      <button class="lc-go" data-act="intro-go">Open the gates</button></div></div>`}
+      <div class="paper bill2 home-bill"><span class="nail"></span>
       <span class="b-small">Tonight at the Gutter Brawl</span><span class="b-big">${esc(first.name)}</span>
       <span class="b-line">against Garth, of your uncle's ludus</span>
       <button class="seal" data-act="home-start">Watch</button></div>`;
@@ -1638,7 +1666,7 @@ function purseHTML() {
   return `<div class="purse-strip"><span class="ps-name"><b>${esc(state.team.name)}</b> <i>${esc(arch.title)}</i></span>
     <span><span class="lbl">Purse</span> <b class="num">${career.coin}</b></span>
     <span><span class="lbl">Renown</span> <b class="num">${career.renown}</b></span>
-    ${owed ? `<span><span class="lbl">Owed</span> <b class="num owed">${career.debt}</b></span>` : ''}
+    ${owed ? `<span><span class="lbl">Owed</span> <b class="num owed">${career.debt.toLocaleString()}</b></span>` : ''}
     ${railsOn() ? '' : `<span class="ps-next" title="Magnus runs a small bout every ${Math.round(afkMs() / 60000)} minutes and banks the purse"><span class="lbl">Next bout</span> <b class="num" id="afk-timer">${clock(next)}</b></span>`}
   </div>`;
 }
@@ -1777,7 +1805,7 @@ function recordCareerResult() {
   let note;
   if (won) {
     const first = !career.beaten[k]; career.beaten[k] = true;
-    const coin = winPay(atIdx()), ren = first ? 3 + atIdx() * 2 : 1;
+    const coin = winPay(atIdx()), ren = (first ? 3 + atIdx() * 2 : 1) + (hasSpot('statue') ? 2 : 0);
     career.coin += coin; career.renown += ren; ledger(`Purse from ${foe.name}`, coin);
     note = `+${coin} coin, +${ren} renown.`;
     if (atIdx() === career.rung && rung().squads.every((s) => career.beaten[s]) && career.rung < LADDER.length - 1) {
@@ -2015,7 +2043,7 @@ function renderStableView() {
       <p class="note">A fighter's rank is fixed for life. Every fight counts toward scar slots (at 5, 15 and 40 fights); scars and titles are earned in the sand.</p>
     </div>
     ${offers ? `<div class="block"><div class="block-head"><h2>Asking to join</h2></div><div class="wares">${offers}</div></div>` : ''}
-    <div class="block"><div class="block-head"><h2>The recruiting board</h2><span class="sub">New faces in ${clock(bd.next - Date.now())}</span></div>
+    <div class="block"><div class="block-head"><h2>The recruiting board</h2><span class="sub"><span class="purse-chip">Strongbox <b class="num">${career.coin}</b> coin</span> · new faces in ${clock(bd.next - Date.now())}</span></div>
       <div class="wares">${cards}</div>
       ${career.stable.length > 1 ? `<p class="note">Out of beds? <button class="linkish" data-act="release-pick">Release a fighter</button></p>` : ''}</div>`;
 }
@@ -2196,7 +2224,8 @@ function renderArenaView() {
           <li><span class="lbl">Win</span><b>+${winPay(i)} coin</b><span class="sub">and renown the first time you beat a crew</span></li>
           <li><span class="lbl">Loss</span><b>+${lossPay(i)} coin</b><span class="sub">the crowd tosses a little</span></li>
           <li><span class="lbl">Small bouts</span><span class="sub">${afkLine}</span></li>
-          ${story().met ? `<li><span class="lbl">Vettius</span>${career.debt > 0 ? `<b class="owed">${career.debt} owed</b><span class="sub">your uncle's debt.${career.coin >= Math.min(DEBT_STEP, career.debt) ? ` <button class="linkish" data-act="pay-debt">Pay ${Math.min(DEBT_STEP, career.debt)}</button>` : ''}</span>` : '<b>Paid off</b>'}</li>` : ''}
+          ${story().met ? `<li><span class="lbl">Vettius</span><b class="owed">${career.debt.toLocaleString()} owed</b><span class="sub">${(career.debtTier || 0) ? `ledger ${(career.debtTier || 0) + 1}` : "your uncle's debt"}${ledgerAt(career.debtTier || 0).unlock ? `; pays off with ${esc(ledgerAt(career.debtTier || 0).name)}` : ''}.${career.coin >= Math.min(debtStep(), career.debt) ? ` <button class="linkish" data-act="pay-debt">Pay ${Math.min(debtStep(), career.debt).toLocaleString()}</button>` : ''}</span></li>
+          ${(career.spots || []).map((k) => { const L = LEDGERS.find((x) => x.unlock === k); return `<li><span class="lbl">${esc(L.name)}</span><span class="sub">${esc(L.does)}</span></li>`; }).join('')}` : ''}
         </ul></div>
     </div>`;
   const on = el.querySelector('.rd.on'); if (on) { const r = on.parentElement; r.scrollLeft = Math.max(0, on.offsetLeft - r.offsetLeft - (r.clientWidth - on.offsetWidth) / 2); }
@@ -2687,10 +2716,11 @@ function renderFighterView() {
   const explain = GE.explainStats(r);
   const statRows = ['hp', 'atk', 'def', 'spd', 'acc', 'crit'].map((k) => {
     const base = t.base[k], fin = r.stats[k], d = fin - base;
-    return `<tr><td>${STAT_LABEL[k]}</td><td class="n">${fmt(base)}</td><td class="n ${d > 0.05 ? 'plus' : d < -0.05 ? 'minus' : 'muted'}">${Math.abs(d) < 0.05 ? '–' : signed(d)}</td><td class="n final">${fmt(fin)}</td><td>${gradeHTML(k, fin)}</td></tr>
-      <tr class="explain"><td colspan="5"><span class="rule">${esc(GE.STAT_RULES[k].rule)}</span> ${esc(explain[k])}</td></tr>`;
-  }).join('') + `<tr><td>Evasion</td><td></td><td></td><td class="n final">${Math.round(r.evasion)}%</td><td>${gradeHTML('evasion', r.evasion)}</td></tr>
-      <tr class="explain"><td colspan="5"><span class="rule">${esc(GE.STAT_RULES.evasion.rule)}</span> ${esc(explain.evasion)}</td></tr>`;
+    const open = (state.statOpen || {})[k];
+    return `<tr class="stat-row" data-act="stat-more" data-k="${k}" aria-expanded="${!!open}"><td>${STAT_LABEL[k]} <span class="more-i">${open ? '−' : 'ⓘ'}</span></td><td class="n">${fmt(base)}</td><td class="n ${d > 0.05 ? 'plus' : d < -0.05 ? 'minus' : 'muted'}">${Math.abs(d) < 0.05 ? '–' : signed(d)}</td><td class="n final">${fmt(fin)}</td><td>${gradeHTML(k, fin)}</td></tr>
+      ${open ? `<tr class="explain"><td colspan="5"><span class="rule">${esc(GE.STAT_RULES[k].rule)}</span> ${esc(explain[k])}</td></tr>` : ''}`;
+  }).join('') + `<tr class="stat-row" data-act="stat-more" data-k="evasion"><td>Evasion <span class="more-i">${(state.statOpen || {}).evasion ? '−' : 'ⓘ'}</span></td><td></td><td></td><td class="n final">${Math.round(r.evasion)}%</td><td>${gradeHTML('evasion', r.evasion)}</td></tr>
+      ${(state.statOpen || {}).evasion ? `<tr class="explain"><td colspan="5"><span class="rule">${esc(GE.STAT_RULES.evasion.rule)}</span> ${esc(explain.evasion)}</td></tr>` : ''}`;
   const resChips = Object.entries(r.resists).map(([k, v]) => `<span class="chip ${v > 0 ? 'good' : 'bad'}">${k} ${v > 0 ? '+' : '−'}${Math.abs(v)}%</span>`).join('') || '<span class="muted">None</span>';
   const srcOf = (kind, id) => {
     if ((kind === 'trait' ? t.traits : t.actives).includes(id)) return 'innate';
@@ -2765,7 +2795,6 @@ function renderFighterView() {
       ${abil.length ? `<ul class="abilities">${abil.join('')}</ul>` : '<p class="muted" style="margin:0">None. Boons and some gear add them.</p>'}</div>`;
   const rest = `<div class="detail-grid">
       <div class="block"><div class="block-head"><h2>Battle numbers</h2></div>
-        <p class="note" style="margin-top:0">Grades compare against every fighter in the sample teams, fully geared.</p>
         <table class="stats"><thead><tr><th>Stat</th><th style="text-align:right">Base</th><th style="text-align:right">Gear & training</th><th style="text-align:right">Fights at</th><th>Grade</th></tr></thead><tbody>${statRows}</tbody></table>
         <dl class="kv">${r.block ? `<dt>Block</dt><dd class="num">${Math.round(r.block * 100)}%</dd>` : ''}
           <dt>Move</dt><dd class="num">${r.move} tile${r.move > 1 ? 's' : ''} a turn</dd><dt>Resists</dt><dd><span class="chips">${resChips}</span></dd>
@@ -3611,11 +3640,16 @@ document.addEventListener('click', (e) => {
       toast(`${odds.length} pieces from the storeroom are in the armory. Tap an empty slot.`); break;
     }
     case 'pay-debt': {
-      const amt = Math.min(DEBT_STEP, career.debt);
+      const amt = Math.min(debtStep(), career.debt);
       if (career.coin < amt) { toast(`Vettius wants ${amt}; the strongbox has ${career.coin}.`); break; }
       career.coin -= amt; career.debt -= amt; ledger(career.debt ? `Paid Vettius ${amt}; ${career.debt} still owed` : 'Paid Vettius the last of it', -amt);
       if (btn.dataset.k) (career.seen || (career.seen = {}))[btn.dataset.k] = true;
-      if (!career.debt) { career.renown += 10; chronicle(`${state.team.name} paid off the old man's debts. The school is its own.`); toast('The debt is paid. The ludus is yours outright. +10 renown.'); }
+      if (!career.debt) {
+        const done = ledgerAt(career.debtTier || 0); career.renown += 10 * ((career.debtTier || 0) + 1);
+        if (done.unlock) { career.spots = [...(career.spots || []), done.unlock]; chronicle(`${state.team.name} paid Vettius in full. ${done.name} came with it.`); toast(`Paid in full. ${done.name} is yours: ${done.does}`); }
+        else { chronicle(`${state.team.name} paid off the old man's debts. The school is its own. For now.`); toast('The debt is paid. The ludus is yours outright. +10 renown.'); }
+        career.debtTier = (career.debtTier || 0) + 1; career.debt = ledgerAt(career.debtTier).owed;
+      }
       saveCareer(); break;
     }
     case 'home-fight': battle.fromHome = true; homeFight(btn.dataset.k); return;
@@ -3699,6 +3733,8 @@ document.addEventListener('click', (e) => {
       b.training = tr;
       break;
     }
+    case 'intro-go': state.introSeen = true; break;
+    case 'stat-more': { const o = state.statOpen || (state.statOpen = {}); o[btn.dataset.k] = !o[btn.dataset.k]; break; }
     case 'pick-perk': { const u = +btn.dataset.i; state.sel = u; state.picker = { mode: 'perk', unit: u, kind: btn.dataset.k, n: +btn.dataset.n }; break; }
     case 'perk-skill': {
       const p = state.picker; const pb = state.team.units[p.unit]; const sk = Object.entries(pb.skills || {}).filter(([, v]) => v > 0);
