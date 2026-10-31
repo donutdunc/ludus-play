@@ -252,7 +252,7 @@ body[data-view="squad"] .purse { display: none; }
 .bcard .mono { width: 28px; height: 28px; font-size: 12px; } .bcard b { font-size: 13px; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .bc-sub { font-size: 11px; color: var(--muted); }
 .bc-pts { position: absolute; top: 5px; right: 7px; font-family: var(--f-num); font-weight: 600; font-size: 14px; color: var(--bronze); }
 .bcard.no { opacity: .55; } .bc-why { font-size: 10.5px; color: var(--pompeii); } .bcard.lift { outline: 3px solid var(--bronze); } .bcard.recruit b { font-size: 12px; overflow: visible; } .bcard.recruit { flex-basis: 84px; border-style: dashed; align-content: center; justify-items: center; }
-.sqd .fcard { margin-top: 0; }
+.sqd .fcard { margin-top: 0; } .sq-label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 4px 0 -4px; }
 .academy .ac-list { display: grid; gap: 8px; } .ac-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
 .ac-name { display: flex; flex-wrap: wrap; column-gap: 8px; align-items: center; min-width: 0; } .ac-name .sub { flex-basis: 100%; font-size: 12.5px; } .ac-name .sk-art { width: 26px; height: 26px; }
 .ac-act { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
@@ -1555,7 +1555,8 @@ function magnusNote() {
   if (career.lineup && career.lineup.length < a.maxUnits && benchFit.length) return { text: `${benchFit[0].name} is sitting in the barracks while we fight short-handed. Put them in.`, btn: 'To the squad', act: 'view', v: 'squad' };
   if (career.rung >= 1 && stable.length < 2) return { text: `The ${aName(a)} fights in pairs, and we have one. There are hopefuls at the gate; the young ones are cheap and grow fast.`, btn: 'To the gate', act: 'view', v: 'ledger' };
   if (!c.legal) return { text: `The arena master turned us away: ${c.violations[0].message.replace(/^./, (m) => m.toLowerCase())}. Change who we bring.`, btn: 'To the squad', act: 'view', v: 'squad' };
-  if ((career.offers || []).length) return { text: `${career.offers[0].name} from ${career.offers[0].from} wants to fight for us. Free, if we have a bed.`, btn: 'See them', act: 'view', v: 'ledger' };
+  { const j = career.joined && stable.find((u) => u.uid === career.joined);
+    if (j && !seen['join-' + j.uid]) return { text: `${j.name} came over from the crew we just beat. ${UNITS[j.template].name}, ${j.stars}★. ${inLineup(j) ? 'There was room, so they\'re in the lineup; check where they stand on the Squad screen.' : 'They\'re on the bench; put them in on the Squad screen if they earn a place.'}`, btn: 'To the squad', act: 'view', v: 'squad', k: 'join-' + j.uid }; }
   // Firsts: each new system gets one line from Magnus the first time it matters.
   { const five = !railsOn() && boardStock().list.find((c) => c.five && !c.duplicate);
     if (five && !seen['five-' + five.key]) return { text: `There's a legend at the gate. ${five.name}, ${five.stars}★ ${UNITS[five.template].name.toLowerCase()}. ${five.cast.origin} Fighters like that come round once in a long while. Don't make them wait.`, btn: 'To the gate', act: 'view', v: 'ledger', k: 'five-' + five.key }; }
@@ -1619,7 +1620,7 @@ function spotLine(id) {
   if (!career.started) return id === 'gate' ? 'Tonight: the Gutter Brawl' : '';
   const sq = nextSquad(), sqT = sq && squadTeam(sq);
   if (id === 'gate') return sqT ? `${sqT.name} tonight` : `${aName(ARENAS[rung().arena])}`;
-  if (id === 'barracks') { const n = (career.stable || []).length; const offers = (career.offers || []).length; return offers ? `${offers} asking to join` : `${n} fighter${n === 1 ? '' : 's'}`; }
+  if (id === 'barracks') { const n = (career.stable || []).length; return `${n} fighter${n === 1 ? '' : 's'}`; }
   if (id === 'training') { const free = drillSlots() - career.drills.length; return free > 0 ? `${free} post${free > 1 ? 's' : ''} free` : 'All posts busy'; }
   if (id === 'forge') { const jobs = (career.forge || []).length; if (jobs) return `Tullus: ${jobs} at the anvil`; const n = Object.values(career.armory || {}).reduce((a, b) => a + b, 0); return `${n} piece${n === 1 ? '' : 's'}`; }
   if (id === 'market') return 'Arms dealer';
@@ -1836,7 +1837,7 @@ function recordCareerResult() {
       note += ` The ${aName(ARENAS[r.arena])} wants you next.${r.arrives && !railsOn() ? ` Something came for you: ${ARRIVALS[r.arrives].name.toLowerCase()}.` : ''}${r.slot ? ' A second drill-master signed on.' : ''}`;
     }
   } else { const lc = lossPay(atIdx()); career.coin += lc; ledger(`Lost to ${foe.name}; the crowd tossed a little`, lc); note = `+${lc} coin from a sympathetic crowd.`; }
-  if (won) { const o = maybeDefector(k); if (o) note += ` ${o.name} of ${o.from} asked to join you (see the Barracks).`; }
+  if (won) { const o = maybeDefector(k); if (o) note += ` ${o.name} came over from ${/^the /i.test(o.from) ? o.from : 'the ' + o.from} and joined the school.`; }
   if (marks.length) note += ' ' + marks.join(' ');
   saveCareer();
   return { won, note };
@@ -1981,7 +1982,10 @@ function maybeDefector(k) {
   const owned = new Set(career.stable.map((u) => u.castId)); const c = GE.CAST.find((x) => x.template === f.template && x.stars < 5 && !owned.has(x.id));
   if (!c) return null;
   const offer = { template: c.template, stars: c.stars, name: c.name, castId: c.id, titles: c.titles || [], from: foe.name };
-  career.offers = [...(career.offers || []), offer].slice(-3);
+  // They just join: straight to the bench, and Magnus points at the Squad.
+  const u = addToStable({ template: offer.template, name: offer.name, stars: offer.stars, castId: offer.castId, titles: [...(offer.titles || [])], equip: starterKit(offer.template) });
+  ledger(`${offer.name} came over from ${offer.from}`, 0); chronicle(`${offer.name}, once of ${offer.from}, swore to ${state.team.name}.`);
+  career.joined = u.uid;
   return offer;
 }
 function acceptOffer(i) {
@@ -2488,6 +2492,7 @@ function renderSquadView() {
       <span class="sq-badge ${f.id}" title="${esc(f.detail)}">${esc(f.name)}</span></div>
     ${state.lift ? `<p class="sq-hint">Tap a tile to place ${state.lift.i !== undefined ? esc(state.team.units[state.lift.i].name) : esc((career.stable.find((u) => u.uid === state.lift.uid) || {}).name || '')}. <button class="linkish" data-act="sq-drop">Cancel</button></p>` : ''}
     ${squadBoardHTML()}
+    <div class="sq-label">Bench</div>
     <div class="sq-bench" id="sq-bench">${bench.map(benchCardHTML).join('')}${career.started && !state.sandbox ? '<button class="bcard recruit" data-act="pick-recruit"><b>+ Recruit</b></button>' : ''}</div>
     ${sel ? cardHTML(state.sel, state.cardOpen === state.sel) : '<p class="muted">Field someone from the bench.</p>'}
     ${sel && career.started && !state.sandbox ? `<button class="btn small" data-act="sq-bench-sel" data-i="${state.sel}">Send ${esc(sel.name)} to the bench</button>` : ''}
