@@ -102,11 +102,9 @@ button { cursor: pointer; }
 /* ---------- Header / purse ---------- */
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--panel); }
 .top {
-  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--panel); border-bottom: 1px solid var(--line);
+  position: relative; z-index: 20; background: var(--panel); border-bottom: 1px solid var(--line);
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 10px 12px;
 }
-.top { transition: transform .22s ease; }
-@media (max-width: 759px) { .top.hid { transform: translateY(calc(-100% - 2px)); } }
 .top-row { display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; }
 .wordmark { font-family: var(--f-display); font-size: 26px; color: var(--pompeii); line-height: 1; letter-spacing: .02em; }
 .tabs { display: inline-flex; border: 1px solid var(--line); border-radius: var(--r-s); overflow: hidden; }
@@ -435,7 +433,7 @@ table.stats td.final { font-weight: 600; }
 
 /* ---------- Armory (inline on wide fighter view, drawer elsewhere) ---------- */
 .catalog { display: flex; flex-direction: column; min-height: 0; }
-.cat-inline { position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--top-h, 140px) + 12px); max-height: calc(100vh - var(--top-h, 140px) - 40px); }
+.cat-inline { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); max-height: calc(100vh - 24px); }
 .catalog-list { overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin: 0 -6px; padding: 0 6px 6px; min-height: 0; }
 .cat-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
 .cat-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
@@ -514,6 +512,14 @@ table.stats td.final { font-weight: 600; }
 .sh-active .pips { color: var(--bronze); font-size: 8px; letter-spacing: 1px; } .sh-active .eff { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .sh-trait { font-size: 12px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; } .sh-trait.kit { color: var(--steel); border-color: color-mix(in srgb, var(--steel) 40%, transparent); }
 
+.sh-abs { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px 0; }
+.sh-ab { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 9px; align-items: start; padding: 7px 10px; border-radius: 9px; border: 1px solid var(--line); background: var(--raise); }
+.sh-ab.active { background: var(--bronze-soft); border-color: color-mix(in srgb, var(--bronze) 45%, transparent); }
+.sh-ab .ab-ic { width: 26px; height: 26px; display: grid; place-items: center; color: var(--bronze); font-size: 13px; } .sh-ab .ab-ic img { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; }
+.sh-ab.kit .ab-ic { color: var(--steel); } .sh-ab.trait .ab-ic { color: var(--muted); }
+.sh-ab .ab-hd { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; } .sh-ab .ab-hd b { font-size: 14.5px; }
+.sh-ab .ab-tag { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.sh-ab p { margin: 2px 0 0; font-size: 13.5px; line-height: 1.35; color: var(--ink); opacity: .85; }
 .sh-gear { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 10px 12px 0; }
 .sh-tile { position: relative; height: 72px; border: 1px solid var(--line); border-radius: 9px; background: var(--raise); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 4px 2px 3px; color: var(--ink); --rc: transparent; box-shadow: inset 3px 0 0 var(--rc); transition: border-color .12s, transform .12s; }
 .sh-tile.rar-common, .sh-tile.rar-fine, .sh-tile.rar-masterwork, .sh-tile.rar-relic { border-left: 1px solid var(--line); }
@@ -535,7 +541,7 @@ table.stats td.final { font-weight: 600; }
 .sh-perk { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px 5px 9px; border-radius: 999px; border: 1px solid var(--line); background: var(--raise); font-size: 13px; color: var(--ink); max-width: 100%; min-width: 0; }
 .sh-perk .pg { color: var(--muted); font-size: 12px; } .sh-perk .pn { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .sh-perk .pc { font-family: var(--f-num); font-weight: 600; color: var(--bronze); }
 .sh-perk.skill:not(.empty) .pg { color: var(--bronze); } .sh-perk.scar:not(.empty) .pn { color: var(--pompeii); } .sh-perk.title:not(.empty) .pn { font-family: "IM Fell English", Georgia, serif; font-style: italic; font-size: 14px; }
-.sh-perk.empty { border-style: dashed; background: transparent; color: var(--muted); } .sh-perk[disabled] { opacity: .5; }
+.sh-perk.empty { background: transparent; color: var(--muted); } .sh-perk[disabled] { opacity: .5; }
 .sh-perk.picking { border-color: var(--bronze); box-shadow: 0 0 0 3px var(--bronze-soft); }
 .sh-perk.fresh { border-color: var(--bronze); animation: perk-pulse 1.6s ease-in-out infinite; }
 @keyframes perk-pulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--bronze) 45%, transparent); } 50% { box-shadow: 0 0 0 5px transparent; } }
@@ -1989,7 +1995,7 @@ function renderHomeView() {
   document.getElementById('view-home').innerHTML = `
     <div class="home-scene">${purseHTML()}${yardHTML()}</div>
     <div class="home-side">${magnusHTML(note)}${boutsHTML()}${recentHTML()}
-      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 10:40 AM</span></p>` : ''}
+      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 11:04 AM</span></p>` : ''}
     </div>`;
   startHomeClock();
 }
@@ -3062,11 +3068,13 @@ function renderFighterView() {
       <span class="lbl">${SHEET_LABEL[k]}</span><b class="num" data-count="${k}">${v}</b>${gradeTicks(k, v)}</button>`;
   }).join('')}${pop ? statPopHTML(b, pop) : ''}</div>`;
 
+  // Abilities read in full: name, what kind it is, and what it does. Nothing hidden behind a hover.
+  const abRow = (cls, icon, name, tag, desc) => `<div class="sh-ab ${cls}"><span class="ab-ic">${icon}</span><div class="ab-tx"><div class="ab-hd"><b>${esc(name)}</b><span class="ab-tag">${esc(tag)}</span></div><p>${esc(desc)}</p></div></div>`;
   const acts = r.actives.map((id) => { const A = ACTIVE_DEF[id];
-    return `<span class="sh-active" title="${esc(A.description)}">${ART.active && ART.active[id] ? `<img src="${ART.active[id]}" alt="">` : '▸'}<b>${esc(A.name)}</b><span class="pips" title="Every ${A.cooldown} turns">${pips(A.cooldown)}</span><span class="eff">${esc(effectLine(id))}</span></span>`; });
-  const traits = r.traits.map((id) => `<span class="sh-trait" title="${esc((TRAITS[id] || {}).description || '')}">${esc((TRAITS[id] || {}).name || id)}</span>`);
-  const kits = GE.kitsFor(b.equip || {}).map((k) => `<span class="sh-trait kit" title="${esc(k.description)}">${esc(k.name)}</span>`);
-  const activeLine = acts.length || traits.length || kits.length ? `<div class="sh-line">${acts.join('')}${[...traits, ...kits].join('')}</div>` : '';
+    return abRow('active', ART.active && ART.active[id] ? `<img src="${ART.active[id]}" alt="">` : '▸', A.name, `every ${A.cooldown} turns`, A.description); });
+  const traits = r.traits.map((id) => { const T = TRAITS[id] || {}; return abRow('trait', ART.trait && ART.trait[id] ? `<img src="${ART.trait[id]}" alt="">` : '◆', T.name || id, 'always on', T.description || ''); });
+  const kits = GE.kitsFor(b.equip || {}).map((k) => abRow('kit', '⛓', k.name, 'set bonus', `${k.pieces.map((x) => (ITEMS[x] || {}).name || x).join(' + ')}: ${k.description}`));
+  const activeLine = acts.length || traits.length || kits.length ? `<div class="sh-abs">${[...acts, ...traits, ...kits].join('')}</div>` : '';
 
   const pickSlot = state.picker && state.picker.mode === 'slot' && pbOf(state.picker) === b ? state.picker.slot : null;
   const gear = DOLL_SLOTS[t.bodyPlan].map((s) => {
@@ -3086,9 +3094,9 @@ function renderFighterView() {
   const perks = perkSlots(b).filter((x) => !(x.kind === 'title' && x.locked && careerNav && !(b.fights >= 1))).map((x) => {
     const glyph = x.kind === 'skill' ? '✦' : x.kind === 'scar' ? '⚔' : '❦';
     const fresh = (x.kind === 'scar' || x.kind === 'title') && !x.locked && unseenPerks(b, x.kind);
-    const label = x.name ? esc(x.name) : x.locked ? (x.kind === 'scar' ? `${GE.SCAR_SLOT_AT[0]} fights` : 'No title') : x.label;
+    const label = x.name ? esc(x.name) : x.locked ? (x.kind === 'scar' ? `Scar at ${GE.SCAR_SLOT_AT[0]} fights` : 'No title') : `${x.label} slot`;
     return `<button class="sh-perk ${x.kind} ${x.name ? '' : 'empty'} ${fresh ? 'fresh' : ''} ${pk && pk.kind === x.kind && pk.n === x.n ? 'picking' : ''}" data-act="pick-perk" data-i="${i}" ${careerNav ? `data-uid="${b.uid}"` : ''} data-k="${x.kind}" data-n="${x.n}" ${x.locked ? 'disabled' : ''} title="${esc(x.line || x.label)}">
-      <span class="pg">${x.name || x.locked ? glyph : '+'}</span><span class="pn">${label}</span>${x.cost ? `<span class="pc">${x.cost}</span>` : ''}</button>`;
+      <span class="pg">${glyph}</span><span class="pn">${label}</span>${x.cost ? `<span class="pc">${x.cost}</span>` : ''}</button>`;
   }).join('');
 
   const drill = career.started && drillFor(b);
@@ -4022,15 +4030,6 @@ function runSim() {
   render();
 }
 
-// Phone: the header slides away while you scroll down to look at things, and comes back the moment you scroll up.
-let topLastY = 0;
-addEventListener('scroll', () => {
-  const top = document.getElementById('top'); const y = scrollY; const d = y - topLastY;
-  if (!top || !mq('(max-width: 759px)')) { if (top) top.classList.remove('hid'); return; }
-  if (y < top.offsetHeight || d < -8) top.classList.remove('hid');
-  else if (d > 8 && !document.body.classList.contains('sheet-open')) top.classList.add('hid');
-  if (Math.abs(d) > 8 || y < top.offsetHeight) topLastY = y;
-}, { passive: true });
 
 // ---------------- Events ----------------
 document.addEventListener('click', (e) => {
