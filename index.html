@@ -704,7 +704,7 @@ body { background:
 .bt:has(.has-art) .hpbar { right: 24%; left: 10%; }
 .bt.dead:has(.has-art) { opacity: .28; }
 /* ---------------- Home: the yard and the lanista's desk ---------------- */
-body[data-view="squad"][data-career="1"] #top .top-controls, body[data-view="home"] #top .purse, body[data-view="home"] #top .top-controls, body[data-view="arena"] #top .top-controls, body[data-view="armory"] #top .purse, body[data-view="armory"] #top .top-controls { display: none; }
+body[data-view="squad"][data-career="1"] #top .top-controls, body[data-view="ledger"][data-career="1"] #top .top-controls, body[data-view="ledger"][data-career="1"] #top .purse, body[data-view="home"] #top .purse, body[data-view="home"] #top .top-controls, body[data-view="arena"] #top .top-controls, body[data-view="armory"] #top .purse, body[data-view="armory"] #top .top-controls { display: none; }
 #view-home { grid-template-columns: minmax(0, 1fr); gap: 12px; }
 @media (min-width: 900px) { #view-home { grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr); align-items: start; } }
 .home-scene { display: grid; gap: 8px; min-width: 0; }
@@ -2034,18 +2034,10 @@ function renderStableView() {
       <div class="w-txt"><b>${esc(o.name)}</b><span class="sub">${o.stars}★ ${esc(UNITS[o.template].name)}, from ${esc(o.from)}</span><span class="w-sum">Asked to join after you beat them. Free.</span></div>
       <span class="btn-row"><button class="btn small primary" data-act="accept-offer" data-i="${i}">Take them in</button><button class="btn small" data-act="decline-offer" data-i="${i}">Send away</button></span></div>`).join('');
   document.getElementById('view-ledger').innerHTML = `
-    <div class="block ledger-block">
-      <div class="block-head"><input class="team-name" id="team-name" data-act="team-name" value="${esc(state.team.name)}" aria-label="School name">
-        <span class="sub">Lineup for the ${esc(aName(a))}: <b class="num">${lc.total}</b>/${a.cap} pts · <b class="num">${career.lineup.length}</b>/${a.maxUnits} fighters · beds <b class="num">${career.stable.length}</b>/${bedCount()}</span></div>
-      ${!lc.legal ? `<p class="warn-line">${esc(lc.violations[0].message)}</p>` : ''}
-      ${bl.toolbar}
-      <div class="ltable-wrap"><table class="ltable"><thead><tr><th></th><th>Fighter</th><th>Record</th><th>Gear</th><th class="c-n">Points</th><th class="c-n">Rating</th><th>Value</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>${bl.total > bl.LIMIT ? `<p class="note">Showing ${bl.LIMIT} of ${bl.total}. <button class="linkish" data-act="rf-more">Show more</button></p>` : ''}${!bl.total ? '<p class="note">No fighters match.</p>' : ''}
-      <p class="note">A fighter's rank is fixed for life. Every fight counts toward scar slots (at 5, 15 and 40 fights); scars and titles are earned in the sand.</p>
-    </div>
     ${offers ? `<div class="block"><div class="block-head"><h2>Asking to join</h2></div><div class="wares">${offers}</div></div>` : ''}
-    <div class="block"><div class="block-head"><h2>The recruiting board</h2><span class="sub"><span class="purse-chip">Strongbox <b class="num">${career.coin}</b> coin</span> · new faces in ${clock(bd.next - Date.now())}</span></div>
+    <div class="block"><div class="block-head"><h2>The gate</h2><span class="sub"><span class="purse-chip">Strongbox <b class="num">${career.coin}</b> coin</span> · beds <b class="num">${career.stable.length}</b>/${bedCount()} · new faces in ${clock(bd.next - Date.now())}</span></div>
       <div class="wares">${cards}</div>
-      ${career.stable.length > 1 ? `<p class="note">Out of beds? <button class="linkish" data-act="release-pick">Release a fighter</button></p>` : ''}</div>`;
+      <p class="note">New hires land on the bench. Field and place them on the <button class="linkish" data-act="view" data-v="squad">Squad</button> screen.${career.stable.length > 1 ? ` Out of beds? <button class="linkish" data-act="release-pick">Release a fighter</button>` : ''}</p></div>`;
 }
 
 // ---------------- The armory and Hasdrubal's market (career mode) ----------------
