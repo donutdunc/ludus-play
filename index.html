@@ -455,6 +455,99 @@ table.stats td.final { font-weight: 600; }
 }
 .hint { padding: 22px 16px; }
 
+/* ---------- Fighter Sheet ---------- */
+.sh-col { gap: 12px; }
+.sheet { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; width: 100%; max-width: 620px; margin: 0 auto; box-shadow: 0 1px 0 rgba(0,0,0,.04), 0 10px 30px -18px rgba(0,0,0,.35); }
+.sh-hero { position: relative; height: 236px; overflow: hidden; --cc: var(--cat-front); isolation: isolate;
+  background: radial-gradient(85% 95% at 34% 30%, color-mix(in srgb, var(--cc) 62%, #fff8ec) 0%, color-mix(in srgb, var(--cc) 78%, #120d08) 52%, color-mix(in srgb, var(--cc) 26%, #0c0906) 100%); }
+.sh-hero[data-cat="back"] { --cc: var(--cat-back); } .sh-hero[data-cat="beast"] { --cc: var(--cat-beast); } .sh-hero[data-cat="large"] { --cc: var(--cat-large); }
+.sh-hero::before { content: ""; position: absolute; inset: 0; z-index: 0; opacity: .16; background: repeating-linear-gradient(115deg, transparent 0 14px, rgba(255,255,255,.35) 14px 15px); mask: radial-gradient(70% 80% at 35% 35%, #000, transparent); }
+.sh-bust { position: absolute; z-index: 1; left: 50%; bottom: -6px; height: 104%; width: auto; aspect-ratio: 1; transform: translateX(-74%); object-fit: contain; filter: drop-shadow(0 8px 18px rgba(0,0,0,.35)); user-select: none; }
+.sh-bust.mono { display: grid; place-items: center; font-size: 72px; color: rgba(255,255,255,.8); background: none; }
+.sh-tok { position: absolute; z-index: 2; right: 46px; bottom: 50px; width: 126px; height: 126px; pointer-events: none; }
+.sh-tok::after { content: ""; position: absolute; left: 22%; right: 22%; bottom: 7%; height: 10px; border-radius: 50%; background: radial-gradient(rgba(0,0,0,.45), transparent 70%); z-index: -1; }
+.sh-tok .fig { position: absolute; inset: 0; filter: drop-shadow(0 3px 0 rgba(0,0,0,.25)); }
+.sh-tok .fig img.body { position: absolute; inset: 0; width: 100%; height: 100%; }
+.sh-tok .fig img.ov { position: absolute; height: auto; aspect-ratio: 1; }
+.sh-nav { position: absolute; z-index: 4; top: 38%; transform: translateY(-50%); width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(255,255,255,.25); background: rgba(12,9,6,.38); color: #fff; font-size: 20px; line-height: 1; padding: 0 0 2px; backdrop-filter: blur(4px); }
+.sh-nav.prev { left: 8px; } .sh-nav.next { right: 8px; } .sh-nav:hover { background: rgba(12,9,6,.6); }
+.sh-pts { position: absolute; z-index: 4; top: 10px; right: 10px; display: inline-flex; align-items: baseline; gap: 4px; padding: 3px 11px 4px; border-radius: 999px; background: rgba(14,10,6,.55); border: 1px solid color-mix(in srgb, var(--bronze) 70%, transparent); color: rgba(255,255,255,.75); font-size: 12px; backdrop-filter: blur(4px); }
+.sh-pts b { font-size: 21px; font-weight: 600; color: #f0c472; line-height: 1; }
+.sh-id { position: absolute; z-index: 3; left: 0; right: 0; bottom: 0; padding: 46px 14px 11px; display: flex; flex-direction: column; gap: 1px;
+  background: linear-gradient(to bottom, transparent, rgba(12,9,6,.55) 38%, rgba(12,9,6,.86)); }
+.sh-name { font-family: var(--f-display); font-size: 28px; line-height: 1.05; color: #fff; border: 0; background: none; padding: 0; width: 100%; min-width: 0; text-shadow: 0 2px 10px rgba(0,0,0,.4); }
+.sh-name:focus { outline: none; box-shadow: 0 1px 0 rgba(255,255,255,.5); }
+.sh-sub { font-size: 13px; color: rgba(255,255,255,.85); letter-spacing: .01em; } .sh-sub i { font-family: "IM Fell English", Georgia, serif; font-size: 14px; }
+.sh-origin { font-family: "IM Fell English", Georgia, serif; font-style: italic; font-size: 13px; color: rgba(255,255,255,.66); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.sh-stats { position: relative; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-bottom: 1px solid var(--line); padding: 6px 4px 7px; background: var(--panel); }
+.sh-stat { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; border: 0; background: none; padding: 3px 0 2px; border-radius: 8px; color: var(--ink); min-width: 0; }
+.sh-stat:hover, .sh-stat.open { background: var(--raise); }
+.sh-stat .lbl { font-size: 10px; letter-spacing: .1em; color: var(--muted); font-weight: 600; }
+.sh-stat b { font-family: var(--f-num); font-weight: 600; font-size: 21px; line-height: 1.05; font-variant-numeric: tabular-nums; transition: color .15s; }
+.sh-stat.trained b { text-decoration: underline 2px var(--bronze); text-underline-offset: 3px; }
+.sh-stat .ticks { display: flex; gap: 2px; margin-top: 2px; } .sh-stat .ticks i { width: 7px; height: 2px; border-radius: 1px; background: var(--line); } .sh-stat .ticks i.on { background: var(--ink); opacity: .7; }
+.sh-stats.previewing .sh-stat.up b { color: var(--verd); } .sh-stats.previewing .sh-stat.down b { color: var(--pompeii); }
+.sh-stat .dl { position: absolute; top: -4px; right: 0; font-family: var(--f-num); font-size: 12px; font-weight: 600; pointer-events: none; animation: dl-float .5s ease-out both; }
+.sh-stat.up .dl { color: var(--verd); } .sh-stat.down .dl { color: var(--pompeii); }
+@keyframes dl-float { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(-2px); } }
+.sh-pop { position: absolute; z-index: 6; top: calc(100% - 2px); left: 8px; right: 8px; background: var(--raise); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); padding: 10px 12px; animation: pop-in .14s ease-out; }
+@keyframes pop-in { from { opacity: 0; transform: translateY(-4px); } }
+.pop-sum { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; font-family: var(--f-num); font-size: 19px; font-weight: 600; }
+.pop-sum span { display: flex; flex-direction: column; } .pop-sum small { font-family: var(--f-body); font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.pop-sum .tr { color: var(--bronze); } .pop-sum .fin { color: var(--ink); text-align: right; }
+.pop-rule { margin: 8px 0 0; font-size: 13px; } .pop-ex { margin: 3px 0 0; font-size: 12.5px; color: var(--muted); }
+
+.sh-line { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 12px 0; align-items: center; }
+.sh-active { display: inline-flex; align-items: center; gap: 7px; min-width: 0; max-width: 100%; padding: 4px 12px 4px 6px; border-radius: 999px; background: var(--bronze-soft); border: 1px solid color-mix(in srgb, var(--bronze) 45%, transparent); font-size: 13px; }
+.sh-active img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; } .sh-active b { white-space: nowrap; }
+.sh-active .pips { color: var(--bronze); font-size: 8px; letter-spacing: 1px; } .sh-active .eff { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.sh-trait { font-size: 12px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; } .sh-trait.kit { color: var(--steel); border-color: color-mix(in srgb, var(--steel) 40%, transparent); }
+
+.sh-gear { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 10px 12px 0; }
+.sh-tile { position: relative; height: 72px; border: 1px solid var(--line); border-radius: 9px; background: var(--raise); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 4px 2px 3px; color: var(--ink); --rc: transparent; box-shadow: inset 3px 0 0 var(--rc); transition: border-color .12s, transform .12s; }
+.sh-tile.rar-common, .sh-tile.rar-fine, .sh-tile.rar-masterwork, .sh-tile.rar-relic { border-left: 1px solid var(--line); }
+.sh-tile.rar-common { --rc: var(--rar-common); } .sh-tile.rar-fine { --rc: var(--rar-fine); } .sh-tile.rar-masterwork { --rc: var(--rar-master); } .sh-tile.rar-relic { --rc: var(--rar-relic); }
+.sh-tile:hover:not([disabled]) { border-color: var(--bronze); } .sh-tile:active:not([disabled]) { transform: scale(.97); }
+.sh-tile .ti { width: 36px; height: 36px; display: grid; place-items: center; } .sh-tile .ti img, .sh-tile .ti svg { width: 36px; height: 36px; object-fit: contain; }
+.sh-tile .tn { font-family: var(--f-num); font-weight: 600; font-size: 15px; line-height: 1; white-space: nowrap; } .sh-tile .tn small { font-size: 10px; font-weight: 500; color: var(--muted); margin-left: 2px; letter-spacing: .04em; }
+.sh-tile .tc { position: absolute; top: 3px; right: 6px; font-family: var(--f-num); font-size: 12px; font-weight: 600; color: var(--bronze); }
+.sh-tile.empty { border-style: dashed; background: transparent; box-shadow: none; } .sh-tile.empty .ti { opacity: .28; } .sh-tile.empty .tn small { margin: 0; }
+.sh-tile.picking { border-color: var(--bronze); box-shadow: inset 3px 0 0 var(--rc), 0 0 0 3px var(--bronze-soft); }
+.sh-tile.previewing { border-color: var(--verd); border-style: solid; } .sh-tile.previewing .ti { animation: tile-pop .28s cubic-bezier(.3,1.6,.5,1); }
+.sh-tile.invalid { border-color: var(--pompeii); } .sh-tile[disabled] { opacity: .45; }
+.sh-tile.pop .ti { animation: tile-pop .32s cubic-bezier(.3,1.6,.5,1); }
+@keyframes tile-pop { 0% { transform: scale(1); } 45% { transform: scale(1.12); } 100% { transform: scale(1); } }
+
+.sh-perks { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px 0; }
+.sh-perk { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px 5px 9px; border-radius: 999px; border: 1px solid var(--line); background: var(--raise); font-size: 13px; color: var(--ink); max-width: 100%; min-width: 0; }
+.sh-perk .pg { color: var(--muted); font-size: 12px; } .sh-perk .pn { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .sh-perk .pc { font-family: var(--f-num); font-weight: 600; color: var(--bronze); }
+.sh-perk.skill:not(.empty) .pg { color: var(--bronze); } .sh-perk.scar:not(.empty) .pn { color: var(--pompeii); } .sh-perk.title:not(.empty) .pn { font-family: "IM Fell English", Georgia, serif; font-style: italic; font-size: 14px; }
+.sh-perk.empty { border-style: dashed; background: transparent; color: var(--muted); } .sh-perk[disabled] { opacity: .5; }
+.sh-perk.picking { border-color: var(--bronze); box-shadow: 0 0 0 3px var(--bronze-soft); }
+.sh-perk.fresh { border-color: var(--bronze); animation: perk-pulse 1.6s ease-in-out infinite; }
+@keyframes perk-pulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--bronze) 45%, transparent); } 50% { box-shadow: 0 0 0 5px transparent; } }
+
+.sh-actions { display: flex; align-items: center; gap: 8px; padding: 10px 12px 12px; margin-top: 2px; }
+.sh-actions .btn.small { min-height: 32px; padding: 5px 12px; font-size: 13.5px; }
+.sh-tac { flex: 1; display: flex; min-width: 0; } .sh-tac button { flex: 1; padding: 6px 4px; font-size: 13px; white-space: nowrap; }
+.sh-bench { color: var(--pompeii); } .sh-drill { font-size: 13px; color: var(--bronze); white-space: nowrap; }
+.sh-sandbox .stars { margin-bottom: 10px; }
+.sh-hint { padding: 18px 6px; align-self: start; }
+@media (min-width: 1180px) { #view-fighter { grid-template-columns: minmax(0, 620px) 400px; justify-content: center; } }
+.catalog .opt.unequip { border-style: dashed; background: transparent; padding-top: 8px; padding-bottom: 8px; } .catalog .opt.unequip .opt-name { color: var(--pompeii); font-weight: 600; }
+@media (prefers-reduced-motion: reduce) { .sh-perk.fresh, .sh-tile.pop .ti, .sh-pop, .sh-stat .dl { animation: none; } }
+@media (max-width: 380px) { .sh-hero { height: 220px; } .sh-tok { width: 108px; height: 108px; right: 44px; } .sh-name { font-size: 25px; } .sh-stat b { font-size: 19px; } .sh-tac button { font-size: 12px; } }
+@media (min-width: 760px) { .sh-hero { height: 270px; } .sh-bust { transform: translateX(-90%); } .sh-tok { width: 168px; height: 168px; right: 22%; bottom: 46px; } .sh-tile { height: 80px; } }
+
+/* Phone: the slot sheet rises to ~60% and leaves the stat bar in view. */
+.drawer.sheet-mode { background: transparent; pointer-events: none; } .drawer.sheet-mode .catalog { pointer-events: auto; box-shadow: 0 -10px 30px rgba(0,0,0,.18); }
+.drawer.sheet-mode .catalog { height: 60vh; height: 60dvh; animation: sheet-up .2s cubic-bezier(.2,.8,.3,1); transition: transform .18s; }
+.drawer.sheet-mode .cat-head { cursor: grab; touch-action: none; position: relative; padding-top: 6px; }
+.drawer.sheet-mode .cat-head::before { content: ""; position: absolute; top: -6px; left: 50%; width: 38px; height: 4px; margin-left: -19px; border-radius: 2px; background: var(--line); }
+@keyframes sheet-up { from { transform: translateY(40%); opacity: .4; } }
+body.sheet-open #view-fighter { padding-bottom: 62vh; }
+
 /* ---------- Battle ---------- */
 .battle { position: fixed; inset: 0; z-index: 50; background: var(--ground); overflow-y: auto;
   padding: calc(14px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
@@ -2385,6 +2478,8 @@ function render() {
   cost = GE.teamCost(state.team, arena());
   chem = GE.chemistry(state.team);
   document.body.dataset.view = state.view;
+  if (state.view !== 'fighter') { sheetShown = null; state.statPop = null; }
+  previewOn = null;
   document.body.dataset.career = career.started && !state.sandbox ? '1' : '';
   renderTop();
   if (state.view === 'home') renderHomeView(); else if (state.view === 'arena') renderArenaView(); else if (state.view === 'armory') renderArmoryView(); else if (state.view === 'market') renderMarketView(); else if (state.view === 'ledger') (career.started ? renderStableView() : renderLedgerView()); else if (state.view === 'squad') (career.started && !state.sandbox ? renderBarracksView() : renderSquadView()); else if (state.view === 'academy') renderAcademyView(); else if (state.view === 'training') renderTrainingView(); else if (state.view === 'roster') renderRosterView(); else renderFighterView();
@@ -2825,6 +2920,79 @@ function compareHTML(i, j) {
 }
 
 // ---------------- Fighter view (paper doll) ----------------
+// ---------------- The Fighter Sheet ----------------
+// One card, four zones: hero (bust + battle token), stat bar, active line, loadout.
+// Everything else hides behind a tap: the stat popover, the slot sheet.
+const SHEET_STATS = ['hp', 'atk', 'def', 'spd', 'acc', 'crit', 'eva'];
+const SHEET_LABEL = { hp: 'HP', atk: 'ATK', def: 'DEF', spd: 'SPD', acc: 'ACC', crit: 'CRIT', eva: 'EVA' };
+const statVal = (r, k) => Math.round(k === 'eva' ? r.evasion : r.stats[k]);
+const reduceMotion = () => mq('(prefers-reduced-motion: reduce)');
+// Counting numerals: rAF from one whole number to another, tabular figures keep the width still.
+function countTo(el, from, to, ms = 380) {
+  if (!el) return;
+  if (el._raf) cancelAnimationFrame(el._raf);
+  if (from === to || reduceMotion()) { el.textContent = to; return; }
+  const t0 = performance.now();
+  const step = (now) => {
+    const p = Math.min(1, (now - t0) / ms); const e = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(from + (to - from) * e);
+    if (p < 1) el._raf = requestAnimationFrame(step); else el._raf = 0;
+  };
+  el._raf = requestAnimationFrame(step);
+}
+// The numbers the sheet last showed, so a re-render counts from there (prev/next, equip) and an open counts from zero.
+let sheetShown = null;
+const gradeTicks = (k, v) => {
+  const g = GE.gradeStat(k === 'eva' ? 'evasion' : k, v); const n = [0, 0, 1, 2, 2, 3][Object.keys(GRADE_CLS).indexOf(g.label)] ?? 1;
+  return `<span class="ticks" title="${esc(g.label)}">${[0, 1, 2].map((x) => `<i class="${x < n ? 'on' : ''}"></i>`).join('')}</span>`;
+};
+// One number per gear tile: the thing the piece is for.
+function tileNum(it) {
+  if (it.weapon) return `${it.weapon.damage}<small>${it.weapon.range > 1 ? 'rng' : 'dmg'}</small>`;
+  if (it.armor) return `${it.armor.def}<small>def</small>`;
+  const m = Object.entries((it.effects && it.effects.mods) || {}).find(([, v]) => v);
+  if (m) return `${m[1] > 0 ? '+' : '−'}${Math.abs(m[1])}<small>${(STAT_LABEL[m[0]] || m[0]).replace(' %', '').toLowerCase()}</small>`;
+  if (it.effects && it.effects.evasion) return `+${it.effects.evasion}<small>eva</small>`;
+  if (it.effects && it.effects.regen) return `+${it.effects.regen}<small>regen</small>`;
+  return '<small>✦</small>';
+}
+function heroToken(t, b) {
+  const k = artKey(t, b.stars || 3); const src = ART.token[k.id];
+  return src ? `<span class="sh-tok"><span class="fig"><img class="body" src="${src}" alt="" draggable="false">${gearOverlays(k.id, b.equip)}</span></span>` : '';
+}
+// Where a number comes from: rank base, training, and everything worn.
+function statParts(b, k) {
+  const fx = teamFx(state.team);
+  const bare = clone(b); bare.equip = {}; bare.training = {}; bare.skills = {}; bare.wornScars = []; bare.title = undefined;
+  const trained = clone(bare); trained.training = clone(b.training || {});
+  const r0 = GE.resolveUnit(bare, fx), r1 = GE.resolveUnit(trained, fx), r2 = GE.resolveUnit(b, fx);
+  const v0 = statVal(r0, k), v1 = statVal(r1, k), v2 = statVal(r2, k);
+  return { base: v0, train: v1 - v0, gear: v2 - v1, fin: v2, r: r2 };
+}
+function statPopHTML(b, k) {
+  const p = statParts(b, k); const r = p.r; const rk = k === 'eva' ? 'evasion' : k;
+  const ex = GE.explainStats(r)[rk];
+  const extra = [];
+  if (k === 'atk') extra.push(`${r.weapon.damage} ${r.weapon.type}${r.weapon.range > 1 ? `, range ${r.weapon.range}` : ''}`);
+  if (k === 'def') { if (r.block) extra.push(`Block ${Math.round(r.block * 100)}%`); const rs = Object.entries(r.resists).map(([x, v]) => `${x} ${v > 0 ? '+' : '−'}${Math.abs(v)}%`); if (rs.length) extra.push(rs.join(' · ')); }
+  if (k === 'spd') extra.push(`Moves ${r.move} tile${r.move > 1 ? 's' : ''} a turn`);
+  if (k === 'hp' && r.regen) extra.push(`Heals ${fmt(r.regen)} a turn`);
+  const sg = (n) => (n > 0 ? `+${n}` : n < 0 ? `−${-n}` : '0');
+  return `<div class="sh-pop" role="dialog" aria-label="${SHEET_LABEL[k]}">
+    <div class="pop-sum"><span><small>Base</small>${p.base}</span><span><small>Gear</small>${sg(p.gear)}</span><span class="${p.train ? 'tr' : ''}"><small>Training</small>${sg(p.train)}</span><span class="fin"><small>Final</small>${p.fin}</span></div>
+    <p class="pop-rule">${esc(GE.STAT_RULES[rk].rule)}</p>${ex ? `<p class="pop-ex">${esc(ex)}</p>` : ''}${extra.length ? `<p class="pop-ex">${extra.map(esc).join(' · ')}</p>` : ''}</div>`;
+}
+// Perks the fighter has earned that the player hasn't looked at yet.
+function unseenPerks(b, kind) {
+  if (!career.started || state.sandbox) return false;
+  if (!b.seenPerks) b.seenPerks = [...(b.scars || []), ...(b.titles || [])];
+  return (kind === 'scar' ? b.scars || [] : b.titles || []).some((id) => !b.seenPerks.includes(id));
+}
+function markPerksSeen(b, kind) {
+  if (!b.seenPerks) b.seenPerks = [];
+  for (const id of (kind === 'scar' ? b.scars || [] : kind === 'title' ? b.titles || [] : [])) if (!b.seenPerks.includes(id)) b.seenPerks.push(id);
+}
+
 function renderFighterView() {
   const el = document.getElementById('view-fighter');
   const b = focusB(); const i = focusI();
@@ -2838,118 +3006,175 @@ function renderFighterView() {
   const careerNav = career.started && !state.sandbox;
   const order = careerNav ? barracksOrder().map((u) => u.uid) : rosterOrder(); const at = order.indexOf(careerNav ? b.uid : i);
   const prevI = order[(at - 1 + order.length) % order.length], nextI = order[(at + 1) % order.length];
-  const gearCost = uc.lines.filter((l) => l.kind !== 'unit' && l.kind !== 'slot_tax').reduce((s, l) => s + l.cost, 0);
-  const tax = uc.lines.find((l) => l.kind === 'slot_tax');
-  const handler = t.companion && b.boundTo !== undefined ? state.team.units[b.boundTo] : null;
+  const stars = r.stars; const lv = b.training || {}; const cat = category(t);
+  const navBtn = (dir, to) => `<button class="sh-nav ${dir}" data-act="${careerNav ? 'focus' : 'select'}" ${careerNav ? `data-uid="${to}"` : `data-i="${to}"`} aria-label="${dir === 'prev' ? 'Previous' : 'Next'} fighter" ${order.length < 2 ? 'hidden' : ''}>${dir === 'prev' ? '‹' : '›'}</button>`;
+  const por = portraitSrc(t, stars, b.castId);
+  const cast = b.castId && GE.CAST_BY_ID[b.castId];
 
-  // One compact row per slot: icon, slot + item, what it does, points.
-  const slotTile = (s) => {
-    const id = b.equip && b.equip[s]; const it = id && ITEMS[id];
-    const sv = viol.filter((v) => v.slot === s);
-    const picking = state.picker && state.picker.mode === 'slot' && pbOf(state.picker) === b && state.picker.slot === s;
-    const blocked = s === 'off' && GE.isTwoHanded(b.equip && b.equip.main);
-    if (!it) return `<button class="lslot empty ${picking ? 'picking' : ''}" data-act="pick-slot" data-slot="${s}" ${blocked ? 'disabled' : ''}>
-      <span class="li faint">${slotIcon(s)}</span><span class="lt"><span class="lbl">${SLOT_LABELS[s]}</span>
-      <span class="itm muted">${blocked ? 'Both hands on the weapon' : s === 'main' && t.naturalWeapon ? esc(t.naturalWeapon.name) : s === 'main' ? 'Fists' : 'Empty'}</span>${s === 'main' && !blocked ? `<span class="st">${r.weapon.damage} ${r.weapon.type}</span>` : ''}</span><span class="cost muted">+</span></button>`;
-    return `<button class="lslot rar-${it.rarity} ${picking ? 'picking' : ''} ${sv.length ? 'invalid' : ''}" data-act="pick-slot" data-slot="${s}" title="${esc(it.description)}">
-      <span class="li">${itemIcon(it)}</span><span class="lt"><span class="lbl">${SLOT_LABELS[s]}</span>
-      <span class="itm">${esc(it.name)}</span><span class="st">${esc(sv.length ? sv[0].message.split(' — ').pop() : itemStat(it))}</span></span>
-      <span class="cost">${it.cost}</span></button>`;
-  };
-
-  const explain = GE.explainStats(r);
-  const statRows = ['hp', 'atk', 'def', 'spd', 'acc', 'crit'].map((k) => {
-    const base = t.base[k], fin = r.stats[k], d = fin - base;
-    const open = (state.statOpen || {})[k];
-    return `<tr class="stat-row" data-act="stat-more" data-k="${k}" aria-expanded="${!!open}"><td>${STAT_LABEL[k]} <span class="more-i">${open ? '−' : 'ⓘ'}</span></td><td class="n">${fmt(base)}</td><td class="n ${d > 0.05 ? 'plus' : d < -0.05 ? 'minus' : 'muted'}">${Math.abs(d) < 0.05 ? '–' : signed(d)}</td><td class="n final">${fmt(fin)}</td><td>${gradeHTML(k, fin)}</td></tr>
-      ${open ? `<tr class="explain"><td colspan="5"><span class="rule">${esc(GE.STAT_RULES[k].rule)}</span> ${esc(explain[k])}</td></tr>` : ''}`;
-  }).join('') + `<tr class="stat-row" data-act="stat-more" data-k="evasion"><td>Evasion <span class="more-i">${(state.statOpen || {}).evasion ? '−' : 'ⓘ'}</span></td><td></td><td></td><td class="n final">${Math.round(r.evasion)}%</td><td>${gradeHTML('evasion', r.evasion)}</td></tr>
-      ${(state.statOpen || {}).evasion ? `<tr class="explain"><td colspan="5"><span class="rule">${esc(GE.STAT_RULES.evasion.rule)}</span> ${esc(explain.evasion)}</td></tr>` : ''}`;
-  const resChips = Object.entries(r.resists).map(([k, v]) => `<span class="chip ${v > 0 ? 'good' : 'bad'}">${k} ${v > 0 ? '+' : '−'}${Math.abs(v)}%</span>`).join('') || '<span class="muted">None</span>';
-  const srcOf = (kind, id) => {
-    if ((kind === 'trait' ? t.traits : t.actives).includes(id)) return 'innate';
-    for (const it of Object.values(r.items)) {
-      const list = it && it.effects && (kind === 'trait' ? it.effects.traits : it.effects.actives);
-      if (list && list.includes(id)) return `from ${it.name}`;
-    }
-    return 'from a stratagem';
-  };
-  const abil = [
-    ...r.traits.map((id) => `<li>${ART.trait && ART.trait[id] ? `<img class="ab-art" src="${ART.trait[id]}" alt="">` : ''}<b>${esc(TRAITS[id].name)}</b><span class="src">${esc(srcOf('trait', id))}</span><div class="muted">${esc(TRAITS[id].description)}</div></li>`),
-    ...r.actives.map((id) => `<li>${ART.active && ART.active[id] ? `<img class="ab-art" src="${ART.active[id]}" alt="">` : ''}<b>${esc(ACTIVE_DEF[id].name)}</b><span class="src">${esc(srcOf('active', id))}, every ${ACTIVE_DEF[id].cooldown} turns</span><div class="muted">${esc(ACTIVE_DEF[id].description)}</div><div class="muted"><i>When:</i> ${esc(ACTIVE_DEF[id].when)}</div></li>`),
-  ];
-  const flags = [];
-  if (r.fearless) flags.push('Fearless');
-  if (r.unstoppable) flags.push('Can’t be stunned');
-  if (r.regen) flags.push(`Heals ${fmt(r.regen)} HP a turn`);
-  if (r.thorns) flags.push(`Thorns ${r.thorns}`);
-  if (r.lifesteal) flags.push(`Lifesteal ${Math.round(r.lifesteal * 100)}%`);
-  if (r.aura) flags.push(`Banner reaches ${r.aura.radius} tiles`);
-  const lv = b.training || {};
-  const used = Object.values(lv).reduce((s, x) => s + (x || 0), 0);
-  const stars = r.stars;
-  const slots = skillSlotsOf(b); const wornSk = Object.keys(b.skills || {}).filter((k) => b.skills[k] > 0);
-  const skPts = wornSk.reduce((n, k) => n + BALANCE.skillPointCost[b.skills[k]], 0);
-  const fixed = career.started && !state.sandbox;
-  const nextAt = GE.SCAR_SLOT_AT.find((n) => (b.fights || 0) < n); const scarSl = GE.scarSlots(b.fights);
-  const rankBlock = fixed ? '' : `<div class="block"><div class="block-head"><h2>Rank</h2><span class="sub">Sandbox only; in a career rank is fixed</span></div>
-    <div class="stars" role="group" aria-label="Rank">${[1, 2, 3, 4, 5].map((n) => `<button data-act="stars" data-v="${n}" aria-pressed="${n === stars}" title="${GE.STAR_LABELS[n - 1]}"><span class="st-row">${'★'.repeat(n)}</span><span class="st-lbl">${GE.STAR_LABELS[n - 1]}</span></button>`).join('')}</div></div>`;
-  const trainRows = Object.keys(t.trainable).map((k) => {
-    const L = lv[k] || 0;
-    const gain = GE.trainingBonus(k, L);
-    return `<div class="train-row"><label for="train-${k}">${STAT_LABEL[k]}</label>
-      <input type="range" id="train-${k}" min="0" max="${GE.maxPerStat(b.stars)}" value="${L}" data-act="train" data-k="${k}">
-      <span class="num" id="train-out-${k}" style="text-align:right">Lv ${L}${L ? ` <span class="plus">+${fmt(gain)}</span>` : ''}</span></div>`;
-  }).join('');
-  const companions = state.team.units.map((u, j) => ({ u, j })).filter(({ u }) => UNITS[u.template].companion && u.boundTo === i);
-  const capacity = r.traits.includes('handler') ? BALANCE.companionsWithHandlerTrait : BALANCE.companionsPerHandler;
-  const canHandle = !t.companion && t.bodyPlan !== 'beast';
-
-  // Header: who, rank, points. Everything else lives on the slots or in the numbers below.
-  const dollBlock = `<div class="block fp">
-    <div class="fp-head">
-      <button class="nav" data-act="${careerNav ? 'focus' : 'select'}" ${careerNav ? `data-uid="${prevI}"` : `data-i="${prevI}"`} aria-label="Previous fighter" ${order.length < 2 ? 'disabled' : ''}>‹</button>
-      <span class="mono fp-por cat-${category(t)}">${unitIcon(t, stars, b.castId)}</span>
-      <div class="fp-who"><input class="fp-name" id="unit-name" data-act="unit-name" value="${esc(b.name || t.name)}" aria-label="Fighter name">
-        <span class="fp-sub">${stars}★ ${esc(t.name)}${titleName(b) ? ` · <i>${esc(titleName(b))}</i>` : ''}</span></div>
-      <span class="fp-pts"><b class="num">${uc.subtotal}</b> pts</span>
-      <button class="nav" data-act="${careerNav ? 'focus' : 'select'}" ${careerNav ? `data-uid="${nextI}"` : `data-i="${nextI}"`} aria-label="Next fighter" ${order.length < 2 ? 'disabled' : ''}>›</button>
-    </div>
-    ${b.castId && GE.CAST_BY_ID[b.castId] ? `<p class="fp-origin">${esc(GE.CAST_BY_ID[b.castId].origin)}</p>` : ''}
-    <div class="lo-slots" id="loadout-block">${DOLL_SLOTS[t.bodyPlan].map(slotTile).join('')}${perkTiles(b, i)}${kitLine(b)}</div>
+  const hero = `<div class="sh-hero" data-cat="${cat}">
+    ${por ? `<img class="sh-bust" src="${por}" alt="" draggable="false">` : `<span class="sh-bust mono">${unitIcon(t, stars, b.castId)}</span>`}
+    ${heroToken(t, b)}
+    ${navBtn('prev', prevI)}${navBtn('next', nextI)}
+    <span class="sh-pts"><b class="num" data-count="pts">${uc.subtotal}</b> pts</span>
+    <div class="sh-id"><input class="sh-name" id="unit-name" data-act="unit-name" value="${esc(b.name || t.name)}" aria-label="Fighter name" spellcheck="false">
+      <span class="sh-sub">${'★'.repeat(stars)} ${esc(t.name)}${titleName(b) ? ` · <i>${esc(titleName(b))}</i>` : ''}</span>
+      ${cast ? `<span class="sh-origin">${esc(cast.origin)}</span>` : ''}</div>
   </div>`;
 
-  const abilBlock = `<div class="block"><div class="block-head"><h2>Abilities</h2></div>
-      ${abil.length ? `<ul class="abilities">${abil.join('')}</ul>` : '<p class="muted" style="margin:0">None. Boons and some gear add them.</p>'}</div>`;
-  const rest = `<div class="detail-grid">
-      <div class="block"><div class="block-head"><h2>Battle numbers</h2></div>
-        <table class="stats"><thead><tr><th>Stat</th><th style="text-align:right">Base</th><th style="text-align:right">Gear & training</th><th style="text-align:right">Fights at</th><th>Grade</th></tr></thead><tbody>${statRows}</tbody></table>
-        <dl class="kv">${r.block ? `<dt>Block</dt><dd class="num">${Math.round(r.block * 100)}%</dd>` : ''}
-          <dt>Move</dt><dd class="num">${r.move} tile${r.move > 1 ? 's' : ''} a turn</dd><dt>Resists</dt><dd><span class="chips">${resChips}</span></dd>
-          ${flags.length ? `<dt>Special</dt><dd>${flags.map(esc).join(', ')}</dd>` : ''}</dl></div>
-      <div class="col">
-        <div class="block" id="training-block"><div class="block-head"><h2>Training</h2><span class="sub">Every stat can reach its ${stars}★ limit of ${GE.maxPerStat(b.stars)}; it only takes time and coin</span></div>
-          ${career.started ? drillPanel(b, t, lv) : `<div class="train-list">${trainRows}</div>
-          <p class="note">Training costs time, not points. Each level adds a whole number (HP +2, ATK +1, DEF +1); a stat takes ${BALANCE.trainingMaxLevel} levels at most.</p>`}</div>
-        <div class="block"><div class="block-head"><h2>Tactic</h2></div>
-          <div class="seg-ctl" role="group" aria-label="Tactic">${['nearest', 'weakest', 'backline'].map((x) => `<button data-act="tactic" data-v="${x}" aria-pressed="${(b.tactic || 'nearest') === x}">${TACTIC_LABEL[x]}</button>`).join('')}</div>
-          <p class="note">${TACTIC_HELP[b.tactic || 'nearest']}</p></div>
-      </div>
-    </div>
-    ${rankBlock}
-    <div class="btn-row"><button class="btn" data-act="remove" style="color:var(--pompeii)">${career.started && !state.sandbox ? 'Bench' : 'Release'} ${esc(dname(t, b.name))}${companions.length ? ' and companions' : ''}</button></div>`;
+  const pop = state.statPop && SHEET_STATS.includes(state.statPop) ? state.statPop : null;
+  const statBar = `<div class="sh-stats" id="sh-stats">${SHEET_STATS.map((k) => {
+    const v = statVal(r, k);
+    return `<button class="sh-stat ${lv[k] ? 'trained' : ''} ${pop === k ? 'open' : ''}" data-act="stat-pop" data-k="${k}" aria-expanded="${pop === k}">
+      <span class="lbl">${SHEET_LABEL[k]}</span><b class="num" data-count="${k}">${v}</b>${gradeTicks(k, v)}</button>`;
+  }).join('')}${pop ? statPopHTML(b, pop) : ''}</div>`;
+
+  const acts = r.actives.map((id) => { const A = ACTIVE_DEF[id];
+    return `<span class="sh-active" title="${esc(A.description)}">${ART.active && ART.active[id] ? `<img src="${ART.active[id]}" alt="">` : '▸'}<b>${esc(A.name)}</b><span class="pips" title="Every ${A.cooldown} turns">${pips(A.cooldown)}</span><span class="eff">${esc(effectLine(id))}</span></span>`; });
+  const traits = r.traits.map((id) => `<span class="sh-trait" title="${esc((TRAITS[id] || {}).description || '')}">${esc((TRAITS[id] || {}).name || id)}</span>`);
+  const kits = GE.kitsFor(b.equip || {}).map((k) => `<span class="sh-trait kit" title="${esc(k.description)}">${esc(k.name)}</span>`);
+  const activeLine = acts.length || traits.length || kits.length ? `<div class="sh-line">${acts.join('')}${[...traits, ...kits].join('')}</div>` : '';
+
+  const pickSlot = state.picker && state.picker.mode === 'slot' && pbOf(state.picker) === b ? state.picker.slot : null;
+  const gear = DOLL_SLOTS[t.bodyPlan].map((s) => {
+    const it = ITEMS[(b.equip || {})[s]]; const sv = viol.filter((v) => v.slot === s);
+    const blocked = s === 'off' && GE.isTwoHanded(b.equip && b.equip.main);
+    if (!it) {
+      const nat = s === 'main' ? (t.naturalWeapon ? t.naturalWeapon.name : 'Fists') : '';
+      return `<button class="sh-tile empty ${pickSlot === s ? 'picking' : ''}" data-act="pick-slot" data-slot="${s}" ${blocked ? 'disabled' : ''} title="${esc(SLOT_LABELS[s])}${nat ? ': ' + esc(nat) : ''}">
+        <span class="ti">${slotIcon(s)}</span><span class="tn">${s === 'main' && !blocked ? `${r.weapon.damage}<small>dmg</small>` : `<small>${blocked ? 'two hands' : esc(SLOT_LABELS[s].toLowerCase())}</small>`}</span></button>`;
+    }
+    return `<button class="sh-tile rar-${it.rarity} ${pickSlot === s ? 'picking' : ''} ${sv.length ? 'invalid' : ''}" data-act="pick-slot" data-slot="${s}" data-tile="${s}" title="${esc(it.name)} · ${esc(sv.length ? sv[0].message : itemStat(it))}">
+      <span class="tc">${it.cost}</span><span class="ti">${itemIcon(it)}</span><span class="tn">${tileNum(it)}</span></button>`;
+  }).join('');
+
+  const pk = state.picker && state.picker.mode === 'perk' && pbOf(state.picker) === b ? state.picker : null;
+  const perks = perkSlots(b).filter((x) => !(x.kind === 'title' && x.locked && careerNav && !(b.fights >= 1))).map((x) => {
+    const glyph = x.kind === 'skill' ? '✦' : x.kind === 'scar' ? '⚔' : '❦';
+    const fresh = (x.kind === 'scar' || x.kind === 'title') && !x.locked && unseenPerks(b, x.kind);
+    const label = x.name ? esc(x.name) : x.locked ? (x.kind === 'scar' ? `${GE.SCAR_SLOT_AT[0]} fights` : 'No title') : x.label;
+    return `<button class="sh-perk ${x.kind} ${x.name ? '' : 'empty'} ${fresh ? 'fresh' : ''} ${pk && pk.kind === x.kind && pk.n === x.n ? 'picking' : ''}" data-act="pick-perk" data-i="${i}" ${careerNav ? `data-uid="${b.uid}"` : ''} data-k="${x.kind}" data-n="${x.n}" ${x.locked ? 'disabled' : ''} title="${esc(x.line || x.label)}">
+      <span class="pg">${x.name || x.locked ? glyph : '+'}</span><span class="pn">${label}</span>${x.cost ? `<span class="pc">${x.cost}</span>` : ''}</button>`;
+  }).join('');
+
+  const drill = career.started && drillFor(b);
+  const canTrain = careerNav && spotOpen('training');
+  const fielded = careerNav ? inLineup(b) : true;
+  const actions = `<div class="sh-actions">
+    ${drill ? `<span class="sh-drill num">${STAT_LABEL[drill.stat]} drill <span data-end="${drill.end}">${clock(drill.end - Date.now())}</span></span>` : canTrain ? `<button class="btn small" data-act="sheet-train">Train</button>` : ''}
+    <div class="seg-ctl sh-tac" role="group" aria-label="Tactic" title="${esc(TACTIC_HELP[b.tactic || 'nearest'])}">${['nearest', 'weakest', 'backline'].map((x) => `<button data-act="tactic" data-v="${x}" aria-pressed="${(b.tactic || 'nearest') === x}">${TACTIC_LABEL[x]}</button>`).join('')}</div>
+    <button class="btn small sh-bench" data-act="remove">${careerNav ? (fielded ? 'Bench' : 'Field') : 'Release'}</button></div>`;
+
+  // Sandbox keeps its rank buttons and training sliders below the card.
+  let sandbox = '';
+  if (!careerNav) {
+    const trainRows = Object.keys(t.trainable).map((k) => { const L = lv[k] || 0; const gain = GE.trainingBonus(k, L);
+      return `<div class="train-row"><label for="train-${k}">${STAT_LABEL[k]}</label><input type="range" id="train-${k}" min="0" max="${GE.maxPerStat(b.stars)}" value="${L}" data-act="train" data-k="${k}">
+        <span class="num" id="train-out-${k}" style="text-align:right">Lv ${L}${L ? ` <span class="plus">+${fmt(gain)}</span>` : ''}</span></div>`; }).join('');
+    sandbox = `<div class="block sh-sandbox"><div class="stars" role="group" aria-label="Rank">${[1, 2, 3, 4, 5].map((n) => `<button data-act="stars" data-v="${n}" aria-pressed="${n === stars}" title="${GE.STAR_LABELS[n - 1]}"><span class="st-row">${'★'.repeat(n)}</span></button>`).join('')}</div>
+      <div class="train-list">${trainRows}</div></div>`;
+  }
+
+  const sheet = `<div class="sheet" data-uid="${careerNav ? b.uid : 'i' + i}">${hero}${statBar}${activeLine}
+    <div class="sh-gear ${DOLL_SLOTS[t.bodyPlan].length < 4 ? 'few' : ''}" id="loadout-block">${gear}</div>
+    <div class="sh-perks">${perks}</div>${actions}</div>`;
 
   let side = '';
   if (wide()) {
     side = state.picker && (state.picker.mode === 'slot' || state.picker.mode === 'perk')
       ? `<aside class="block catalog cat-inline" id="cat-inline">${catalogHTML(state.picker)}</aside>`
-      : `<aside class="block cat-inline hint"><h2>Armory</h2><p class="muted">${career.started && !state.sandbox ? 'Tap a slot, or a piece from the armory below the figure, to see what you own for it.' : "Tap a slot on the figure to see everything that fits it. Items that don't fit stay listed with the reason."}</p></aside>`;
+      : `<aside class="cat-inline hint sh-hint"><p class="muted">Tap a slot to see what fits. Hover a piece to see what it changes.</p></aside>`;
   }
   const prevScroll = document.querySelector('#cat-inline .catalog-list')?.scrollTop || 0;
-  el.innerHTML = `<div class="col">${dollBlock}${abilBlock}${rest}</div>${side}`;
+  el.innerHTML = `<div class="col sh-col">${sheet}${sandbox}</div>${side}`;
   const list = document.querySelector('#cat-inline .catalog-list');
   if (list) list.scrollTop = prevScroll;
+
+  // Count the numbers in: from zero on open, from the last fighter on prev/next, from the old value after a change.
+  const now = { key: careerNav ? b.uid : 'i' + i, pts: uc.subtotal };
+  for (const k of SHEET_STATS) now[k] = statVal(r, k);
+  const from = sheetShown && state.view === 'fighter' ? sheetShown : null;
+  el.querySelectorAll('[data-count]').forEach((n) => { const k = n.dataset.count; countTo(n, from ? from[k] : 0, now[k], from && from.key === now.key ? 320 : 420); });
+  sheetShown = now;
+  if (state.popTile) { const tl = el.querySelector(`[data-tile="${state.popTile}"]`); state.popTile = null; if (tl && !reduceMotion()) tl.classList.add('pop'); }
 }
+
+// ---- Live preview: hover (desktop) or press-and-hold (phone) on a sheet row shows the numbers as they'd be ----
+function previewBuild(btn) {
+  const p = state.picker; if (!p || (p.mode !== 'slot' && p.mode !== 'perk')) return null;
+  const nb = clone(pbOf(p)); const act = btn.dataset.act;
+  if (act === 'equip' || act === 'buy-equip') applyEquip(nb, p.slot, btn.dataset.id);
+  else if (act === 'unequip') applyEquip(nb, p.slot, null);
+  else if (act === 'perk-skill') {
+    const sk = Object.entries(nb.skills || {}).filter(([, v]) => v > 0); const k = btn.dataset.k, L = +btn.dataset.v;
+    if (sk[p.n]) sk.splice(p.n, 1, ...(k ? [[k, L]] : [])); else if (k) sk.push([k, L]);
+    nb.skills = Object.fromEntries(sk);
+  } else if (act === 'perk-scar') { const w = [...(nb.wornScars || [])]; if (btn.dataset.k) w[p.n] = btn.dataset.k; else w.splice(p.n, 1); nb.wornScars = w.filter(Boolean); }
+  else if (act === 'perk-title') nb.title = btn.dataset.k || undefined;
+  else return null;
+  return nb;
+}
+let previewOn = null;
+function showPreview(btn) {
+  if (state.view !== 'fighter' || !sheetShown) return;
+  const nb = previewBuild(btn); if (!nb) return;
+  const r = GE.resolveUnit(nb, teamFx(state.team));
+  const bar = document.getElementById('sh-stats'); if (!bar) return;
+  previewOn = btn;
+  bar.classList.add('previewing');
+  // The slot being changed previews too: its icon and its one number.
+  const tile = document.querySelector('.sh-tile.picking');
+  if (tile && state.picker.mode === 'slot') { if (tile._orig === undefined) tile._orig = tile.innerHTML; const it = ITEMS[(nb.equip || {})[state.picker.slot]];
+    tile.innerHTML = it ? `<span class="tc">${it.cost}</span><span class="ti">${itemIcon(it)}</span><span class="tn">${tileNum(it)}</span>` : `<span class="ti" style="opacity:.28">${slotIcon(state.picker.slot)}</span><span class="tn"><small>empty</small></span>`;
+    tile.classList.add('previewing'); }
+  for (const k of SHEET_STATS) {
+    const cell = bar.querySelector(`[data-count="${k}"]`); if (!cell) continue;
+    const v = statVal(r, k), d = v - sheetShown[k]; const box = cell.parentElement;
+    countTo(cell, +cell.textContent || sheetShown[k], v, 220);
+    box.classList.toggle('up', d > 0); box.classList.toggle('down', d < 0);
+    box.querySelector('.dl')?.remove();
+    if (d) box.insertAdjacentHTML('beforeend', `<span class="dl">${d > 0 ? '+' : '−'}${Math.abs(d)}</span>`);
+  }
+}
+function clearPreview() {
+  if (!previewOn) return; previewOn = null;
+  const bar = document.getElementById('sh-stats'); if (!bar || !sheetShown) return;
+  bar.classList.remove('previewing');
+  const tile = document.querySelector('.sh-tile.previewing'); if (tile) { if (tile._orig !== undefined) tile.innerHTML = tile._orig; tile._orig = undefined; tile.classList.remove('previewing'); }
+  bar.querySelectorAll('.sh-stat').forEach((box) => { box.classList.remove('up', 'down'); box.querySelector('.dl')?.remove(); });
+  for (const k of SHEET_STATS) { const cell = bar.querySelector(`[data-count="${k}"]`); if (cell) countTo(cell, +cell.textContent, sheetShown[k], 200); }
+}
+const PREVIEW_ACTS = new Set(['equip', 'buy-equip', 'unequip', 'perk-skill', 'perk-scar', 'perk-title']);
+document.addEventListener('mouseover', (e) => {
+  if (!mq('(hover: hover)')) return;
+  const row = e.target.closest('.sheet-row, .catalog .opt');
+  if (row && PREVIEW_ACTS.has(row.dataset.act) && !row.disabled) { if (previewOn !== row) showPreview(row); }
+  else if (previewOn && !e.target.closest('.catalog-list')) clearPreview();
+});
+document.addEventListener('mouseleave', () => clearPreview());
+document.addEventListener('mouseout', (e) => { if (previewOn && e.target.closest && e.target.closest('.catalog-list') && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.catalog-list'))) clearPreview(); });
+// Touch: hold 120 ms to preview; a short press still commits; a long hold (a look, not a choice) doesn't.
+let hold = null;
+document.addEventListener('pointerdown', (e) => {
+  if (e.pointerType === 'mouse') return;
+  const row = e.target.closest('.catalog .opt'); if (!row || row.disabled || !PREVIEW_ACTS.has(row.dataset.act)) return;
+  hold = { row, t0: Date.now(), x: e.clientX, y: e.clientY, timer: setTimeout(() => showPreview(row), 120) };
+});
+document.addEventListener('pointermove', (e) => { if (hold && Math.hypot(e.clientX - hold.x, e.clientY - hold.y) > 10) { clearTimeout(hold.timer); clearPreview(); hold = null; } });
+const endHold = () => { if (!hold) return; clearTimeout(hold.timer); if (Date.now() - hold.t0 > 450) hold.row.dataset.nocommit = '1'; clearPreview(); hold = null; };
+document.addEventListener('pointerup', endHold); document.addEventListener('pointercancel', endHold);
+document.addEventListener('contextmenu', (e) => { if (e.target.closest('.catalog .opt')) e.preventDefault(); });
+
+// ---- Phone sheet: drag the handle down to close ----
+let sheetDrag = null;
+document.addEventListener('pointerdown', (e) => {
+  const h = e.target.closest('#drawer.sheet-mode .cat-head'); if (!h || e.target.closest('button')) return;
+  const c = h.closest('.catalog'); sheetDrag = { c, y0: e.clientY, dy: 0 }; c.style.transition = 'none';
+});
+document.addEventListener('pointermove', (e) => { if (!sheetDrag) return; sheetDrag.dy = Math.max(0, e.clientY - sheetDrag.y0); sheetDrag.c.style.transform = `translateY(${sheetDrag.dy}px)`; });
+document.addEventListener('pointerup', () => {
+  if (!sheetDrag) return; const d = sheetDrag; sheetDrag = null; d.c.style.transition = '';
+  if (d.dy > 70) { state.picker = null; render(); } else d.c.style.transform = '';
+});
 
 // ---------------- Armory / recruit / stratagem lists ----------------
 function statDiff(b, slot, itemId) {
@@ -2980,7 +3205,10 @@ function catalogHTML(p) {
     sub = `${t.name}, ${t.size}`;
     seedArmory();
     const opts = Object.values(ITEMS).filter((it) => it.slot === p.slot && visibleItem(it, curId)).map((it) => ({ it, own: ownLock(it, p.unit, p.slot), locks: GE.itemLocks(t, it, p.slot, { arena: a, equip: b.equip }), notes: GE.itemNotes(t, it, p.slot, { equip: b.equip }) }));
-    opts.sort((x, y) => (x.locks.length > 0) - (y.locks.length > 0) || x.it.cost - y.it.cost);
+    const gainOf = (it) => { if (it.id === curId) return 0; const nb = clone(b); applyEquip(nb, p.slot, it.id); return ratingOf(nb) - ratingOf(b); };
+    for (const o of opts) o.gain = o.locks.length ? -1e9 : gainOf(o.it);
+    // Pinned: what's on now. Then what fits, best rating gain first.
+    opts.sort((x, y) => (y.it.id === curId) - (x.it.id === curId) || (x.locks.length > 0) - (y.locks.length > 0) || y.gain - x.gain || x.it.cost - y.it.cost);
     const shown = state.hideLocked ? opts.filter((o) => !o.locks.length) : opts;
     const nLocked = opts.filter((o) => o.locks.length).length;
     const vt = vtest.key === JSON.stringify({ mode: p.mode, unit: p.unit, slot: p.slot }) ? vtest : null;
@@ -2997,7 +3225,8 @@ function catalogHTML(p) {
       : `<div class="forge-box"><b>Temper to ${GE.QUALITIES[tq.next].name}</b> <span class="muted">${[tq.coin + ' coin', tq.scrap && tq.scrap + ' scrap', tq.ore && tq.ore + ' ore', tq.trophy && 'a trophy'].filter(Boolean).join(' · ')} · ${clock(tq.minutes * 60000 / SPEED())}</span>
         <span class="muted">You have ${cn(career.coin)}, ${career.scrap || 0} scrap${career.rung >= 5 ? `, ${career.ore || 0} ore` : ''}.</span>
         <div class="forge-acts">${tq.next === 3 ? affixOffer(curId).map((a) => `<button class="btn" data-act="temper" data-k="${a}">${esc(GE.AFFIXES[a].name)}: ${esc(GE.AFFIXES[a].description)}</button>`).join('') : `<button class="btn primary" data-act="temper">Send to the forge</button>`}</div></div>`;
-    body = temperBlock + (curId ? `<button class="opt" data-act="unequip"><span class="opt-name">Leave empty ${badge('__none')}</span><span class="opt-cost">−${ITEMS[curId].cost}</span><span class="opt-line">Remove ${esc(ITEMS[curId].name)}</span></button>` : (vt && vt.results.__none !== undefined ? `<div class="sub" style="margin-bottom:4px">Empty slot: ${badge('__none')}</div>` : ''))
+    const unequipRow = curId ? `<button class="opt sheet-row unequip" data-act="unequip"><span class="opt-name">Unequip ${badge('__none')}</span><span class="opt-cost">−${ITEMS[curId].cost}</span></button>` : '';
+    body = temperBlock + (curId ? '' : (vt && vt.results.__none !== undefined ? `<div class="sub" style="margin-bottom:4px">Empty slot: ${badge('__none')}</div>` : ''))
       + (shown.some((o) => o.it.id !== curId) ? '' : '<p class="sub">Nothing you own goes in this slot yet.</p>')
       + shown.map(({ it, locks, notes, own }) => {
         const isCur = it.id === curId;
@@ -3015,13 +3244,13 @@ function catalogHTML(p) {
           <span class="oicon">${itemIcon(it)}</span><span class="opt-name">${esc(it.name)}${isCur ? ' <span class="rtag anchor">on</span>' : ''}</span>
           <span class="opt-cost">${it.cost}</span>
           <span class="opt-delta">${lockShort ? `<span class="minus">${esc(lockShort)}</span>` : diff.map(([k, d]) => `<span class="${d > 0 ? 'plus' : 'minus'}">${signed(d)} ${k}</span>`).join('')}${!locks.length && !isCur && dCost ? `<span class="${dCost > 0 ? 'minus' : 'plus'}">${dCost > 0 ? '+' : '−'}${Math.abs(dCost)} pt</span>` : ''}${ownMsg && !locks.length ? `<span class="muted">${forSale ? priceOf(it) + ' coin' : 'not owned'}</span>` : ''}</span></button>`;
-      }).join('');
+      }).map((h, n) => (n === 0 && curId ? h + unequipRow : h)).join('');
   } else if (p.mode === 'perk') {
     const b = pbOf(p); const t = UNITS[b.template]; const who = esc(b.name || t.name);
     if (p.kind === 'skill') {
       const sk = Object.entries(b.skills || {}).filter(([, v]) => v > 0); const cur = sk[p.n];
       title = `Skill slot ${p.n + 1} for ${who}`; sub = `${skillSlotsOf(b)} skill slot${skillSlotsOf(b) > 1 ? 's' : ''} · each level costs points`;
-      body = (cur ? `<button class="opt sheet-row" data-act="perk-skill" data-k="" data-v="0"><span class="opt-name">Leave empty</span><span class="opt-cost">−${BALANCE.skillPointCost[cur[1]]}</span></button>` : '')
+      body = (cur ? `<button class="opt sheet-row unequip" data-act="perk-skill" data-k="" data-v="0"><span class="opt-name">Unequip ${esc(GE.SKILLS[cur[0]].name)}</span><span class="opt-cost">−${BALANCE.skillPointCost[cur[1]]}</span></button>` : '')
         + Object.entries(GE.SKILLS).map(([k, S]) => { const cap = skillUnlocked(k); const elsewhere = sk.some(([x], n) => x === k && n !== p.n);
           return [1, 2, 3].map((L) => { const on = cur && cur[0] === k && cur[1] === L; const lock = L > cap ? (L === cap + 1 ? 'Not taught at the Academy yet' : '') : elsewhere ? 'Worn in another slot' : '';
             if (L > cap + 1) return '';
@@ -3032,16 +3261,16 @@ function catalogHTML(p) {
     } else if (p.kind === 'scar') {
       const worn = b.wornScars || []; const cur = worn[p.n];
       title = `Scar slot ${p.n + 1} for ${who}`; sub = `${GE.scarSlots(b.fights)} of 3 scar slots open · scars are free`;
-      body = (cur ? `<button class="opt sheet-row" data-act="perk-scar" data-k=""><span class="opt-name">Leave empty</span></button>` : '')
-        + ((b.scars || []).length ? b.scars.map((id) => { const S = GE.SCARS[id]; const on = id === cur; const other = !on && worn.includes(id);
+      const unq = cur ? `<button class="opt sheet-row unequip" data-act="perk-scar" data-k=""><span class="opt-name">Unequip</span></button>` : '';
+      body = ((b.scars || []).length ? [...b.scars].sort((x, y) => (y === cur) - (x === cur)).map((id) => { const S = GE.SCARS[id]; const on = id === cur; const other = !on && worn.includes(id);
           return `<button class="opt opt-item sheet-row ${on ? 'current' : ''}" data-act="perk-scar" data-k="${id}" ${on || other ? 'disabled' : ''}><span class="oicon">⚔</span><span class="opt-name">${esc(S.name)}${on ? ' <span class="rtag anchor">on</span>' : ''}</span><span class="opt-cost">0</span>
-            <span class="opt-delta">${other ? '<span class="muted">Worn in another slot</span>' : S.line.split(', ').map((x) => `<span class="${/^\+/.test(x) || /Resolve|turn|reach|counts|stun|CRIT too|regen/.test(x) && !/^−/.test(x) ? 'plus' : 'minus'}">${esc(x)}</span>`).join('')}</span></button>`; }).join('')
+            <span class="opt-delta">${other ? '<span class="muted">Worn in another slot</span>' : S.line.split(', ').map((x) => `<span class="${/^\+/.test(x) || /Resolve|turn|reach|counts|stun|CRIT too|regen/.test(x) && !/^−/.test(x) ? 'plus' : 'minus'}">${esc(x)}</span>`).join('')}</span></button>${on ? unq : ''}`; }).join('')
           : `<p class="sub">No scars yet. Every fight is a chance at one.</p>`);
     } else {
       title = `Title for ${who}`; sub = 'One worn at a time · titles are free';
-      body = (b.title ? `<button class="opt sheet-row" data-act="perk-title" data-k=""><span class="opt-name">Wear none</span></button>` : '')
-        + (b.titles || []).map((id) => { const T = GE.TITLES[id]; const on = b.title === id;
-          return `<button class="opt opt-item sheet-row ${on ? 'current' : ''}" data-act="perk-title" data-k="${id}" ${on ? 'disabled' : ''}><span class="oicon">❦</span><span class="opt-name">${esc(T.name)}${on ? ' <span class="rtag anchor">on</span>' : ''}</span><span class="opt-cost">0</span><span class="opt-delta"><span class="plus">${esc(T.line)}</span></span></button>`; }).join('');
+      const unq = `<button class="opt sheet-row unequip" data-act="perk-title" data-k=""><span class="opt-name">Unequip</span></button>`;
+      body = [...(b.titles || [])].sort((x, y) => (y === b.title) - (x === b.title)).map((id) => { const T = GE.TITLES[id]; const on = b.title === id;
+          return `<button class="opt opt-item sheet-row ${on ? 'current' : ''}" data-act="perk-title" data-k="${id}" ${on ? 'disabled' : ''}><span class="oicon">❦</span><span class="opt-name">${esc(T.name)}${on ? ' <span class="rtag anchor">on</span>' : ''}</span><span class="opt-cost">0</span><span class="opt-delta"><span class="plus">${esc(T.line)}</span></span></button>${on ? unq : ''}`; }).join('');
     }
   } else if (p.mode === 'recruit' || p.mode === 'companion') {
     const handler = p.mode === 'companion' ? state.team.units[p.unit] : null;
@@ -3092,12 +3321,17 @@ function renderDrawer() {
   const d = document.getElementById('drawer');
   const p = state.picker;
   const inline = p && (p.mode === 'slot' || p.mode === 'perk') && state.view === 'fighter' && wide();
-  if (!p || inline) { d.hidden = true; d.innerHTML = ''; d.dataset.key = ''; return; }
+  if (!p || inline) { d.hidden = true; d.innerHTML = ''; d.dataset.key = ''; d.classList.remove('sheet-mode'); document.body.classList.remove('sheet-open'); return; }
   const key = JSON.stringify(p);
   const prev = d.dataset.key === key ? (d.querySelector('.catalog-list') || {}).scrollTop || 0 : 0;
   d.dataset.key = key;
+  const sheetMode = (p.mode === 'slot' || p.mode === 'perk') && state.view === 'fighter';
+  const opening = d.hidden || !d.classList.contains('sheet-mode');
+  d.classList.toggle('sheet-mode', sheetMode); document.body.classList.toggle('sheet-open', sheetMode);
   d.innerHTML = `<div class="block catalog" role="dialog" aria-modal="true">${catalogHTML(p)}</div>`;
   d.hidden = false;
+  // Lift the page so the stat bar sits just above the sheet, where the preview numbers move.
+  if (sheetMode && opening) { const bar = document.getElementById('sh-stats'); if (bar) { const want = innerHeight * 0.4 - 8; const r = bar.getBoundingClientRect(); window.scrollBy({ top: r.bottom - want, behavior: reduceMotion() ? 'auto' : 'smooth' }); } }
   d.querySelector('.catalog-list').scrollTop = prev;
 }
 
@@ -3735,6 +3969,11 @@ function runSim() {
 document.addEventListener('click', (e) => {
   if (e.target.id === 'drawer') { state.picker = null; render(); return; }
   const btn = e.target.closest('[data-act]');
+  if (btn && btn.dataset.nocommit) { delete btn.dataset.nocommit; return; }
+  // The phone sheet lets taps through to the page: another tile switches slot, anything else puts the sheet away.
+  const dr = document.getElementById('drawer');
+  if (!dr.hidden && dr.classList.contains('sheet-mode') && !e.target.closest('#drawer') && !(btn && /^(pick-slot|pick-perk|stat-pop)$/.test(btn.dataset.act))) { state.picker = null; if (!btn) { render(); return; } }
+  if (state.statPop && !(btn && btn.dataset.act === 'stat-pop') && !e.target.closest('.sh-pop')) { state.statPop = null; if (!btn || btn.tagName === 'INPUT' || btn.tagName === 'SELECT') { render(); if (!btn) return; } }
   if (!btn || btn.tagName === 'SELECT' || btn.tagName === 'INPUT') return;
   const act = btn.dataset.act;
   const b = focusB(); const i = focusI();
@@ -3798,7 +4037,7 @@ document.addEventListener('click', (e) => {
     case 'decline-offer': career.offers.splice(+btn.dataset.i, 1); saveCareer(); break;
     case 'stable-open': { const u = career.stable.find((x) => x.uid === +btn.dataset.uid); if (!inLineup(u)) { toast(`${u.name} is on the bench. Field them to change gear and training.`); return; } state.sel = state.team.units.indexOf(u); state.view = 'fighter'; window.scrollTo(0, 0); break; }
     case 'release-pick': { const benched = career.stable.filter((u) => !inLineup(u)); if (!benched.length) { toast('Bench someone first, then release them.'); return; } const u = benched[benched.length - 1]; if (btn.dataset.armed) { releaseFighter(u.uid); toast(`${u.name} is gone. Their gear stays in the armory.`); break; } btn.dataset.armed = '1'; btn.textContent = `Tap again to release ${u.name}`; return; }
-    case 'buy-equip': { const id = btn.dataset.id; const m = buyItem(id); if (m) { toast(m); return; } applyEquip(pbOf(state.picker), state.picker.slot, id); toast(`Bought ${ITEMS[id].name} and put it on.`); if (!wide()) state.picker = null; break; }
+    case 'buy-equip': { const id = btn.dataset.id; const m = buyItem(id); if (m) { toast(m); return; } applyEquip(pbOf(state.picker), state.picker.slot, id); toast(`Bought ${ITEMS[id].name} and put it on.`); state.popTile = state.picker.slot; if (!wide() && state.view !== 'fighter') state.picker = null; break; }
     case 'buy': { const m = buyItem(btn.dataset.id); toast(m || (career.lastGiven ? `${ITEMS[btn.dataset.id].name} is yours. ${career.lastGiven} is wearing it.` : `${ITEMS[btn.dataset.id].name} is in your armory. Equip it on the Fighter screen.`)); break; }
     case 'sell': { const m = sellItem(btn.dataset.id); toast(m || 'Sold.'); break; }
     case 'home-chronicle': {
@@ -3839,8 +4078,8 @@ document.addEventListener('click', (e) => {
     case 'toggle-locked': state.hideLocked = !state.hideLocked; break;
     case 'vtest': if (!state.picker || state.picker.unit < 0) { toast('Field this fighter to test options against the field.'); return; } runVariants(); return;
     case 'rfilter': state.recruitFilter = btn.dataset.v; break;
-    case 'equip': applyEquip(pbOf(state.picker), state.picker.slot, btn.dataset.id); if (!wide()) state.picker = null; break;
-    case 'unequip': applyEquip(pbOf(state.picker), state.picker.slot, null); if (!wide()) state.picker = null; break;
+    case 'equip': applyEquip(pbOf(state.picker), state.picker.slot, btn.dataset.id); state.popTile = state.picker.slot; if (!wide() && state.view !== 'fighter') state.picker = null; break;
+    case 'unequip': applyEquip(pbOf(state.picker), state.picker.slot, null); if (!wide() && state.view !== 'fighter') state.picker = null; break;
     case 'recruit':
       if (state.picker && state.picker.mode === 'companion') addUnit(btn.dataset.id, state.picker.unit); else addUnit(btn.dataset.id);
       state.picker = null; break;
@@ -3866,8 +4105,10 @@ document.addEventListener('click', (e) => {
     case 'intro-go': state.introSeen = true; break;
     case 'ar-tab': state.arTab = btn.dataset.k; break;
     case 'ar-sort': state.arSort = btn.dataset.k; break;
+    case 'stat-pop': state.statPop = state.statPop === btn.dataset.k ? null : btn.dataset.k; break;
+    case 'sheet-train': state.post = { step: 'stat', uid: b.uid }; state.focusUid = b.uid; state.picker = null; state.view = 'training'; window.scrollTo(0, 0); break;
     case 'stat-more': { const o = state.statOpen || (state.statOpen = {}); o[btn.dataset.k] = !o[btn.dataset.k]; break; }
-    case 'pick-perk': { const pbb = btn.dataset.uid !== undefined ? career.stable.find((x) => x.uid === +btn.dataset.uid) : btn.dataset.i !== undefined && +btn.dataset.i >= 0 ? state.team.units[+btn.dataset.i] : b; state.picker = { mode: 'perk', unit: state.team.units.indexOf(pbb), b: pbb, kind: btn.dataset.k, n: +btn.dataset.n }; break; }
+    case 'pick-perk': { const pbb = btn.dataset.uid !== undefined ? career.stable.find((x) => x.uid === +btn.dataset.uid) : btn.dataset.i !== undefined && +btn.dataset.i >= 0 ? state.team.units[+btn.dataset.i] : b; state.picker = { mode: 'perk', unit: state.team.units.indexOf(pbb), b: pbb, kind: btn.dataset.k, n: +btn.dataset.n }; if (unseenPerks(pbb, btn.dataset.k)) { markPerksSeen(pbb, btn.dataset.k); saveCareer(); } break; }
     case 'focus': state.focusUid = +btn.dataset.uid; state.view = 'fighter'; state.picker = null; window.scrollTo(0, 0); break;
     case 'perk-skill': {
       const p = state.picker; const pb = pbOf(p); const sk = Object.entries(pb.skills || {}).filter(([, v]) => v > 0);
@@ -3875,14 +4116,14 @@ document.addEventListener('click', (e) => {
       if (k && L > skillUnlocked(k)) { toast(`The Academy hasn't taught ${GE.SKILLS[k].name} ${L} yet.`); break; }
       if (k && !sk[p.n] && sk.length >= skillSlotsOf(pb)) { toast('No free skill slot.'); break; }
       if (sk[p.n]) sk.splice(p.n, 1, ...(k ? [[k, L]] : [])); else if (k) sk.push([k, L]);
-      pb.skills = Object.fromEntries(sk); if (career.started) saveCareer(); if (!wide()) state.picker = null; break;
+      pb.skills = Object.fromEntries(sk); if (career.started) saveCareer(); if (!wide() && state.view !== 'fighter') state.picker = null; break;
     }
     case 'perk-scar': {
       const p = state.picker; const pb = pbOf(p); const w = [...(pb.wornScars || [])];
       if (btn.dataset.k) w[p.n] = btn.dataset.k; else w.splice(p.n, 1);
-      pb.wornScars = w.filter(Boolean).slice(0, GE.scarSlots(pb.fights)); if (career.started) saveCareer(); if (!wide()) state.picker = null; break;
+      pb.wornScars = w.filter(Boolean).slice(0, GE.scarSlots(pb.fights)); if (career.started) saveCareer(); if (!wide() && state.view !== 'fighter') state.picker = null; break;
     }
-    case 'perk-title': { const pb = pbOf(state.picker); pb.title = btn.dataset.k || undefined; if (career.started) saveCareer(); if (!wide()) state.picker = null; break; }
+    case 'perk-title': { const pb = pbOf(state.picker); pb.title = btn.dataset.k || undefined; if (career.started) saveCareer(); if (!wide() && state.view !== 'fighter') state.picker = null; break; }
     case 'skill': {
       const k = btn.dataset.k; const sk = { ...(b.skills || {}) };
       const slots = skillSlotsOf(b); const worn = Object.keys(sk).filter((x) => sk[x] > 0).length;
@@ -3894,7 +4135,7 @@ document.addEventListener('click', (e) => {
     }
     case 'drill': battle.drill = +btn.dataset.uid; showSide(); return;
     case 'undrill': battle.drill = null; showSide(); return;
-    case 'remove': if (career.started && !state.sandbox) { toggleLineup(b.uid); state.picker = null; break; } removeUnit(i); state.picker = null; if (!state.team.units.length) state.view = 'squad'; break;
+    case 'remove': if (career.started && !state.sandbox) { const m = toggleLineup(b.uid); if (m) toast(m); state.picker = null; break; } removeUnit(i); state.picker = null; if (!state.team.units.length) state.view = 'squad'; break;
     case 'sim': runSim(); return;
     case 'fight': startBattle(); return;
     case 'close-battle': closeBattle(); return;
