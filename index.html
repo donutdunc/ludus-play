@@ -105,6 +105,12 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   position: relative; z-index: 20; background: var(--panel); border-bottom: 1px solid var(--line);
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 10px 12px;
 }
+@media (max-width: 759px) {
+  body[data-career="1"] #top .tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; display: flex; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: var(--panel); padding-bottom: env(safe-area-inset-bottom, 0px); box-shadow: 0 -4px 16px rgba(0,0,0,.06); }
+  body[data-career="1"] #top .tabs button { flex: 1; min-height: 52px; background: transparent; font-size: 15px; border-radius: 0; }
+  body[data-career="1"] #top .tabs button[aria-current="page"] { background: transparent; color: var(--pompeii); box-shadow: inset 0 2px 0 var(--pompeii); }
+  body[data-career="1"] { padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)); }
+}
 .top-row { display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; }
 .wordmark { font-family: var(--f-display); font-size: 26px; color: var(--pompeii); line-height: 1; letter-spacing: .02em; }
 .tabs { display: inline-flex; border: 1px solid var(--line); border-radius: var(--r-s); overflow: hidden; }
@@ -454,7 +460,7 @@ table.stats td.final { font-weight: 600; }
 .opt-rec .opt-line, .opt-rec .opt-lock { grid-column: 2 / -1; }
 .group-label { font-size: 12.5px; color: var(--muted); margin: 8px 0 2px; }
 .close-x { border: 1px solid var(--line); background: var(--raise); border-radius: var(--r-s); width: 34px; height: 34px; display: grid; place-items: center; font-size: 18px; line-height: 1; flex-shrink: 0; }
-.drawer { position: fixed; z-index: 40; inset: 0; background: var(--scrim); display: flex; justify-content: flex-end; }
+.drawer { position: fixed; z-index: 47; inset: 0; background: var(--scrim); display: flex; justify-content: flex-end; }
 .drawer .catalog { width: min(420px, 100%); height: 100%; border-radius: 0; box-shadow: var(--shadow);
   padding-top: calc(14px + env(safe-area-inset-top, 0px)); padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); padding-right: max(14px, env(safe-area-inset-right, 0px)); }
 @media (max-width: 759px) {
@@ -852,7 +858,7 @@ body { background:
 .bt:has(.has-art) .hpbar { right: 24%; left: 10%; }
 .bt.dead:has(.has-art) { opacity: .28; }
 /* ---------------- Home: the yard and the lanista's desk ---------------- */
-body[data-view="squad"][data-career="1"] #top .top-controls, body[data-view="fighter"][data-career="1"] #top .top-controls, body[data-view="fighter"][data-career="1"] #top .purse, body[data-view="arena"][data-career="1"] #top .purse, body[data-view="ledger"][data-career="1"] #top .top-controls, body[data-view="ledger"][data-career="1"] #top .purse, body[data-view="home"] #top .purse, body[data-view="home"] #top .top-controls, body[data-view="arena"] #top .top-controls, body[data-view="armory"] #top .purse, body[data-view="armory"] #top .top-controls { display: none; }
+body[data-view="squad"][data-career="1"] #top .top-controls, body[data-view="fighter"][data-career="1"] #top .top-controls, body[data-view="fighter"][data-career="1"] #top .purse, body[data-view="arena"][data-career="1"] #top .purse, body[data-view="ledger"][data-career="1"] #top .top-controls, body[data-view="ledger"][data-career="1"] #top .purse, body[data-view="home"] #top .purse, body[data-view="home"] #top .top-controls, body[data-view="arena"] #top .top-controls, body[data-view="armory"] #top .purse, body[data-view="armory"] #top .top-controls, body[data-view="market"] #top .purse, body[data-view="market"] #top .top-controls { display: none; }
 #view-home { grid-template-columns: minmax(0, 1fr); gap: 12px; }
 @media (min-width: 900px) { #view-home { grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr); align-items: start; } }
 .home-scene { display: grid; gap: 8px; min-width: 0; }
@@ -1150,6 +1156,14 @@ table.cmp td { font-family: var(--f-num); font-size: 16px; } table.cmp td.win { 
 .mkt-line { margin: 4px 0 0; font-family: "IM Fell English", Georgia, serif; font-style: italic; font-size: 16px; }
 .mkt-purse { color: #f2e6cf; text-align: right; display: grid; } .mkt-purse span { font-size: 12px; opacity: .8; } .mkt-purse b { font-size: 26px; }
 .wares { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+/* Market, tightened: short banner, one compact row per piece. */
+.mkt-head { min-height: 150px; } .mkt-who img { width: 64px; height: 64px; } .mkt-line { font-size: 14.5px; } .mkt-who b { font-size: 19px; }
+.ware.mk { grid-template-columns: 36px minmax(0, 1fr) auto; padding: 8px 10px; gap: 10px; } .ware.mk .w-ico { width: 34px; height: 34px; } .ware.mk .w-ico img, .ware.mk .w-ico svg { width: 34px; height: 34px; }
+.mk-top { display: flex; align-items: baseline; gap: 8px; min-width: 0; } .mk-top b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 15px; }
+.mk-meta { font-family: var(--f-body); font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.mk-eff { display: flex; flex-wrap: wrap; gap: 0 8px; font-family: var(--f-num); font-size: 13.5px; } .mk-eff .eff { color: var(--steel); }
+.ware.mk .w-who { font-size: 12px; } .ware.mk .w-buy { padding: 6px 10px; min-width: 64px; }
+.mk-clock { font-size: 13px; color: var(--muted); } .mk-clock b { color: var(--ink); font-size: 16px; }
 .ware { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--raise); }
 .ware.sold { opacity: .5; }
 .w-ico { width: 56px; height: 56px; display: grid; place-items: center; } .w-ico .ico { width: 100%; height: 100%; } .w-ico.s { width: 34px; height: 34px; }
@@ -2012,14 +2026,14 @@ function renderHomeView() {
   document.getElementById('view-home').innerHTML = `
     <div class="home-scene">${purseHTML()}${yardHTML()}</div>
     <div class="home-side">${magnusHTML(note)}${boutsHTML()}${recentHTML()}
-      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 11:23 AM</span></p>` : ''}
+      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 11:59 AM</span></p>` : ''}
     </div>`;
   startHomeClock();
 }
 let homeClock = null;
 setInterval(() => { if (state.view === 'academy') { if (finishCourses()) render(); else document.querySelectorAll('#view-academy [data-end]').forEach((el) => { el.textContent = clock(+el.dataset.end - Date.now()); }); }
   if (state.view === 'training') document.querySelectorAll('#view-training [data-end]').forEach((el) => { if (+el.dataset.end <= Date.now()) { finishDrills(); render(); } else el.textContent = clock(+el.dataset.end - Date.now()); });
-  if (state.view === 'fighter' || state.view === 'ledger') document.querySelectorAll('#view-fighter [data-end], #view-ledger [data-end]').forEach((el) => { const left = +el.dataset.end - Date.now(); if (left <= 0) { finishDrills(); render(); } else el.textContent = clock(left); }); }, 1000);
+  if (state.view === 'fighter' || state.view === 'ledger' || state.view === 'market') document.querySelectorAll('#view-market [data-end], #view-fighter [data-end], #view-ledger [data-end]').forEach((el) => { const left = +el.dataset.end - Date.now(); if (left <= 0) { finishDrills(); render(); } else el.textContent = clock(left); }); }, 1000);
 function startHomeClock() {
   clearInterval(homeClock);
   homeClock = setInterval(() => {
@@ -2328,7 +2342,7 @@ function renderStableView() {
 // ---------------- The armory and Hasdrubal's market (career mode) ----------------
 // Gear is owned. 1-point anchor gear is free and unlimited; everything else is bought from Hasdrubal.
 const marketMs = () => 4 * 3600 * 1000 / SPEED(); // stock turns over every four hours
-const STOCK_SIZE = 6;
+const STOCK_SIZE = 5;
 const marketOpen = () => career.started && LADDER.slice(0, career.rung + 1).some((r) => r.arrives === 'card');
 const priceOf = (it) => Math.round(it.cost * ({ common: 5, fine: 6, masterwork: 8, relic: 10 }[it.rarity] || 5));
 const sellPrice = (it) => Math.max(1, Math.floor(priceOf(it) * 0.4));
@@ -2430,10 +2444,11 @@ function renderMarketView() {
   const card = (it) => {
     const sold = st.sold.includes(it.id); const can = career.coin >= priceOf(it);
     const who = state.team.units.map((u, i) => ({ u, i })).filter(({ u }) => GE.itemLocks(UNITS[u.template], it, it.slot, { arena: a, equip: u.equip }).length === 0).map(({ u }) => u.name);
-    return `<div class="ware rar-${it.rarity} ${sold ? 'sold' : ''}">
+    return `<div class="ware mk rar-${it.rarity} ${sold ? 'sold' : ''}">
       <span class="w-ico">${itemIcon(it)}</span>
-      <div class="w-txt"><b>${esc(it.name)}</b> <span class="rtag ${it.rarity}">${it.rarity}</span><span class="sub">${esc(SLOT_LABELS[it.slot])} · ${it.cost} pt${it.cost > 1 ? 's' : ''} in a roster</span><span class="w-sum">${esc(itemSummary(it))}</span>
-        <span class="w-who ${who.length ? '' : 'none'}">${who.length ? `Fits ${esc(who.slice(0, 3).join(', '))}${who.length > 3 ? '…' : ''}` : 'Nobody in your school can use it yet'}${ownedCount(it.id) ? ` · you own ${ownedCount(it.id)}` : ''}</span></div>
+      <div class="w-txt"><span class="mk-top"><b>${esc(it.name)}</b></span>
+        <span class="mk-eff"><span class="mk-meta">${esc(SLOT_LABELS[it.slot])} · ${it.cost} pt${it.cost > 1 ? 's' : ''}</span>${rowBits(it, true, [])}</span>
+        <span class="w-who ${who.length ? '' : 'none'}">${who.length ? `Fits ${esc(who.slice(0, 3).join(', '))}${who.length > 3 ? '…' : ''}` : 'Nobody can use it yet'}${ownedCount(it.id) ? ` · own ${ownedCount(it.id)}` : ''}</span></div>
       <button class="w-buy" data-act="buy" data-id="${it.id}" ${sold || !can ? 'disabled' : ''}>${sold ? 'Sold' : cn(priceOf(it))}</button></div>`;
   };
   const owned = Object.entries(career.armory || {}).filter(([id, n]) => n > 0 && ITEMS[id]).map(([id, n]) => {
@@ -2445,7 +2460,7 @@ function renderMarketView() {
       <div class="mkt-who">${N.hasdrubal ? `<img src="${N.hasdrubal}" alt="">` : ''}<div><b>Hasdrubal</b><span class="sub">Arms dealer, the forum</span><p class="mkt-line">“${esc(line)}”</p></div></div>
       <div class="mkt-purse"><span>Purse</span><b class="num">${cn(career.coin)}</b></div>
     </div>
-    <div class="block"><div class="block-head"><h2>On the counter</h2><span class="sub">Fresh stock in ${clock(st.next - Date.now())}</span></div>
+    <div class="block"><div class="block-head"><h2>On the counter</h2><span class="mk-clock">New stock in <b class="num" data-end="${st.next}">${clock(st.next - Date.now())}</b></span></div>
       <div class="wares">${st.items.map(card).join('')}</div></div>
     <div class="block"><div class="block-head"><h2>Your armory</h2><span class="sub">Sell back at 40%</span></div><ul class="armory">${owned}</ul></div>`;
 }
