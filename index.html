@@ -530,6 +530,13 @@ table.stats td.final { font-weight: 600; }
 .sh-ab .ab-hd { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; } .sh-ab .ab-hd b { font-size: 14.5px; }
 .sh-ab .ab-tag { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
 .sh-ab p { margin: 2px 0 0; font-size: 13.5px; line-height: 1.35; color: var(--ink); opacity: .85; }
+.sh-pass { margin: 8px 12px 0; border: 1px solid var(--line); border-radius: 9px; background: var(--raise); padding: 6px 10px 4px; }
+.ps-h { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 2px; }
+.ps-row { display: grid; grid-template-columns: 42px auto minmax(0, 1fr); gap: 8px; align-items: baseline; padding: 4px 0; border: 0; border-top: 1px solid var(--line); background: none; width: 100%; text-align: left; color: var(--ink); font-size: 13.5px; }
+.ps-row:first-of-type { border-top: 0; } .ps-k { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.ps-row b { white-space: nowrap; } .ps-l { color: var(--muted); } .ps-row.title b { font-family: "IM Fell English", Georgia, serif; font-style: italic; font-weight: 400; font-size: 15px; }
+.ps-row.quirk .ps-l, .ps-row.title .ps-l { color: var(--verd); font-family: var(--f-num); font-weight: 600; font-size: 14px; }
+button.ps-row { cursor: pointer; } button.ps-row:hover { background: var(--bronze-soft); }
 .sh-gear { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 10px 12px 0; }
 .sh-tile { position: relative; height: 72px; border: 1px solid var(--line); border-radius: 9px; background: var(--raise); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 4px 2px 3px; color: var(--ink); --rc: transparent; box-shadow: inset 3px 0 0 var(--rc); transition: border-color .12s, transform .12s; }
 .sh-tile.rar-common, .sh-tile.rar-fine, .sh-tile.rar-masterwork, .sh-tile.rar-relic { border-left: 1px solid var(--line); }
@@ -1531,6 +1538,8 @@ function loadCareer() { try { const c = JSON.parse(localStorage.getItem(CAREER_K
 const career = loadCareer();
 // Tactics aren't a player toggle in a career (positioning does that job); clear any old choice.
 for (const u of career.stable || []) delete u.tactic;
+// Named fighters keep their names (renaming is gone); undo any old renames.
+for (const u of career.stable || []) if (u.castId && GE.CAST_BY_ID[u.castId]) u.name = GE.CAST_BY_ID[u.castId].name;
 function saveCareer() { try { localStorage.setItem(CAREER_KEY, JSON.stringify(career)); } catch (e) { /* ignore */ } }
 // career.rung is the furthest arena that will have you; career.at is the one you've chosen to fight in (any up to it).
 const atIdx = () => Math.min(LADDER.length - 1, career.rung, career.at ?? career.rung);
@@ -2038,7 +2047,7 @@ function renderHomeView() {
   document.getElementById('view-home').innerHTML = `
     <div class="home-scene">${purseHTML()}${yardHTML()}</div>
     <div class="home-side">${magnusHTML(note)}${boutsHTML()}${recentHTML()}
-      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 3:33 PM</span></p>` : ''}
+      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 3:46 PM</span></p>` : ''}
     </div>`;
   startHomeClock();
 }
@@ -3137,7 +3146,7 @@ function renderFighterView() {
     ${heroToken(t, b)}
     ${navBtn('prev', prevI)}${navBtn('next', nextI)}
     <span class="sh-pts"><b class="num" data-count="pts">${uc.subtotal}</b> pts</span>
-    <div class="sh-id"><input class="sh-name" id="unit-name" data-act="unit-name" value="${esc(b.name || t.name)}" aria-label="Fighter name" spellcheck="false">
+    <div class="sh-id"><span class="sh-name">${esc(b.name || t.name)}</span>
       <span class="sh-sub">${'★'.repeat(stars)} ${esc(t.name)} · <b>${jobOf(t)}</b>${titleName(b) ? ` · <i>${esc(titleName(b))}</i>` : ''}</span>
       ${cast ? `<span class="sh-origin">${esc(cast.origin)}</span>` : ''}</div>
   </div>`;
@@ -3146,18 +3155,25 @@ function renderFighterView() {
   const statBar = `<div class="sh-stats" id="sh-stats">${SHEET_STATS.map((k) => {
     const v = statVal(r, k);
     return `<button class="sh-stat ${lv[k] ? 'trained' : ''} ${pop === k ? 'open' : ''}" data-act="stat-pop" data-k="${k}" aria-expanded="${pop === k}">
-      <span class="lbl">${SHEET_LABEL[k]}</span><b class="num" data-count="${k}">${v}</b>${gradeTicks(k, v)}</button>`;
+      <span class="lbl">${SHEET_LABEL[k]}</span><b class="num" data-count="${k}">${v}</b></button>`;
   }).join('')}${pop ? statPopHTML(b, pop) : ''}</div>`;
 
   // Abilities read in full: name, what kind it is, and what it does. Nothing hidden behind a hover.
   const abRow = (cls, icon, name, tag, desc) => `<div class="sh-ab ${cls}"><span class="ab-ic">${icon}</span><div class="ab-tx"><div class="ab-hd"><b>${esc(name)}</b><span class="ab-tag">${esc(tag)}</span></div><p>${esc(desc)}</p></div></div>`;
   const acts = r.actives.map((id) => { const A = ACTIVE_DEF[id];
     return abRow('active', ART.active && ART.active[id] ? `<img src="${ART.active[id]}" alt="">` : A.kind === 'triggered' ? '↯' : '▸', A.name, abilityTag(id), A.description); });
-  const traits = r.traits.map((id) => { const T = TRAITS[id] || {}; return abRow('trait', ART.trait && ART.trait[id] ? `<img src="${ART.trait[id]}" alt="">` : '◆', T.name || id, 'Passive', T.description || ''); });
-  const qk = careerNav || b.castId ? GE.quirkOf(b.castId) : null;
-  const quirk = qk ? [abRow('quirk', '✧', b.name || t.name, 'Quirk', qk.line)] : [];
-  const kits = GE.kitsFor(b.equip || {}).map((k) => abRow('kit', '⛓', k.name, 'Set bonus', `${k.pieces.map((x) => (ITEMS[x] || {}).name || x).join(' + ')}: ${k.description}`));
-  const activeLine = acts.length || traits.length || kits.length || quirk.length ? `<div class="sh-abs">${[...acts, ...traits, ...quirk, ...kits].join('')}</div>` : '';
+  // Passives, together: everything that's simply always on, in one box.
+  const pRow = (kind, name, line, act) => `<${act ? `button data-act="pick-perk" data-i="${i}" ${careerNav ? `data-uid="${b.uid}"` : ''} data-k="title" data-n="0"` : 'div'} class="ps-row ${kind}"><span class="ps-k">${kind === 'title' ? 'Title' : kind === 'quirk' ? 'Quirk' : kind === 'kit' ? 'Set' : 'Trait'}</span><b>${esc(name)}</b><span class="ps-l">${esc(line)}</span></${act ? 'button' : 'div'}>`;
+  const qk = GE.quirkOf(b.castId);
+  const ttl = titleName(b) && b.title ? GE.TITLES[b.title] : null;
+  const passives = [
+    ...(ttl ? [pRow('title', ttl.name, ttl.line, true)] : (b.titles || []).length ? [pRow('title', 'No title worn', 'Tap to wear one', true)] : []),
+    ...(qk ? [pRow('quirk', b.name || t.name, qk.line)] : []),
+    ...r.traits.map((id) => pRow('trait', (TRAITS[id] || {}).name || id, (TRAITS[id] || {}).description || '')),
+    ...GE.kitsFor(b.equip || {}).map((k) => pRow('kit', k.name, `${k.pieces.map((x) => (ITEMS[x] || {}).name || x).join(' + ')}: ${k.description}`)),
+  ];
+  const activeLine = (acts.length ? `<div class="sh-abs">${acts.join('')}</div>` : '')
+    + (passives.length ? `<div class="sh-pass"><div class="ps-h">Passive</div>${passives.join('')}</div>` : '');
 
   const pickSlot = state.picker && state.picker.mode === 'slot' && pbOf(state.picker) === b ? state.picker.slot : null;
   const gear = DOLL_SLOTS[t.bodyPlan].map((s) => {
@@ -3174,7 +3190,7 @@ function renderFighterView() {
   }).join('');
 
   const pk = state.picker && state.picker.mode === 'perk' && pbOf(state.picker) === b ? state.picker : null;
-  const perks = perkSlots(b).filter((x) => !(x.kind === 'title' && x.locked && careerNav && !(b.fights >= 1))).map((x) => {
+  const perks = perkSlots(b).filter((x) => x.kind !== 'title').map((x) => {
     const glyph = x.kind === 'skill' ? '✦' : x.kind === 'scar' ? '⚔' : '❦';
     const fresh = (x.kind === 'scar' || x.kind === 'title') && !x.locked && unseenPerks(b, x.kind);
     const label = x.name ? esc(x.name) : x.locked ? (x.kind === 'scar' ? `Scar at ${GE.SCAR_SLOT_AT[0]} fights` : 'No title') : `${x.label} slot`;
