@@ -1998,14 +1998,14 @@ function renderTrainingView() {
       .sort((x, y) => (y.stars || 3) - (x.stars || 3) || x.name.localeCompare(y.name));
     pick = `<div class="block"><div class="block-head"><h2>Who trains?</h2><button class="close-x" data-act="post-close" aria-label="Close">×</button></div>
       <div class="bk-list">${can.map((u) => { const t = UNITS[u.template]; const L = Object.values(u.training || {}).reduce((a, x) => a + (x || 0), 0);
-        return `<button class="bk-row" data-act="post-fighter" data-uid="${u.uid}"><span class="mono cat-${category(t)}">${unitIcon(t, u.stars, u.castId)}</span><span class="bk-who"><b>${esc(u.name)}</b><span class="bk-sub">${u.stars || 3}★ ${esc(t.name)} · ${L} level${L === 1 ? '' : 's'} trained</span></span><span class="bk-pts">${cn(drillQuote(u, 'hp').coin)}</span></button>`; }).join('') || '<p class="sub">Everyone is training or at their limit.</p>'}</div></div>`;
+        return `<button class="bk-row" data-act="post-fighter" data-uid="${u.uid}"><span class="mono cat-${category(t)}">${unitIcon(t, u.stars, u.castId)}</span><span class="bk-who"><b>${esc(u.name)}</b><span class="bk-sub">${u.stars || 3}★ ${esc(t.name)} · ${L} level${L === 1 ? '' : 's'} trained</span></span><span class="bk-pts"><span class="sub">next drill</span> ${cn(drillQuote(u, 'hp').coin)} <span class="sub">· ${clock(drillQuote(u, 'hp').min * 60000 / SPEED())}</span></span></button>`; }).join('') || '<p class="sub">Everyone is training or at their limit.</p>'}</div></div>`;
   } else if (tp && tp.step === 'stat') {
     const u = career.stable.find((x) => x.uid === tp.uid);
     if (u) { const t = UNITS[u.template];
       pick = `<div class="block"><div class="block-head"><h2><span class="mono cat-${category(t)} post-mini">${unitIcon(t, u.stars, u.castId)}</span> ${esc(u.name)}</h2><button class="linkish" data-act="post-open">Someone else</button></div>${drillPanel(u, t, u.training || {})}</div>`; }
   }
   el.innerHTML = `<div class="training-page"><div class="block"><div class="block-head"><h2>Training posts</h2><span class="sub">${career.drills.length}/${n} in use · ${cn(career.coin)}</span></div>
-    <div class="posts">${posts.join('')}</div><p class="sub" style="margin:8px 0 0">A drill adds to one stat for good. Each level costs more time and coin; more posts open at later arenas.</p></div>${pick}</div>`;
+    <div class="posts">${posts.join('')}</div><p class="sub" style="margin:8px 0 0">A drill adds to one stat for good. Each drill a fighter does costs more than the last, whichever stat it is.</p></div>${pick}</div>`;
 }
 function renderAcademyView() {
   finishCourses();
@@ -2031,7 +2031,7 @@ function renderHomeView() {
   document.getElementById('view-home').innerHTML = `
     <div class="home-scene">${purseHTML()}${yardHTML()}</div>
     <div class="home-side">${magnusHTML(note)}${boutsHTML()}${recentHTML()}
-      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 2:25 PM</span></p>` : ''}
+      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 2:27 PM</span></p>` : ''}
     </div>`;
   startHomeClock();
 }
