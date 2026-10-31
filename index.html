@@ -760,6 +760,13 @@ table.stats tr.explain .rule { color: var(--ink); opacity: .75; }
 .hitfx.fx-crit { width: 12%; } .hitfx.fx-heal { animation-duration: .9s; }
 @keyframes hitfx { 0% { opacity: 0; transform: translate(-50%, -50%) scale(calc(var(--flip, 1) * .4), .4); } 25% { opacity: 1; transform: translate(-50%, -50%) scale(calc(var(--flip, 1) * 1.05), 1.05); } 100% { opacity: 0; transform: translate(-50%, -60%) scale(calc(var(--flip, 1) * 1.15), 1.15); } }
 @keyframes floatup { 0% { opacity: 0; margin-top: 6px; } 15% { opacity: 1; margin-top: 0; } 75% { opacity: 1; } 100% { opacity: 0; margin-top: -22px; } }
+.pulse { display: grid; gap: 6px; width: 100%; }
+.pl-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.pl-mood { font-family: var(--f-display); font-size: 20px; } .pl-mood.good { color: var(--bronze); } .pl-mood.bad { color: var(--pompeii); }
+.pl-hp { font-size: 14px; } .pl-bar { height: 8px; border-radius: 4px; background: var(--pompeii); overflow: hidden; } .pl-bar i { display: block; height: 100%; background: var(--bronze); transition: width .35s ease; }
+.pl-hl { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; font-size: 14px; }
+.pl-hl li { opacity: .6; } .pl-hl li:first-child { opacity: 1; } .pl-hl li.good::before { content: '▲ '; color: var(--verd); font-size: 10px; } .pl-hl li.bad::before { content: '▼ '; color: var(--pompeii); font-size: 10px; }
+.pl-hl li.big { font-weight: 600; } .pl-hl li.now { animation: pop-in .25s ease-out; } .pl-hl li.quiet { color: var(--muted); }
 .caption { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-height: 48px; padding: 8px 12px; border-radius: var(--r-m); background: var(--panel); border: 1px solid var(--line); font-size: 15px; }
 .fchip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 4px; border-radius: 99px; background: var(--raise); border: 2px solid; font-weight: 600; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .fchip.s0 { border-color: var(--bronze); } .fchip.s1 { border-color: var(--pompeii); }
@@ -2031,7 +2038,7 @@ function renderHomeView() {
   document.getElementById('view-home').innerHTML = `
     <div class="home-scene">${purseHTML()}${yardHTML()}</div>
     <div class="home-side">${magnusHTML(note)}${boutsHTML()}${recentHTML()}
-      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 2:27 PM</span></p>` : ''}
+      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 3:33 PM</span></p>` : ''}
     </div>`;
   startHomeClock();
 }
@@ -3667,7 +3674,7 @@ function startBattle(key) {
   battle.gs = battle.builds.map((b, i) => GE.resolveUnit(b, teamFx(battle.teams[i < battle.teams[0].units.length ? 0 : 1])).gearScore);
   battle.drill = null; battle.careerNote = null;
   battle.res = battle.mySide === 0 ? GE.simulate(state.team, opp, battle.seed, { log: true }) : GE.simulate(opp, state.team, battle.seed, { log: true });
-  battle.frames = buildFrames(battle.res);
+  battle.frames = buildFrames(battle.res); battle.highlights = null;
   battle.idx = 0;
   const el = document.getElementById('battle');
   const res = battle.res, me = battle.mySide;
@@ -3679,11 +3686,9 @@ function startBattle(key) {
     <div class="b-head"><div class="b-title"><span class="you">${esc(state.team.name)}</span><span class="vs">against</span><span class="them">${esc(opp.name)}</span></div>
       <button class="close-x" data-act="close-battle" aria-label="Leave the arena">×</button></div>
     <div class="b-main"><div class="b-stage">
-    <p class="turn-hint">Turn your phone sideways for the full arena.</p>
     <div class="arena-wrap"><div class="arena ${ARENA_FLOOR(state.arenaId) ? 'has-floor' : ''}" id="arena" ${ARENA_FLOOR(state.arenaId) ? `style="background-image:url(${ARENA_FLOOR(state.arenaId)})"` : ''}><div class="grid"></div><div class="midline"></div>${tokens}
       <svg class="fx" id="fx" viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true"></svg></div></div>
     <div class="caption" id="caption" aria-live="polite"></div>
-    <div class="upnext" id="upnext"></div>
     <div id="b-result"></div>
     </div><aside class="score" id="score" aria-label="Live scoreboard"></aside>
     <div class="b-logsheet" id="b-report" hidden role="dialog" aria-label="Fight report"><div class="bl-head"><b>Fight report</b><button class="close-x" data-act="b-report" aria-label="Close the report">×</button></div><div class="rep-body" id="b-report-body"></div></div>
@@ -3841,11 +3846,10 @@ function showFrame(idx, animate = true) {
     // Fade out the fallen after their hit lands
     f.snap.forEach((s, uid) => { if (!s.alive && prevSnap[uid].alive) setTimeout(() => document.getElementById('bt-' + uid)?.classList.add('dead'), 500); });
   }
-  renderCaption(f);
-  // Up next
+  renderPulse(idx);
+  // Up next (gone: the order of turns isn't worth the attention)
   const next = [];
   for (let k = idx + 1; k < battle.frames.length && next.length < 6; k++) if (battle.frames[k].actor !== null) next.push(battle.frames[k].actor);
-  document.getElementById('upnext').innerHTML = next.length ? `<span>Up next</span>${next.map((uid) => { const s = res.start[uid]; const t = UNITS[s.template]; return `<span class="m cat-${category(t)} s${s.side === me ? 0 : 1}" title="${esc(dname(t, s.name))}">${unitIcon(t, battle.builds[uid]?.stars, battle.builds[uid]?.castId)}</span>`; }).join('')}` : '';
   battle.lastTargets = attacks.map((e) => e.tid);
   showSide();
   document.getElementById('b-scrub').value = idx;
@@ -3934,6 +3938,51 @@ function renderScore(f, targets) {
     </section>`;
   };
   document.getElementById('score').innerHTML = `<p class="sub score-tip">Tap a fighter for details.</p>` + team(me) + team(1 - me);
+}
+// The pulse: who's winning, and only the moments worth looking up for (crits, knockouts, specials,
+// narrow escapes, the tide turning). Replaces the blow-by-blow caption.
+function teamShare(snap) {
+  const me = battle.mySide, start = battle.res.start; let a = 0, A = 0, b = 0, B = 0;
+  snap.forEach((s, uid) => { const st = start[uid]; const hp = s.alive && !s.fled ? Math.max(0, s.hp) : 0; if (st.side === me) { a += hp; A += st.hp; } else { b += hp; B += st.hp; } });
+  return { us: A ? a / A : 0, them: B ? b / B : 0 };
+}
+function computeHighlights() {
+  const res = battle.res, me = battle.mySide, out = [];
+  const nm = (uid) => esc(res.start[uid].name || UNITS[res.start[uid].template].name);
+  const mine = (uid) => res.start[uid].side === me;
+  let lead = 0;
+  battle.frames.forEach((f, i) => {
+    if (!i) return;
+    for (const e of f.ev) {
+      if (e.kind === 'death' && e.tid !== undefined) out.push({ i, good: !mine(e.tid), big: true, text: `${nm(e.tid)} is down` });
+      else if (e.kind === 'attack' && e.outcome === 'crit' && e.amount > 0) out.push({ i, good: mine(e.aid), text: `${nm(e.aid)} crits ${nm(e.tid)} for ${e.amount}` });
+      else if (e.kind === 'active' && e.label) out.push({ i, good: mine(e.aid), text: `${nm(e.aid)}: ${esc(e.label)}` });
+      else if (e.kind === 'attack' && e.outcome === 'miss' && e.tid !== undefined) {
+        const s = f.snap[e.tid]; if (s && s.alive && s.hp <= res.start[e.tid].hp * 0.2) out.push({ i, good: mine(e.tid), text: `${nm(e.aid)} whiffs. ${nm(e.tid)} lives` });
+      } else if (e.kind === 'attack' && e.tid !== undefined && e.amount > 0) {
+        const s = f.snap[e.tid]; if (s && s.alive && s.hp > 0 && s.hp <= Math.max(1, res.start[e.tid].hp * 0.1)) out.push({ i, good: mine(e.tid), text: `${nm(e.tid)} hangs on at ${Math.round(s.hp)} HP` });
+      }
+    }
+    const sh = teamShare(f.snap); const d = sh.us - sh.them; const nl = d > 0.12 ? 1 : d < -0.12 ? -1 : lead;
+    if (nl !== lead && lead !== 0) out.push({ i, good: nl > 0, big: true, text: nl > 0 ? 'The tide turns your way' : 'The tide turns against you' });
+    lead = nl;
+  });
+  return out;
+}
+function renderPulse(idx) {
+  const el = document.getElementById('caption'); if (!el) return;
+  if (!battle.highlights) battle.highlights = computeHighlights();
+  const f = battle.frames[idx]; const sh = teamShare(f.snap);
+  const last = idx === battle.frames.length - 1; const won = battle.res.winner === battle.mySide;
+  const d = sh.us - sh.them;
+  const mood = last ? (won ? 'Victory' : battle.res.winner === null || battle.res.winner === undefined ? 'A draw' : 'Defeat')
+    : idx === 0 ? 'The gates open' : d > 0.35 ? 'Running away with it' : d > 0.12 ? 'Ahead' : d > -0.12 ? 'Dead even' : d > -0.35 ? 'Behind' : 'In real trouble';
+  const tone = last ? (won ? 'good' : 'bad') : d > 0.12 ? 'good' : d < -0.12 ? 'bad' : '';
+  const tot = sh.us + sh.them || 1; const w = Math.round((sh.us / tot) * 100);
+  const hs = battle.highlights.filter((h) => h.i <= idx).slice(-3).reverse();
+  el.innerHTML = `<div class="pulse"><div class="pl-top"><span class="pl-mood ${tone}">${mood}</span><span class="pl-hp num">${Math.round(sh.us * 100)}% <span class="sub">vs</span> ${Math.round(sh.them * 100)}%</span></div>
+    <div class="pl-bar"><i style="width:${w}%"></i></div>
+    <ol class="pl-hl">${hs.map((h, n) => `<li class="${h.good ? 'good' : 'bad'} ${h.big ? 'big' : ''} ${n === 0 && h.i === idx ? 'now' : ''}">${h.text}</li>`).join('') || '<li class="quiet">No surprises yet.</li>'}</ol></div>`;
 }
 function renderCaption(f) {
   const el = document.getElementById('caption');
