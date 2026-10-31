@@ -1165,6 +1165,18 @@ table.cmp td { font-family: var(--f-num); font-size: 16px; } table.cmp td.win { 
 .lineup-tog.on { background: var(--bronze); border-color: var(--bronze); color: #fff; }
 .c-xp { min-width: 110px; } .xpbar { display: block; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; margin-bottom: 2px; } .xpbar i { display: block; height: 100%; background: var(--verd); }
 .c-who[data-act] { cursor: pointer; }
+.gc { border: 1px solid var(--line); border-radius: 12px; background: var(--raise); padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.gc.sold { opacity: .5; } .gc.legend { border-color: var(--bronze); box-shadow: 0 0 0 2px color-mix(in srgb, var(--bronze) 35%, transparent); }
+.gc-top { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 12px; align-items: center; }
+.gc-por { width: 64px; height: 64px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; box-shadow: 0 2px 6px rgba(0,0,0,.18); } .gc-por img { width: 100%; height: 100%; object-fit: cover; }
+.gc-who { display: flex; flex-direction: column; min-width: 0; } .gc-who b { font-family: var(--f-display); font-size: 20px; line-height: 1.1; }
+.gc-sub { font-size: 13px; color: var(--muted); } .gc-role { color: var(--ink); font-weight: 600; }
+.gc-origin { font-family: "IM Fell English", Georgia, serif; font-style: italic; font-size: 14px; margin-top: 2px; }
+.gc-stats { display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 6px 0; text-align: center; }
+.gc-stats span { display: flex; flex-direction: column; font-family: var(--f-num); font-size: 19px; font-weight: 600; line-height: 1.1; } .gc-stats small { font-family: var(--f-body); font-size: 10px; letter-spacing: .1em; color: var(--muted); font-weight: 600; }
+.gc-wpn { font-size: 13px; color: var(--muted); }
+.gc-ab { font-size: 14px; } .gc-ab .ab-tag { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; } .gc-ab p { margin: 1px 0 0; font-size: 13.5px; line-height: 1.35; opacity: .85; }
+.gc-foot { font-size: 12.5px; color: var(--muted); }
 .recruit { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--raise); }
 .recruit .mono { width: 48px; height: 48px; } .recruit.sold { opacity: .5; } .recruit.offer { border-color: var(--verd); }
 .warn-line { color: var(--pompeii); font-weight: 600; margin: 4px 0 8px; }
@@ -1995,7 +2007,7 @@ function renderHomeView() {
   document.getElementById('view-home').innerHTML = `
     <div class="home-scene">${purseHTML()}${yardHTML()}</div>
     <div class="home-side">${magnusHTML(note)}${boutsHTML()}${recentHTML()}
-      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 11:04 AM</span></p>` : ''}
+      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 11:11 AM</span></p>` : ''}
     </div>`;
   startHomeClock();
 }
@@ -2167,11 +2179,19 @@ function boardStock() {
   const owned = new Set((career.stable || []).map((u) => u.castId).filter(Boolean));
   // Refreshes since a 5★ last showed (the pity counter). A board that rolls one marks the window.
   const since5 = win - (career.last5Win !== undefined ? career.last5Win + 1 : career.boardStart);
-  const b = GE.drawBoard(win, career.rung, owned, since5, n, cheapSlots);
-  if (b.fiveRolled && career.last5Win !== win) { career.last5Win = win; saveCareer(); }
-  const list = b.slots.map((sl) => ({ key: sl.key, template: sl.cast.template, stars: sl.cast.stars, name: sl.cast.name, cast: sl.cast, duplicate: sl.duplicate, five: sl.five, price: recruitPrice(UNITS[sl.cast.template], sl.cast.stars) }));
+  // Draw once per window and keep it: hiring someone must not reshuffle the rest of the gate.
+  let slots = career.board && career.board.win === win && career.board.rung === career.rung ? career.board.slots.map((x) => ({ ...x, cast: GE.CAST_BY_ID[x.castId] })).filter((x) => x.cast) : null;
+  let fiveChance = career.board && career.board.win === win ? career.board.fiveChance : 0;
+  if (!slots) {
+    const b = GE.drawBoard(win, career.rung, owned, since5, n, cheapSlots);
+    if (b.fiveRolled && career.last5Win !== win) career.last5Win = win;
+    slots = b.slots; fiveChance = b.fiveChance;
+    career.board = { win, rung: career.rung, fiveChance, slots: b.slots.map((sl) => ({ key: sl.key, castId: sl.cast.id, duplicate: sl.duplicate, five: sl.five })) };
+    saveCareer();
+  }
+  const list = slots.map((sl) => ({ key: sl.key, template: sl.cast.template, stars: sl.cast.stars, name: sl.cast.name, cast: sl.cast, duplicate: sl.duplicate, five: sl.five, price: recruitPrice(UNITS[sl.cast.template], sl.cast.stars) }));
   const hired = career.hired && career.hired.win === win ? career.hired.keys : [];
-  return { list, hired, win, next: (win + 1) * BOARD_MS(), fiveChance: b.fiveChance };
+  return { list, hired, win, next: (win + 1) * BOARD_MS(), fiveChance };
 }
 function hire(key) {
   const st = boardStock(); const c = st.list.find((x) => x.key === key);
@@ -2264,18 +2284,29 @@ function renderStableView() {
       <td class="c-st">${status}</td></tr>`;
   }).join('');
   const bd = boardStock();
+  // A gate card says who this is, how they fight and what they bring: a page of the fighter sheet, not a line.
+  const ROLE = { front: 'Front line', back: 'Back line', beast: 'Beast', large: 'Large' };
   const cards = bd.list.map((c) => {
     const t = UNITS[c.template]; const gone = bd.hired.includes(c.key);
-    const r = ratingOf({ template: c.template, stars: c.stars, equip: {} });
-    const pts = GE.starCost(t.cost, c.stars); const act = t.actives[0];
+    const r = GE.resolveUnit({ template: c.template, stars: c.stars, equip: starterKit(c.template) });
+    const pts = GE.starCost(t.cost, c.stars);
     const owner = c.duplicate && career.stable.find((u) => u.castId === c.cast.id);
     const legacy = owner ? GE.legacyOptions(c.stars, owner.legacy || []) : [];
     const LEG = { skill_slot: '+1 skill slot', title: 'Title: the Twice-Proven', credit: 'Academy credit' };
-    return `<div class="recruit ${gone ? 'sold' : ''} ${c.five ? 'legend' : ''}"><span class="mono cat-${category(t)}">${unitIcon(t, c.stars, c.cast && c.cast.id)}</span>
-      <div class="w-txt"><b>${owner ? `${esc(c.name)}'s old rival` : esc(c.name)}</b><span class="sub">${c.stars}★ ${esc(t.name)} · ${pts} pt${pts > 1 ? 's' : ''} · ${t.skillSlots || 1} skill slot${(t.skillSlots || 1) > 1 ? 's' : ''}${act ? ` · ${esc(ACTIVE_DEF[act].name)}` : ''}</span>
-        <span class="w-sum">${owner ? `${esc(owner.name)} is already yours. Take a Legacy for them instead.` : esc(c.cast.origin)}</span></div>
-      ${owner ? `<span class="btn-row">${legacy.map((l) => `<button class="btn small" data-act="legacy" data-key="${c.key}" data-k="${l}" ${gone ? 'disabled' : ''}>${LEG[l]}</button>`).join('')}</span>`
-        : `<button class="w-buy" data-act="hire" data-key="${c.key}" ${gone || career.coin < c.price ? 'disabled' : ''}>${gone ? 'Hired' : cn(c.price)}</button>`}</div>`;
+    const st = [['HP', r.stats.hp], ['ATK', r.stats.atk], ['DEF', r.stats.def], ['SPD', r.stats.spd], ['EVA', r.evasion]].map(([k, v]) => `<span><small>${k}</small>${Math.round(v)}</span>`).join('');
+    const abil = [...r.actives.map((id) => ({ n: ACTIVE_DEF[id].name, tag: `every ${ACTIVE_DEF[id].cooldown} turns`, d: ACTIVE_DEF[id].description })),
+      ...r.traits.map((id) => ({ n: (TRAITS[id] || {}).name || id, tag: 'always on', d: (TRAITS[id] || {}).description || '' }))].slice(0, 2);
+    const wpn = r.weapon ? `${r.weapon.damage} ${r.weapon.type}${r.weapon.range > 1 ? `, range ${r.weapon.range}` : ''}` : '';
+    const buy = owner ? `<span class="btn-row">${legacy.map((l) => `<button class="btn small" data-act="legacy" data-key="${c.key}" data-k="${l}" ${gone ? 'disabled' : ''}>${LEG[l]}</button>`).join('')}</span>`
+      : `<button class="w-buy" data-act="hire" data-key="${c.key}" ${gone || career.coin < c.price ? 'disabled' : ''}>${gone ? 'Hired' : cn(c.price)}</button>`;
+    return `<div class="gc ${gone ? 'sold' : ''} ${c.five ? 'legend' : ''}">
+      <div class="gc-top"><span class="gc-por cat-${category(t)}">${unitIcon(t, c.stars, c.cast && c.cast.id)}</span>
+        <div class="gc-who"><b>${owner ? `${esc(c.name)}'s old rival` : esc(c.name)}</b><span class="gc-sub">${'★'.repeat(c.stars)} ${esc(t.name)} · <span class="gc-role">${ROLE[category(t)]}</span></span>
+          <span class="gc-origin">${owner ? `${esc(owner.name)} is already yours. Take a Legacy for them instead.` : esc(c.cast.origin)}</span></div>${buy}</div>
+      <div class="gc-stats">${st}</div>
+      ${wpn ? `<div class="gc-wpn">Fights with ${esc(r.weapon.name || (ITEMS[(starterKit(c.template) || {}).main] || {}).name || t.naturalWeapon?.name || 'fists')} · ${esc(wpn)}</div>` : ''}
+      ${abil.map((a) => `<div class="gc-ab"><b>${esc(a.n)}</b> <span class="ab-tag">${esc(a.tag)}</span><p>${esc(a.d)}</p></div>`).join('')}
+      <div class="gc-foot">${pts} pt${pts > 1 ? 's' : ''} in the arena · ${t.skillSlots || 1} skill slot${(t.skillSlots || 1) > 1 ? 's' : ''}${t.description ? ` · ${esc(t.description.split('.')[0])}` : ''}</div></div>`;
   }).join('');
   const offers = (career.offers || []).map((o, i) => `<div class="recruit offer"><span class="mono cat-${category(UNITS[o.template])}">${unitIcon(UNITS[o.template], o.stars, o.castId)}</span>
       <div class="w-txt"><b>${esc(o.name)}</b><span class="sub">${o.stars}★ ${esc(UNITS[o.template].name)}, from ${esc(o.from)}</span><span class="w-sum">Asked to join after you beat them. Free.</span></div>
