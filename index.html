@@ -254,14 +254,15 @@ body[data-view="squad"] .purse { display: none; }
 .bcard.no { opacity: .55; } .bc-why { font-size: 10.5px; color: var(--pompeii); } .bcard.lift { outline: 3px solid var(--bronze); } .bcard.recruit b { font-size: 12px; overflow: visible; } .bcard.recruit { flex-basis: 84px; border-style: dashed; align-content: center; justify-items: center; }
 .sqd .fcard { margin-top: 0; }
 .academy .ac-list { display: grid; gap: 8px; } .ac-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
-.ac-name { display: grid; grid-template-columns: auto auto minmax(0, 1fr); column-gap: 8px; align-items: center; } .ac-name .sub { grid-column: 1 / -1; font-size: 12.5px; } .ac-name .sk-art { width: 26px; height: 26px; }
+.ac-name { display: flex; flex-wrap: wrap; column-gap: 8px; align-items: center; min-width: 0; } .ac-name .sub { flex-basis: 100%; font-size: 12.5px; } .ac-name .sk-art { width: 26px; height: 26px; }
 .ac-act { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
 body[data-view="academy"] #top .purse, body[data-view="academy"] #top .top-controls { display: none; }
 .recruit.legend { border-color: var(--bronze); box-shadow: 0 0 0 2px color-mix(in srgb, var(--bronze) 35%, transparent); }
 .fc-perks { gap: 4px; flex-wrap: wrap; } .chip-perk { font-size: 11.5px; padding: 2px 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--raise, var(--panel)); white-space: nowrap; }
 .chip-perk.empty { border-style: dashed; color: var(--muted); } .chip-perk.scar:not(.empty) { border-color: color-mix(in srgb, var(--pompeii) 45%, var(--line)); } .chip-perk.title:not(.empty) { font-style: italic; }
 .oicon img, .lslot .li img { width: 30px; height: 30px; object-fit: contain; }
-.stat-row { cursor: pointer; } .more-i { font-size: 11px; color: var(--muted); margin-left: 2px; }
+.cn { white-space: nowrap; display: inline-flex; align-items: center; gap: 2px; } .coin { width: 1em; height: 1em; vertical-align: -0.12em; flex: none; }
+.w-buy .cn { flex-direction: row; font-size: 17px; } .stat-row { cursor: pointer; } .more-i { font-size: 11px; color: var(--muted); margin-left: 2px; }
 .purse-chip { color: var(--ink); } .purse-chip b { color: var(--bronze); font-size: 15px; }
 .ludus-card.splash { position: fixed; inset: 0; z-index: 60; border-radius: 0; margin: 0; display: grid; place-items: center; padding: 24px; background: radial-gradient(ellipse at 50% 35%, #2a1d12, #0d0907 70%); }
 .lc-in { max-width: 520px; } .lc-go { margin-top: 26px; font: inherit; font-size: 16px; letter-spacing: .12em; text-transform: uppercase; color: #17110c; background: #d9b36a; border: 0; border-radius: 999px; padding: 12px 26px; cursor: pointer; animation: lc-in 2.4s ease-out both; }
@@ -1346,6 +1347,9 @@ const fname = (b) => (b.name || UNITS[b.template].name) + (titleName(b) ? ' ' + 
 const DRILL_MIN = [3, 5, 8, 12, 18, 25, 35, 45, 60, 80, 100, 120, 150, 180, 240];
 const drillSlots = () => 1 + LADDER.slice(1, career.rung + 1).filter((r) => r.slot).length;
 // Higher ranks take longer and cost more per level; a Mastered level (6) also needs a lump of ore.
+// One currency icon everywhere a price is shown (text messages still say "coin").
+const COIN = '<svg class="coin" viewBox="0 0 16 16" role="img" aria-label="coin"><circle cx="8" cy="8" r="7" fill="#d9a441" stroke="#8a5a14" stroke-width="1.2"/><circle cx="8" cy="8" r="4.2" fill="none" stroke="#8a5a14" stroke-width=".9"/><circle cx="8" cy="8" r="1.3" fill="#8a5a14"/></svg>';
+const cn = (n) => `<span class="cn">${n}${COIN}</span>`;
 const DRILL_STAR = [0.8, 1, 1.3, 1.7, 2.2];
 const skillSlotsOf = (b) => Math.min(3, (UNITS[b.template].skillSlots || 1) + (b.extraSkillSlots || 0));
 const gainTxt = (k, n) => (k === 'res' ? `${Math.round(n * BALANCE.resolvePerLevel * 100)}%` : fmt(n));
@@ -1663,9 +1667,9 @@ function purseHTML() {
   const owed = story().met && career.debt > 0;
   const arch = schoolArchetype(state.team.units);
   return `<div class="purse-strip"><span class="ps-name"><b>${esc(state.team.name)}</b> <i>${esc(arch.title)}</i></span>
-    <span><span class="lbl">Purse</span> <b class="num">${career.coin}</b></span>
+    <span><span class="lbl">Purse</span> <b class="num">${cn(career.coin)}</b></span>
     <span><span class="lbl">Renown</span> <b class="num">${career.renown}</b></span>
-    ${owed ? `<span><span class="lbl">Owed</span> <b class="num owed">${career.debt.toLocaleString()}</b></span>` : ''}
+    ${owed ? `<span><span class="lbl">Owed</span> <b class="num owed">${cn(career.debt.toLocaleString())}</b></span>` : ''}
     ${railsOn() ? '' : `<span class="ps-next" title="Magnus runs a small bout every ${Math.round(afkMs() / 60000)} minutes and banks the purse"><span class="lbl">Next bout</span> <b class="num" id="afk-timer">${clock(next)}</b></span>`}
   </div>`;
 }
@@ -1697,7 +1701,7 @@ function drillPanel(b, t, lv, used, budget) {
     const blocked = d ? 'already drilling' : L >= cap ? `${b.stars || 3}★ cap` : used >= budget ? 'rank limit' : busy ? 'no free slot' : career.coin < q.coin ? `needs ${q.coin} coin` : q.ore && (career.ore || 0) < q.ore ? 'needs ore' : '';
     const here = d && d.stat === k;
     return `<div class="drill-row"><span><b>${STAT_LABEL[k]}</b> <span class="num">Lv ${L}/${cap}</span>${L ? ` <span class="plus num">+${fmt(gain)}</span>` : ''}</span>
-      ${here ? `<span class="drill-on num">Drilling… <span data-end="${d.end}">${clock(d.end - Date.now())}</span></span>` : `<button class="btn small" data-act="drill" data-k="${k}" ${blocked ? 'disabled' : ''} title="${blocked ? esc(blocked) : `Next level: +${gainTxt(k, nextGain)} ${STAT_LABEL[k]}`}">${blocked && !d ? esc(blocked) : `${q.tier !== 'Basic' ? q.tier + ' · ' : ''}+${gainTxt(k, nextGain)} · ${q.min} min · ${q.coin} coin${q.ore ? ' · 1 ore' : ''}`}</button>`}</div>`;
+      ${here ? `<span class="drill-on num">Drilling… <span data-end="${d.end}">${clock(d.end - Date.now())}</span></span>` : `<button class="btn small" data-act="drill" data-k="${k}" ${blocked ? 'disabled' : ''} title="${blocked ? esc(blocked) : `Next level: +${gainTxt(k, nextGain)} ${STAT_LABEL[k]}`}">${blocked && !d ? esc(blocked) : `${q.tier !== 'Basic' ? q.tier + ' · ' : ''}+${gainTxt(k, nextGain)} · ${q.min} min · ${cn(q.coin)}${q.ore ? ' · 1 ore' : ''}`}</button>`}</div>`;
   }).join('');
   return `<div class="drill-list">${rows}</div>
     <p class="note">Each drill adds a whole number to one stat and costs coin and real time; each level on the same fighter costs more of both. ${career.drills.length}/${drillSlots()} training slots in use; the strongbox holds ${career.coin} coin.</p>`;
@@ -1740,16 +1744,15 @@ function renderAcademyView() {
   const ac = academy(); const el = document.getElementById('view-academy');
   const rows = Object.entries(GE.SKILLS).map(([k, sk]) => {
     const L = ac.unlocked[k] || 0; const run = ac.courses.find((c) => c.skill === k); const next = L + 1;
-    const wearers = (career.stable || []).filter((u) => (u.skills || {})[k]).length;
     const why = next > BALANCE.skillMaxLevel ? 'Mastered' : run ? '' : career.rung < COURSE.rung[next] ? 'Opens at a later arena' : ac.courses.length >= courseSlots() ? 'No free course slot' : career.coin < COURSE.coin[next] ? `Needs ${COURSE.coin[next]} coin` : '';
     return `<div class="ac-row">
       <div class="ac-name">${ART.skill && ART.skill[k] ? `<img class="sk-art" src="${ART.skill[k]}" alt="">` : ''}<b>${esc(sk.name)}</b><span class="fc-pips">${'●'.repeat(L)}${'○'.repeat(BALANCE.skillMaxLevel - L)}</span>
-        <span class="sub">${esc(sk.perLevel)}</span><span class="sub">${wearers ? `Worn by ${wearers}` : 'Worn by nobody yet'} · ${BALANCE.skillPointCost.slice(1).map((c, i) => `L${i + 1} ${c} pt`).join(', ')}</span></div>
+        <span class="sub">${esc(sk.perLevel.replace(/ per level/, '').replace(/\.$/, ''))}${next <= BALANCE.skillMaxLevel && next > 1 ? ` ×${next}` : ''} · ${BALANCE.skillPointCost[Math.min(next, BALANCE.skillMaxLevel)]} pt to wear</span></div>
       <div class="ac-act">${run ? `<span class="drill-on num">Level ${run.level}… <span data-end="${run.end}">${clock(run.end - Date.now())}</span></span>${career.academyCredit > 0 ? `<button class="btn small" data-act="ac-credit" data-k="${k}">Use credit</button>` : ''}`
         : next > BALANCE.skillMaxLevel ? '<span class="sub">Mastered</span>'
-        : `<button class="btn small ${why ? '' : 'primary'}" data-act="ac-course" data-k="${k}" ${why ? 'disabled' : ''}>${why ? esc(why) : `Level ${next} · ${COURSE.min[next]} min · ${COURSE.coin[next]} coin`}</button>`}</div></div>`;
+        : `<button class="btn small ${why ? '' : 'primary'}" data-act="ac-course" data-k="${k}" ${why ? 'disabled' : ''}>${why ? esc(why) : `Level ${next} · ${COURSE.min[next]} min · ${cn(COURSE.coin[next])}`}</button>`}</div></div>`;
   }).join('');
-  el.innerHTML = `<div class="block academy"><div class="block-head"><h2>The Battle Academy</h2><span class="sub">${ac.courses.length}/${courseSlots()} course slot${courseSlots() > 1 ? 's' : ''} in use · ${career.coin} coin${career.academyCredit ? ` · ${career.academyCredit} credit` : ''}</span></div>
+  el.innerHTML = `<div class="block academy"><div class="block-head"><h2>The Battle Academy</h2><span class="sub">${ac.courses.length}/${courseSlots()} course slot${courseSlots() > 1 ? 's' : ''} in use · ${cn(career.coin)}${career.academyCredit ? ` · ${career.academyCredit} credit` : ''}</span></div>
     <p class="note">A course teaches the whole school. Once a level is unlocked, any fighter with a free skill slot can wear it; it costs points in the arena, not coin.</p>
     <div class="ac-list">${rows}</div></div>`;
 }
@@ -2025,14 +2028,14 @@ function renderStableView() {
       <div class="w-txt"><b>${owner ? `${esc(c.name)}'s old rival` : esc(c.name)}</b><span class="sub">${c.stars}★ ${esc(t.name)} · ${pts} pt${pts > 1 ? 's' : ''} · ${t.skillSlots || 1} skill slot${(t.skillSlots || 1) > 1 ? 's' : ''}${act ? ` · ${esc(ACTIVE_DEF[act].name)}` : ''}</span>
         <span class="w-sum">${owner ? `${esc(owner.name)} is already yours. Take a Legacy for them instead.` : esc(c.cast.origin)}</span></div>
       ${owner ? `<span class="btn-row">${legacy.map((l) => `<button class="btn small" data-act="legacy" data-key="${c.key}" data-k="${l}" ${gone ? 'disabled' : ''}>${LEG[l]}</button>`).join('')}</span>`
-        : `<button class="w-buy" data-act="hire" data-key="${c.key}" ${gone || career.coin < c.price ? 'disabled' : ''}>${gone ? 'Hired' : `${c.price}<i>coin</i>`}</button>`}</div>`;
+        : `<button class="w-buy" data-act="hire" data-key="${c.key}" ${gone || career.coin < c.price ? 'disabled' : ''}>${gone ? 'Hired' : cn(c.price)}</button>`}</div>`;
   }).join('');
   const offers = (career.offers || []).map((o, i) => `<div class="recruit offer"><span class="mono cat-${category(UNITS[o.template])}">${unitIcon(UNITS[o.template], o.stars)}</span>
       <div class="w-txt"><b>${esc(o.name)}</b><span class="sub">${o.stars}★ ${esc(UNITS[o.template].name)}, from ${esc(o.from)}</span><span class="w-sum">Asked to join after you beat them. Free.</span></div>
       <span class="btn-row"><button class="btn small primary" data-act="accept-offer" data-i="${i}">Take them in</button><button class="btn small" data-act="decline-offer" data-i="${i}">Send away</button></span></div>`).join('');
   document.getElementById('view-ledger').innerHTML = `
     ${offers ? `<div class="block"><div class="block-head"><h2>Asking to join</h2></div><div class="wares">${offers}</div></div>` : ''}
-    <div class="block"><div class="block-head"><h2>The gate</h2><span class="sub"><span class="purse-chip">Strongbox <b class="num">${career.coin}</b> coin</span> · new faces in ${clock(bd.next - Date.now())}</span></div>
+    <div class="block"><div class="block-head"><h2>The gate</h2><span class="sub"><span class="purse-chip">Strongbox <b class="num">${cn(career.coin)}</b></span> · new faces in ${clock(bd.next - Date.now())}</span></div>
       <div class="wares">${cards}</div>
       <p class="note">New hires land on the bench. Field and place them on the <button class="linkish" data-act="view" data-v="squad">Squad</button> screen.</p></div>`;
 }
@@ -2145,7 +2148,7 @@ function renderMarketView() {
       <span class="w-ico">${itemIcon(it)}</span>
       <div class="w-txt"><b>${esc(it.name)}</b> <span class="rtag ${it.rarity}">${it.rarity}</span><span class="sub">${esc(SLOT_LABELS[it.slot])} · ${it.cost} pt${it.cost > 1 ? 's' : ''} in a roster</span><span class="w-sum">${esc(itemSummary(it))}</span>
         <span class="w-who ${who.length ? '' : 'none'}">${who.length ? `Fits ${esc(who.slice(0, 3).join(', '))}${who.length > 3 ? '…' : ''}` : 'Nobody in your school can use it yet'}${ownedCount(it.id) ? ` · you own ${ownedCount(it.id)}` : ''}</span></div>
-      <button class="w-buy" data-act="buy" data-id="${it.id}" ${sold || !can ? 'disabled' : ''}>${sold ? 'Sold' : `${priceOf(it)}<i>coin</i>`}</button></div>`;
+      <button class="w-buy" data-act="buy" data-id="${it.id}" ${sold || !can ? 'disabled' : ''}>${sold ? 'Sold' : cn(priceOf(it))}</button></div>`;
   };
   const owned = Object.entries(career.armory || {}).filter(([id, n]) => n > 0 && ITEMS[id]).map(([id, n]) => {
     const it = ITEMS[id]; const free = n - equippedCount(id);
@@ -2154,7 +2157,7 @@ function renderMarketView() {
   el.innerHTML = `
     <div class="mkt-head" ${S.market ? `style="background-image:url(${S.market})"` : ''}>
       <div class="mkt-who">${N.hasdrubal ? `<img src="${N.hasdrubal}" alt="">` : ''}<div><b>Hasdrubal</b><span class="sub">Arms dealer, the forum</span><p class="mkt-line">“${esc(line)}”</p></div></div>
-      <div class="mkt-purse"><span>Purse</span><b class="num">${career.coin}</b></div>
+      <div class="mkt-purse"><span>Purse</span><b class="num">${cn(career.coin)}</b></div>
     </div>
     <div class="block"><div class="block-head"><h2>On the counter</h2><span class="sub">Fresh stock in ${clock(st.next - Date.now())} · nothing over ${a.maxItem} pts at the ${esc(aName(a))}</span></div>
       <div class="wares">${st.items.map(card).join('')}</div></div>
@@ -2210,10 +2213,10 @@ function renderArenaView() {
         <ol class="squads">${squads || '<li class="sub">Nobody booked yet.</li>'}</ol></div>
       <div class="block"><div class="block-head"><h2>What it pays</h2>${railsOn() ? '' : `<span class="sub">Next small bout in <b class="num" id="afk-timer">${clock(next)}</b></span>`}</div>
         <ul class="pays">
-          <li><span class="lbl">Win</span><b>+${winPay(i)} coin</b><span class="sub">and renown the first time you beat a crew</span></li>
-          <li><span class="lbl">Loss</span><b>+${lossPay(i)} coin</b><span class="sub">the crowd tosses a little</span></li>
+          <li><span class="lbl">Win</span><b>+${cn(winPay(i))}</b><span class="sub">and renown the first time you beat a crew</span></li>
+          <li><span class="lbl">Loss</span><b>+${cn(lossPay(i))}</b><span class="sub">the crowd tosses a little</span></li>
           <li><span class="lbl">Small bouts</span><span class="sub">${afkLine}</span></li>
-          ${story().met ? `<li><span class="lbl">Vettius</span><b class="owed">${career.debt.toLocaleString()} owed</b><span class="sub">${(career.debtTier || 0) ? `ledger ${(career.debtTier || 0) + 1}` : "your uncle's debt"}${ledgerAt(career.debtTier || 0).unlock ? `; pays off with ${esc(ledgerAt(career.debtTier || 0).name)}` : ''}.${career.coin >= Math.min(debtStep(), career.debt) ? ` <button class="linkish" data-act="pay-debt">Pay ${Math.min(debtStep(), career.debt).toLocaleString()}</button>` : ''}</span></li>
+          ${story().met ? `<li><span class="lbl">Vettius</span><b class="owed">${cn(career.debt.toLocaleString())} owed</b><span class="sub">${(career.debtTier || 0) ? `ledger ${(career.debtTier || 0) + 1}` : "your uncle's debt"}${ledgerAt(career.debtTier || 0).unlock ? `; pays off with ${esc(ledgerAt(career.debtTier || 0).name)}` : ''}.${career.coin >= Math.min(debtStep(), career.debt) ? ` <button class="linkish" data-act="pay-debt">Pay ${Math.min(debtStep(), career.debt).toLocaleString()}</button>` : ''}</span></li>
           ${(career.spots || []).map((k) => { const L = LEDGERS.find((x) => x.unlock === k); return `<li><span class="lbl">${esc(L.name)}</span><span class="sub">${esc(L.does)}</span></li>`; }).join('')}` : ''}
         </ul></div>
     </div>`;
@@ -2859,7 +2862,7 @@ function catalogHTML(p) {
     const tq = curId && career.started && !state.sandbox ? GE.temperQuote(curId) : null;
     const temperBlock = !tq ? '' : !forgeOpen() ? '' : career.rung < FORGE_OPENS[tq.next] ? `<div class="forge-box muted">Tullus can make ${GE.QUALITIES[tq.next].name} pieces from a later arena.</div>`
       : `<div class="forge-box"><b>Temper to ${GE.QUALITIES[tq.next].name}</b> <span class="muted">${[tq.coin + ' coin', tq.scrap && tq.scrap + ' scrap', tq.ore && tq.ore + ' ore', tq.trophy && 'a trophy'].filter(Boolean).join(' · ')} · ${clock(tq.minutes * 60000 / SPEED())}</span>
-        <span class="muted">You have ${career.coin} coin, ${career.scrap || 0} scrap${career.rung >= 5 ? `, ${career.ore || 0} ore` : ''}.</span>
+        <span class="muted">You have ${cn(career.coin)}, ${career.scrap || 0} scrap${career.rung >= 5 ? `, ${career.ore || 0} ore` : ''}.</span>
         <div class="forge-acts">${tq.next === 3 ? affixOffer(curId).map((a) => `<button class="btn" data-act="temper" data-k="${a}">${esc(GE.AFFIXES[a].name)}: ${esc(GE.AFFIXES[a].description)}</button>`).join('') : `<button class="btn primary" data-act="temper">Send to the forge</button>`}</div></div>`;
     body = temperBlock + (curId ? `<button class="opt" data-act="unequip"><span class="opt-name">Leave empty ${badge('__none')}</span><span class="opt-cost">−${ITEMS[curId].cost}</span><span class="opt-line">Remove ${esc(ITEMS[curId].name)}</span></button>` : (vt && vt.results.__none !== undefined ? `<div class="sub" style="margin-bottom:4px">Empty slot: ${badge('__none')}</div>` : ''))
       + (shown.some((o) => o.it.id !== curId) ? '' : '<p class="sub">Nothing you own goes in this slot yet.</p>')
