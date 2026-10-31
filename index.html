@@ -547,6 +547,14 @@ table.stats td.final { font-weight: 600; }
 .sh-sandbox .stars { margin-bottom: 10px; }
 .sh-hint { padding: 18px 6px; align-self: start; }
 @media (min-width: 1180px) { #view-fighter { grid-template-columns: minmax(0, 620px) 400px; justify-content: center; } }
+.catalog .opt.sheet-row { grid-template-columns: 28px minmax(0, 1fr) auto; column-gap: 10px; row-gap: 1px; padding: 6px 10px; align-items: center; }
+.catalog .opt.sheet-row .oicon { grid-row: 1 / span 2; width: 28px; height: 28px; } .catalog .opt.sheet-row .oicon img, .catalog .opt.sheet-row .oicon svg { width: 28px; height: 28px; }
+.catalog .opt.sheet-row .opt-name { font-size: 14px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.catalog .opt.sheet-row .opt-cost { grid-column: 3; grid-row: 1 / span 2; font-size: 16px; }
+.catalog .opt.sheet-row .opt-delta { grid-column: 2; font-size: 12.5px; gap: 8px; line-height: 1.2; } .catalog .opt.sheet-row .opt-delta:empty { display: none; }
+.catalog .opt.sheet-row .eff { color: var(--steel); }
+.catalog .catalog-list { gap: 4px; }
+.catalog .opt.sheet-row.unequip { grid-template-columns: minmax(0, 1fr) auto; } .catalog .opt.sheet-row.unequip .opt-cost { grid-column: 2; grid-row: auto; }
 .catalog .opt.unequip { border-style: dashed; background: transparent; padding-top: 8px; padding-bottom: 8px; } .catalog .opt.unequip .opt-name { color: var(--pompeii); font-weight: 600; }
 @media (prefers-reduced-motion: reduce) { .sh-perk.fresh, .sh-tile.pop .ti, .sh-pop, .sh-stat .dl { animation: none; } }
 @media (max-width: 380px) { .sh-hero { height: 220px; } .sh-tok { width: 108px; height: 108px; right: 44px; } .sh-name { font-size: 25px; } .sh-stat b { font-size: 19px; } .sh-tac button { font-size: 12px; } }
@@ -554,7 +562,7 @@ table.stats td.final { font-weight: 600; }
 
 /* Phone: the slot sheet rises to ~60% and leaves the stat bar in view. */
 .drawer.sheet-mode { background: transparent; pointer-events: none; } .drawer.sheet-mode .catalog { pointer-events: auto; box-shadow: 0 -10px 30px rgba(0,0,0,.18); }
-.drawer.sheet-mode .catalog { height: 60vh; height: 60dvh; animation: sheet-up .2s cubic-bezier(.2,.8,.3,1); transition: transform .18s; }
+.drawer.sheet-mode .catalog { height: auto; max-height: 60vh; max-height: 60dvh; animation: sheet-up .2s cubic-bezier(.2,.8,.3,1); transition: transform .18s; }
 .drawer.sheet-mode .cat-head { cursor: grab; touch-action: none; position: relative; padding-top: 6px; }
 .drawer.sheet-mode .cat-head::before { content: ""; position: absolute; top: -6px; left: 50%; width: 38px; height: 4px; margin-left: -19px; border-radius: 2px; background: var(--line); }
 @keyframes sheet-up { from { transform: translateY(40%); opacity: .4; } }
@@ -3010,6 +3018,14 @@ function markPerksSeen(b, kind) {
   for (const id of (kind === 'scar' ? b.scars || [] : kind === 'title' ? b.titles || [] : [])) if (!b.seenPerks.includes(id)) b.seenPerks.push(id);
 }
 
+// After the storeroom: slots where something waiting in the armory would help glow until the next fight.
+function glowSlot(b, t, s, blocked) { return glowPicks(b, t, s, blocked).length > 0; }
+function glowPicks(b, t, s, blocked) {
+  if (blocked || state.sandbox || !career.started || !story().glow || (career.fights || 0) > 2) return [];
+  const cur = (b.equip || {})[s]; const room = arena().cap - cost.total + (cur ? ITEMS[cur].cost : 0);
+  return Object.values(ITEMS).filter((x) => x.slot === s && x.id !== cur && ownedCount(x.id) > equippedCount(x.id) && x.cost <= room
+    && !GE.itemLocks(t, x, s, { equip: b.equip }).length && (!cur || (() => { const nb = clone(b); applyEquip(nb, s, x.id); return ratingOf(nb) > ratingOf(b); })()));
+}
 function renderFighterView() {
   const el = document.getElementById('view-fighter');
   const b = focusB(); const i = focusI();
@@ -3056,12 +3072,12 @@ function renderFighterView() {
     const it = ITEMS[(b.equip || {})[s]]; const sv = viol.filter((v) => v.slot === s);
     const blocked = s === 'off' && GE.isTwoHanded(b.equip && b.equip.main);
     if (!it) {
-      const glow = careerNav && story().glow && !blocked && Object.values(ITEMS).some((x) => x.slot === s && ownedCount(x.id) > equippedCount(x.id) && x.cost <= arena().cap - cost.total && !GE.itemLocks(t, x, s, { arena: arena(), equip: b.equip }).length);
+      const glow = glowSlot(b, t, s, blocked);
       const nat = s === 'main' ? (t.naturalWeapon ? t.naturalWeapon.name : 'Fists') : '';
       return `<button class="sh-tile empty ${glow ? 'glow' : ''} ${pickSlot === s ? 'picking' : ''}" data-act="pick-slot" data-slot="${s}" ${blocked ? 'disabled' : ''} title="${esc(SLOT_LABELS[s])}${nat ? ': ' + esc(nat) : ''}">
         <span class="ti">${slotIcon(s)}</span><span class="tn">${s === 'main' && !blocked ? `${r.weapon.damage}<small>dmg</small>` : `<small>${blocked ? 'two hands' : esc(SLOT_LABELS[s].toLowerCase())}</small>`}</span></button>`;
     }
-    return `<button class="sh-tile rar-${it.rarity} ${pickSlot === s ? 'picking' : ''} ${sv.length ? 'invalid' : ''}" data-act="pick-slot" data-slot="${s}" data-tile="${s}" title="${esc(it.name)} · ${esc(sv.length ? sv[0].message : itemStat(it))}">
+    return `<button class="sh-tile rar-${it.rarity} ${glowSlot(b, t, s, false) ? 'glow' : ''} ${pickSlot === s ? 'picking' : ''} ${sv.length ? 'invalid' : ''}" data-act="pick-slot" data-slot="${s}" data-tile="${s}" title="${esc(it.name)} · ${esc(sv.length ? sv[0].message : itemStat(it))}">
       <span class="tc">${it.cost}</span><span class="ti">${itemIcon(it)}</span><span class="tn">${tileNum(it)}</span></button>`;
   }).join('');
 
@@ -3213,6 +3229,28 @@ function statDiff(b, slot, itemId) {
   return out;
 }
 
+// What a piece does, as short tags: stat changes first (green/red), then anything the numbers miss (resists, traits, actives).
+// Every row says something; a point never buys a blank line.
+function effectBits(it) {
+  const e = it.effects || {}, out = [];
+  for (const [k, v] of Object.entries({ ...((it.armor && it.armor.resists) || {}), ...(e.resists || {}) })) out.push(`${v > 0 ? '+' : '−'}${Math.abs(v)}% ${k} res`);
+  for (const id of e.traits || []) out.push((TRAITS[id] || {}).name || id);
+  for (const id of e.actives || []) out.push((ACTIVE_DEF[id] || {}).name || id);
+  if (e.regen) out.push(`+${e.regen} regen`);
+  if (e.thorns) out.push(`thorns ${e.thorns}`);
+  if (e.lifesteal) out.push(`${Math.round(e.lifesteal * 100)}% lifesteal`);
+  if (it.weapon && it.weapon.onHit) out.push(`${Math.round(it.weapon.onHit.chance * 100)}% ${it.weapon.onHit.status}`);
+  if (it.weapon && it.weapon.armorPierce) out.push(`ignores ${Math.round(it.weapon.armorPierce * 100)}% DEF`);
+  return out;
+}
+function rowBits(it, isCur, diff) {
+  const stat = isCur ? (it.weapon || it.armor || Object.values((it.effects || {}).mods || {}).some(Boolean) ? [`<span>${esc(itemStat(it).split(' · ')[0])}</span>`] : [])
+    : diff.map(([k, d]) => `<span class="${d > 0 ? 'plus' : 'minus'}">${signed(d)} ${k}</span>`);
+  const extra = effectBits(it).map((x) => `<span class="eff">${esc(x)}</span>`);
+  const all = [...stat, ...extra];
+  if (!all.length) all.push(`<span class="eff">${esc(String(it.description || '').split(/[.:]/)[0])}</span>`);
+  return all.join('');
+}
 function catalogHTML(p) {
   const a = arena();
   let title = '', sub = '', body = '', filters = '';
@@ -3245,7 +3283,7 @@ function catalogHTML(p) {
         <div class="forge-acts">${tq.next === 3 ? affixOffer(curId).map((a) => `<button class="btn" data-act="temper" data-k="${a}">${esc(GE.AFFIXES[a].name)}: ${esc(GE.AFFIXES[a].description)}</button>`).join('') : `<button class="btn primary" data-act="temper">Send to the forge</button>`}</div></div>`;
     const unequipRow = curId ? `<button class="opt sheet-row unequip" data-act="unequip"><span class="opt-name">Unequip ${badge('__none')}</span><span class="opt-cost">−${ITEMS[curId].cost}</span></button>` : '';
     body = temperBlock + (curId ? '' : (vt && vt.results.__none !== undefined ? `<div class="sub" style="margin-bottom:4px">Empty slot: ${badge('__none')}</div>` : ''))
-      + (shown.some((o) => o.it.id !== curId) ? '' : '<p class="sub">Nothing you own goes in this slot yet.</p>')
+      + (curId || shown.length ? '' : '<p class="sub">Nothing you own goes in this slot yet.</p>')
       + shown.map(({ it, locks, notes, own }) => {
         const isCur = it.id === curId;
         const st = own && !isCur && marketOpen() ? marketStock() : null;
@@ -3261,7 +3299,7 @@ function catalogHTML(p) {
         return `<button class="opt opt-item sheet-row rar-${it.rarity} ${isCur ? 'current' : ''} ${ownMsg ? 'not-owned' : ''}" data-act="${ownAct || 'equip'}" data-id="${it.id}" title="${esc(tip)}" ${locks.length || (ownMsg && !ownAct) ? 'disabled' : ''}>
           <span class="oicon">${itemIcon(it)}</span><span class="opt-name">${esc(it.name)}${isCur ? ' <span class="rtag anchor">on</span>' : ''}</span>
           <span class="opt-cost">${it.cost}</span>
-          <span class="opt-delta">${lockShort ? `<span class="minus">${esc(lockShort)}</span>` : diff.map(([k, d]) => `<span class="${d > 0 ? 'plus' : 'minus'}">${signed(d)} ${k}</span>`).join('')}${!locks.length && !isCur && dCost ? `<span class="${dCost > 0 ? 'minus' : 'plus'}">${dCost > 0 ? '+' : '−'}${Math.abs(dCost)} pt</span>` : ''}${ownMsg && !locks.length ? `<span class="muted">${forSale ? priceOf(it) + ' coin' : 'not owned'}</span>` : ''}</span></button>`;
+          <span class="opt-delta">${lockShort ? `<span class="minus">${esc(lockShort)}</span>` : rowBits(it, isCur, diff)}${!locks.length && !isCur && dCost ? `<span class="${dCost > 0 ? 'minus' : 'plus'}">${dCost > 0 ? '+' : '−'}${Math.abs(dCost)} pt</span>` : ''}${ownMsg && !locks.length ? `<span class="muted">${forSale ? priceOf(it) + ' coin' : 'not owned'}</span>` : ''}</span></button>`;
       }).map((h, n) => (n === 0 && curId ? h + unequipRow : h)).join('');
   } else if (p.mode === 'perk') {
     const b = pbOf(p); const t = UNITS[b.template]; const who = esc(b.name || t.name);
@@ -4024,9 +4062,9 @@ document.addEventListener('click', (e) => {
       story().gladius = 'given'; syncLineup(); saveCareer(); break;
     }
     case 'story-storeroom': {
-      // One of each cheap odd and end: the first taste of building a fighter your own way.
+      // A first taste, no choices yet: one piece each for three empty slots. (A peasant can't hold a real weapon, so no blade.)
       career.armory = career.armory || {};
-      const odds = Object.values(ITEMS).filter((it) => it.cost === 1 && !it.anchor && !it.quest && ['head', 'hands', 'feet', 'trinket', 'boon'].includes(it.slot));
+      const odds = ['leather_cap', 'hand_wraps', 'rope_sandals'].map((id) => ITEMS[id]).filter(Boolean);
       for (const it of odds) career.armory[it.id] = (career.armory[it.id] || 0) + 1;
       story().storeroom = true; story().glow = true; ledger(`Cleared out the storeroom: ${odds.length} odds and ends`, 0);
       saveCareer(); state.view = 'fighter'; state.sel = 0; state.picker = null; state.scrollTo = 'loadout'; window.scrollTo(0, 0);
@@ -4066,7 +4104,7 @@ document.addEventListener('click', (e) => {
     case 'decline-offer': career.offers.splice(+btn.dataset.i, 1); saveCareer(); break;
     case 'stable-open': { const u = career.stable.find((x) => x.uid === +btn.dataset.uid); if (!inLineup(u)) { toast(`${u.name} is on the bench. Field them to change gear and training.`); return; } state.sel = state.team.units.indexOf(u); state.view = 'fighter'; window.scrollTo(0, 0); break; }
     case 'release-pick': { const benched = career.stable.filter((u) => !inLineup(u)); if (!benched.length) { toast('Bench someone first, then release them.'); return; } const u = benched[benched.length - 1]; if (btn.dataset.armed) { releaseFighter(u.uid); toast(`${u.name} is gone. Their gear stays in the armory.`); break; } btn.dataset.armed = '1'; btn.textContent = `Tap again to release ${u.name}`; return; }
-    case 'buy-equip': { const id = btn.dataset.id; const m = buyItem(id); if (m) { toast(m); return; } applyEquip(pbOf(state.picker), state.picker.slot, id); toast(`Bought ${ITEMS[id].name} and put it on.`); state.popTile = state.picker.slot; if (!wide() && state.view !== 'fighter') state.picker = null; break; }
+    case 'buy-equip': { const id = btn.dataset.id; const m = buyItem(id); if (m) { toast(m); return; } applyEquip(pbOf(state.picker), state.picker.slot, id); toast(`Bought ${ITEMS[id].name} and put it on.`); state.popTile = state.picker.slot; state.picker = null; break; }
     case 'buy': { const m = buyItem(btn.dataset.id); toast(m || (career.lastGiven ? `${ITEMS[btn.dataset.id].name} is yours. ${career.lastGiven} is wearing it.` : `${ITEMS[btn.dataset.id].name} is in your armory. Equip it on the Fighter screen.`)); break; }
     case 'sell': { const m = sellItem(btn.dataset.id); toast(m || 'Sold.'); break; }
     case 'home-chronicle': {
@@ -4099,7 +4137,10 @@ document.addEventListener('click', (e) => {
     case 'rf-more': state.rf.more = (state.rf.more || 0) + 1; break;
     case 'temper': { const msg = startTemper(pbOf(state.picker), state.picker && state.picker.slot, btn.dataset.k); toast(msg || 'Off to Tullus at the forge.'); if (!msg) state.picker = null; break; }
     case 'salvage': { const msg = salvage(btn.dataset.id); toast(msg || 'Salvaged.'); break; }
-    case 'pick-slot': { const ci = btn.dataset.i !== undefined ? +btn.dataset.i : null; const sb = ci !== null ? state.team.units[ci] : b; state.picker = { mode: 'slot', unit: state.team.units.indexOf(sb), b: sb, slot: btn.dataset.slot }; break; }
+    case 'pick-slot': { const ci = btn.dataset.i !== undefined ? +btn.dataset.i : null; const sb = ci !== null ? state.team.units[ci] : b;
+      // Early on, an empty glowing slot with exactly one piece waiting just takes it: no sheet, no choice.
+      const one = state.view === 'fighter' && sb && !(sb.equip || {})[btn.dataset.slot] ? glowPicks(sb, UNITS[sb.template], btn.dataset.slot, false) : [];
+      if (one.length === 1) { applyEquip(sb, btn.dataset.slot, one[0].id); state.popTile = btn.dataset.slot; state.picker = null; break; } state.picker = { mode: 'slot', unit: state.team.units.indexOf(sb), b: sb, slot: btn.dataset.slot }; break; }
     case 'pick-recruit': if (career.started) { state.view = 'ledger'; window.scrollTo(0, document.body.scrollHeight); break; } state.picker = { mode: 'recruit' }; break;
     case 'pick-companion': state.picker = { mode: 'companion', unit: i }; break;
     case 'pick-strat': state.picker = { mode: 'stratagem', index: +btn.dataset.k }; break;
@@ -4107,8 +4148,8 @@ document.addEventListener('click', (e) => {
     case 'toggle-locked': state.hideLocked = !state.hideLocked; break;
     case 'vtest': if (!state.picker || state.picker.unit < 0) { toast('Field this fighter to test options against the field.'); return; } runVariants(); return;
     case 'rfilter': state.recruitFilter = btn.dataset.v; break;
-    case 'equip': applyEquip(pbOf(state.picker), state.picker.slot, btn.dataset.id); if (career.started && story().glow) { delete story().glow; saveCareer(); } state.popTile = state.picker.slot; if (!wide() && state.view !== 'fighter') state.picker = null; break;
-    case 'unequip': applyEquip(pbOf(state.picker), state.picker.slot, null); if (!wide() && state.view !== 'fighter') state.picker = null; break;
+    case 'equip': applyEquip(pbOf(state.picker), state.picker.slot, btn.dataset.id); state.popTile = state.picker.slot; state.picker = null; break;
+    case 'unequip': applyEquip(pbOf(state.picker), state.picker.slot, null); state.picker = null; break;
     case 'recruit':
       if (state.picker && state.picker.mode === 'companion') addUnit(btn.dataset.id, state.picker.unit); else addUnit(btn.dataset.id);
       state.picker = null; break;
@@ -4145,14 +4186,14 @@ document.addEventListener('click', (e) => {
       if (k && L > skillUnlocked(k)) { toast(`The Academy hasn't taught ${GE.SKILLS[k].name} ${L} yet.`); break; }
       if (k && !sk[p.n] && sk.length >= skillSlotsOf(pb)) { toast('No free skill slot.'); break; }
       if (sk[p.n]) sk.splice(p.n, 1, ...(k ? [[k, L]] : [])); else if (k) sk.push([k, L]);
-      pb.skills = Object.fromEntries(sk); if (career.started) saveCareer(); if (!wide() && state.view !== 'fighter') state.picker = null; break;
+      pb.skills = Object.fromEntries(sk); if (career.started) saveCareer(); state.picker = null; break;
     }
     case 'perk-scar': {
       const p = state.picker; const pb = pbOf(p); const w = [...(pb.wornScars || [])];
       if (btn.dataset.k) w[p.n] = btn.dataset.k; else w.splice(p.n, 1);
-      pb.wornScars = w.filter(Boolean).slice(0, GE.scarSlots(pb.fights)); if (career.started) saveCareer(); if (!wide() && state.view !== 'fighter') state.picker = null; break;
+      pb.wornScars = w.filter(Boolean).slice(0, GE.scarSlots(pb.fights)); if (career.started) saveCareer(); state.picker = null; break;
     }
-    case 'perk-title': { const pb = pbOf(state.picker); pb.title = btn.dataset.k || undefined; if (career.started) saveCareer(); if (!wide() && state.view !== 'fighter') state.picker = null; break; }
+    case 'perk-title': { const pb = pbOf(state.picker); pb.title = btn.dataset.k || undefined; if (career.started) saveCareer(); state.picker = null; break; }
     case 'skill': {
       const k = btn.dataset.k; const sk = { ...(b.skills || {}) };
       const slots = skillSlotsOf(b); const worn = Object.keys(sk).filter((x) => sk[x] > 0).length;
