@@ -1549,14 +1549,13 @@ function magnusNote() {
   // After a loss, point at the biggest lever first: empty fighter slots, then unspent points, then gear testing.
   if (career.last && !career.last.won) {
     const bs = boardStock(); const cheapest = Math.min(...bs.list.filter((x) => !bs.hired.includes(x.key)).map((x) => x.price));
-    if (career.lineup && career.lineup.length < a.maxUnits && c.remaining >= 4 && career.stable.length < bedCount() && career.coin < cheapest && a.maxUnits - career.lineup.length >= 2 && !seen['short-' + career.fights]) return { text: `We were outnumbered. ${isFinite(cheapest) ? `The cheapest hopeful at the gate wants ${cheapest}, and the strongbox has ${career.coin}.` : 'Nobody new at the gate until morning.'} Bodies first, gear after.`, btn: 'Understood', act: 'seen', k: 'short-' + career.fights };
-    if (career.lineup && career.lineup.length < a.maxUnits && c.remaining >= 4 && career.stable.length < bedCount() && career.coin >= cheapest) return { text: `We were outnumbered out there, and numbers win down here. There's someone at the gate for ${cheapest}.`, btn: 'Hire someone', act: 'view', v: 'ledger' };
+    if (career.lineup && career.lineup.length < a.maxUnits && c.remaining >= 4 && career.coin < cheapest && a.maxUnits - career.lineup.length >= 2 && !seen['short-' + career.fights]) return { text: `We were outnumbered. ${isFinite(cheapest) ? `The cheapest hopeful at the gate wants ${cheapest}, and the strongbox has ${career.coin}.` : 'Nobody new at the gate until morning.'} Bodies first, gear after.`, btn: 'Understood', act: 'seen', k: 'short-' + career.fights };
+    if (career.lineup && career.lineup.length < a.maxUnits && c.remaining >= 4 && career.coin >= cheapest) return { text: `We were outnumbered out there, and numbers win down here. There's someone at the gate for ${cheapest}.`, btn: 'Hire someone', act: 'view', v: 'ledger' };
     const st = marketOpen() ? marketStock() : null;
     const buyable = st ? st.items.filter((it) => !st.sold.includes(it.id) && priceOf(it) <= career.coin && it.cost <= c.remaining) : [];
     if (c.remaining >= 4 && buyable.length) return { text: `They'd have let us bring more than we did. Hasdrubal has ${buyable.length === 1 ? `a ${buyable[0].name}` : `${NUMW[buyable.length] || buyable.length} things`} we can afford that would fit.`, btn: 'Visit Hasdrubal', act: 'home-arrival', k: 'card' };
     // Beds full but points to spare: a better body is worth more than another trinket.
     const board = bs.list.filter((x) => !bs.hired.includes(x.key) && x.stars >= 2 && x.price <= career.coin);
-    if (c.remaining >= 10 && career.stable.length >= bedCount() && board.length) return { text: `The barracks is full and we're still light. Let the weakest go and take ${board[0].name}, a ${rankName(board[0].stars, UNITS[board[0].template]).toLowerCase()} at the gate, for ${board[0].price}.`, btn: 'To the barracks', act: 'view', v: 'ledger' };
     if (c.remaining >= 4) return { text: `We're light, and the strongbox has ${career.coin}. Let the small bouts earn for a while; Hasdrubal restocks every few hours.`, btn: 'Back to the yard', act: 'seen', k: 'broke-' + career.fights };
     return { text: career.last.why || 'That one got away from us. Change something small.', btn: 'To the armory', act: 'open-fighter' };
   }
@@ -1598,7 +1597,7 @@ function spotLine(id) {
   if (!career.started) return id === 'gate' ? 'Tonight: the Gutter Brawl' : '';
   const sq = nextSquad(), sqT = sq && squadTeam(sq);
   if (id === 'gate') return sqT ? `${sqT.name} tonight` : `${aName(ARENAS[rung().arena])}`;
-  if (id === 'barracks') { const n = (career.stable || []).length, beds = bedCount(); const offers = (career.offers || []).length; return offers ? `${offers} asking to join` : `${n} of ${beds} beds`; }
+  if (id === 'barracks') { const n = (career.stable || []).length; const offers = (career.offers || []).length; return offers ? `${offers} asking to join` : `${n} fighter${n === 1 ? '' : 's'}`; }
   if (id === 'training') { const free = drillSlots() - career.drills.length; return free > 0 ? `${free} post${free > 1 ? 's' : ''} free` : 'All posts busy'; }
   if (id === 'forge') { const jobs = (career.forge || []).length; if (jobs) return `Tullus: ${jobs} at the anvil`; const n = Object.values(career.armory || {}).reduce((a, b) => a + b, 0); return `${n} piece${n === 1 ? '' : 's'}`; }
   if (id === 'market') return 'Arms dealer';
@@ -1837,8 +1836,8 @@ const BOARD_POOL = [
 ];
 // Always room for a full lineup plus a couple on the bench.
 // The barracks grows fast: room is never the reason not to collect (the lineup cap of 10 does the limiting).
-const BEDS = [4, 8, 20, 40, 80, 150, 300, 600];
-const bedCount = () => BEDS[Math.min(career.rung, BEDS.length - 1)];
+// No bed limit: every fighter is a named individual, so owning them all is the collection, not a problem.
+const bedCount = () => Infinity;
 let uidSeq = 1;
 function stableInit() {
   if (!career.started) return;
@@ -1931,7 +1930,6 @@ function hire(key) {
   const st = boardStock(); const c = st.list.find((x) => x.key === key);
   if (!c || st.hired.includes(key)) return 'Already gone.';
   if (c.duplicate) return `${c.name} is already yours. Take the Legacy instead.`;
-  if (career.stable.length >= bedCount()) return `The barracks has ${bedCount()} beds and they're full. Release someone or climb the ladder for more room.`;
   if (career.coin < c.price) return `${c.name} wants ${c.price} coin; the strongbox has ${career.coin}.`;
   career.coin -= c.price; career.hired = { win: st.win, keys: [...st.hired, key] };
   addToStable({ template: c.template, name: c.name, stars: c.stars, castId: c.cast.id, titles: [...(c.cast.titles || [])], equip: starterKit(c.template) });
@@ -1956,7 +1954,7 @@ function takeLegacy(key, kind) {
 }
 // Defectors: after a win, a beaten fighter sometimes asks to join.
 function maybeDefector(k) {
-  const foe = squadTeam(k); if (!foe || railsOn() || Math.random() > 0.2 || career.stable.length >= bedCount()) return null;
+  const foe = squadTeam(k); if (!foe || railsOn() || Math.random() > 0.2) return null;
   const pool = foe.units.filter((u) => !UNITS[u.template].companion); if (!pool.length) return null;
   const f = pool[Math.floor(Math.random() * pool.length)];
   const owned = new Set(career.stable.map((u) => u.castId)); const c = GE.CAST.find((x) => x.template === f.template && x.stars < 5 && !owned.has(x.id));
@@ -1967,7 +1965,6 @@ function maybeDefector(k) {
 }
 function acceptOffer(i) {
   const o = (career.offers || [])[i]; if (!o) return '';
-  if (career.stable.length >= bedCount()) return `No free bed. The barracks holds ${bedCount()}.`;
   const used = new Set(career.stable.map((u) => u.name)); let name = o.name; let n = 2; while (used.has(name)) name = `${o.name} ${n++}`;
   addToStable({ template: o.template, name, stars: o.stars, castId: o.castId, titles: [...(o.titles || [])], equip: starterKit(o.template) });
   career.offers.splice(i, 1); ledger(`${name} came over from ${o.from}`); chronicle(`${name}, once of ${o.from}, swore to ${state.team.name}.`);
@@ -2035,9 +2032,9 @@ function renderStableView() {
       <span class="btn-row"><button class="btn small primary" data-act="accept-offer" data-i="${i}">Take them in</button><button class="btn small" data-act="decline-offer" data-i="${i}">Send away</button></span></div>`).join('');
   document.getElementById('view-ledger').innerHTML = `
     ${offers ? `<div class="block"><div class="block-head"><h2>Asking to join</h2></div><div class="wares">${offers}</div></div>` : ''}
-    <div class="block"><div class="block-head"><h2>The gate</h2><span class="sub"><span class="purse-chip">Strongbox <b class="num">${career.coin}</b> coin</span> · beds <b class="num">${career.stable.length}</b>/${bedCount()} · new faces in ${clock(bd.next - Date.now())}</span></div>
+    <div class="block"><div class="block-head"><h2>The gate</h2><span class="sub"><span class="purse-chip">Strongbox <b class="num">${career.coin}</b> coin</span> · new faces in ${clock(bd.next - Date.now())}</span></div>
       <div class="wares">${cards}</div>
-      <p class="note">New hires land on the bench. Field and place them on the <button class="linkish" data-act="view" data-v="squad">Squad</button> screen.${career.stable.length > 1 ? ` Out of beds? <button class="linkish" data-act="release-pick">Release a fighter</button>` : ''}</p></div>`;
+      <p class="note">New hires land on the bench. Field and place them on the <button class="linkish" data-act="view" data-v="squad">Squad</button> screen.</p></div>`;
 }
 
 // ---------------- The armory and Hasdrubal's market (career mode) ----------------
