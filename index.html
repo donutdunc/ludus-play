@@ -4021,7 +4021,7 @@ document.addEventListener('click', (e) => {
     case 'story-gladius': {
       const u = career.stable && career.stable.find((x) => x.uid === career.lineup[0]);
       if (u) { u.equip = { ...(u.equip || {}), main: 'uncles_gladius' }; ledger(`${u.name} took your uncle's gladius from the storeroom`, 0); }
-      story().gladius = 'given'; syncLineup(); saveCareer(); toast("Uncle's Gladius: 6 slash, up from the club's 3 blunt."); break;
+      story().gladius = 'given'; syncLineup(); saveCareer(); break;
     }
     case 'story-storeroom': {
       // One of each cheap odd and end: the first taste of building a fighter your own way.
