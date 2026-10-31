@@ -105,6 +105,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--panel); border-bottom: 1px solid var(--line);
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 10px 12px;
 }
+.top { transition: transform .22s ease; }
+@media (max-width: 759px) { .top.hid { transform: translateY(calc(-100% - 2px)); } }
 .top-row { display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; }
 .wordmark { font-family: var(--f-display); font-size: 26px; color: var(--pompeii); line-height: 1; letter-spacing: .02em; }
 .tabs { display: inline-flex; border: 1px solid var(--line); border-radius: var(--r-s); overflow: hidden; }
@@ -3964,6 +3966,16 @@ function runSim() {
   }
   render();
 }
+
+// Phone: the header slides away while you scroll down to look at things, and comes back the moment you scroll up.
+let topLastY = 0;
+addEventListener('scroll', () => {
+  const top = document.getElementById('top'); const y = scrollY; const d = y - topLastY;
+  if (!top || !mq('(max-width: 759px)')) { if (top) top.classList.remove('hid'); return; }
+  if (y < top.offsetHeight || d < -8) top.classList.remove('hid');
+  else if (d > 8 && !document.body.classList.contains('sheet-open')) top.classList.add('hid');
+  if (Math.abs(d) > 8 || y < top.offsetHeight) topLastY = y;
+}, { passive: true });
 
 // ---------------- Events ----------------
 document.addEventListener('click', (e) => {
