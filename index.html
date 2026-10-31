@@ -133,7 +133,7 @@ select { background: var(--raise); border: 1px solid var(--line); border-radius:
 .view { display: grid; gap: 16px; align-items: start;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 16px 48px; grid-template-columns: minmax(0, 1fr); }
 body[data-view] .view { display: none; }
-body[data-view="home"] #view-home, body[data-view="arena"] #view-arena, body[data-view="armory"] #view-armory, body[data-view="ledger"] #view-ledger, body[data-view="roster"] #view-roster, body[data-view="squad"] #view-squad, body[data-view="academy"] #view-academy, body[data-view="fighter"] #view-fighter, body[data-view="market"] #view-market { display: grid; }
+body[data-view="home"] #view-home, body[data-view="arena"] #view-arena, body[data-view="armory"] #view-armory, body[data-view="ledger"] #view-ledger, body[data-view="roster"] #view-roster, body[data-view="squad"] #view-squad, body[data-view="academy"] #view-academy, body[data-view="training"] #view-training, body[data-view="fighter"] #view-fighter, body[data-view="market"] #view-market { display: grid; }
 @media (min-width: 820px) { #view-roster { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); } }
 @media (min-width: 1200px) { #view-roster { grid-template-columns: 290px minmax(0, 1fr) 340px; } }
 @media (min-width: 1180px) { #view-fighter { grid-template-columns: minmax(0, 1fr) 380px; } }
@@ -284,6 +284,11 @@ body[data-view="academy"] #top .purse, body[data-view="academy"] #top .top-contr
 .fp-sub { font-size: 13px; color: var(--muted); } .fp-pts { font-size: 12px; color: var(--muted); text-align: right; } .fp-pts b { font-size: 22px; color: var(--bronze); display: block; line-height: 1; }
 .fp-origin { margin: 8px 0 10px; font-size: 13px; font-style: italic; color: var(--muted); }
 .fp .lslot { min-height: 46px; padding: 5px 8px 5px 6px; } .fp .lslot .lbl { font-size: 9.5px; } .fp .lslot .itm { font-size: 13.5px; } .fp .lslot .st { font-size: 11px; display: block !important; }
+.posts { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.post { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 8px; align-items: center; padding: 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); text-align: left; min-height: 58px; position: relative; }
+.post .mono { width: 40px; height: 40px; } .post-txt { display: flex; flex-direction: column; min-width: 0; } .post-txt b { font-size: 14px; } .post-t { position: absolute; top: 6px; right: 8px; font-size: 12px; color: var(--verd); }
+.post.open { border-style: dashed; cursor: pointer; } .post.open.on { border-color: var(--bronze); } .post-plus { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 22px; color: var(--bronze); border: 1px dashed var(--bronze); }
+.post-mini { width: 26px !important; height: 26px !important; display: inline-grid; vertical-align: middle; } body[data-view="training"] #top .purse, body[data-view="training"] #top .top-controls { display: none; }
 .stat-row { cursor: pointer; } .more-i { font-size: 11px; color: var(--muted); margin-left: 2px; }
 .purse-chip { color: var(--ink); } .purse-chip b { color: var(--bronze); font-size: 15px; }
 .ludus-card.splash { position: fixed; inset: 0; z-index: 60; border-radius: 0; margin: 0; display: grid; place-items: center; padding: 24px; background: radial-gradient(ellipse at 50% 35%, #2a1d12, #0d0907 70%); }
@@ -1074,6 +1079,7 @@ img.item-art { object-fit: contain; filter: none !important; }
   <section class="view" id="view-arena"></section>
   <section class="view" id="view-armory"></section>
   <section class="view" id="view-academy"></section>
+  <section class="view" id="view-training"></section>
   <section class="view" id="view-ledger"></section>
   <section class="view" id="view-market"></section>
   <section class="view" id="view-squad"></section>
@@ -1571,7 +1577,7 @@ function magnusNote() {
     if (career.fights === 2) return { text: `A starving dog this time. Fast and mean, and it'll lunge from two tiles off, so don't blink. Watch the name that flashes by a fighter: that's a special move, and each fighter has one on a cooldown. When ${lead} gets hit, he can Dig In.`, btn: null };
     if (stable.length < 2) return { text: `Word gets around. The Tavern Cellar will have us, but they fight in pairs. ${lead} needs someone beside him, and there are a few hopefuls at the gate.`, btn: 'See who\'s at the gate', act: 'view', v: 'ledger' };
     if (career.fights === 3) return { text: `${stable[1].name} and ${lead}, against two farmhands who drank their wages. Keep them close together.`, btn: null };
-    return { text: `Three wins. Now the patient part: send one of them to the posts. A few minutes of drilling and they keep it for good.`, btn: 'To the training posts', act: 'open-fighter' };
+    return { text: `Three wins. Now the patient part: send one of them to the posts. A few minutes of drilling and they keep it for good.`, btn: 'To the training posts', act: 'view', v: 'training' };
   }
   if (!career.afkOn) return { text: `One more thing your uncle did right. While you're away, I take the school out to small bouts: one every quarter hour at whichever arena you've picked, with that arena's lineup. Small purses, but they add up, and every result goes in the ledger.`, btn: 'Send them out', act: 'afk-on' };
   if (career.rung > career.seenRung) {
@@ -1596,7 +1602,7 @@ function magnusNote() {
   if (academyOpen() && !seen.academy) return { text: `Your uncle's old drill hall is still standing. Call it an academy: pay a teacher, wait out the course, and every fighter in the school can use what was taught. One course at a time to start.`, btn: 'To the Academy', act: 'view', v: 'academy', k: 'academy' };
   if (forgeOpen() && !seen.forge) return { text: `Tullus the smith has fired up the old forge behind the barracks. Bring him a piece and some scrap and he'll make it better. Spares he melts down for scrap.`, btn: 'Understood', act: 'seen', k: 'forge' };
   if (marketOpen() && !career.bought) return { text: "Hasdrubal sent his card. He trades in the forum, past the fish market, and what you buy from him stays yours. Even his cheap pieces are worth a look.", btn: 'Visit Hasdrubal', act: 'home-arrival', k: 'card' };
-  if (career.rung >= 1 && !career.drilled && career.coin >= 3) return { text: `${career.coin} in the strongbox and the posts are empty. A few minutes of drilling and they keep it for good.`, btn: 'To the training posts', act: 'open-fighter' };
+  if (career.rung >= 1 && !career.drilled && career.coin >= 3) return { text: `${career.coin} in the strongbox and the posts are empty. A few minutes of drilling and they keep it for good.`, btn: 'To the training posts', act: 'view', v: 'training' };
   if (team.units.length >= 3 && !seen.roster) return { text: 'Three of us now, so where they stand matters. Shields shoulder to shoulder, archers and healers behind them.', btn: 'Set the formation', act: 'view', v: 'arena' };
   // After a loss, point at the biggest lever first: empty fighter slots, then unspent points, then gear testing.
   if (career.last && !career.last.won) {
@@ -1611,7 +1617,7 @@ function magnusNote() {
     if (c.remaining >= 4) return { text: `We're light, and the strongbox has ${career.coin}. Let the small bouts earn for a while; Hasdrubal restocks every few hours.`, btn: 'Back to the yard', act: 'seen', k: 'broke-' + career.fights };
     return { text: career.last.why || 'That one got away from us. Change something small.', btn: 'To the armory', act: 'open-fighter' };
   }
-  if (!career.drills.length && career.coin >= 3) return { text: `${career.coin} in the strongbox and the posts are empty.`, btn: 'To the training posts', act: 'open-fighter' };
+  if (!career.drills.length && career.coin >= 3) return { text: `${career.coin} in the strongbox and the posts are empty.`, btn: 'To the training posts', act: 'view', v: 'training' };
   if (c.remaining > 0 && a.cap <= 52 && !seen['spare-' + career.rung]) return { text: `The ${aName(a)} would let us bring a little more. ${marketOpen() ? 'A cheap piece from Hasdrubal, or another body from the gate.' : 'Even junk counts: a stick or some rags in an empty hand.'}`, btn: 'Noted', act: 'seen', k: 'spare-' + career.rung };
   const lt = career.debtTier || 0;
   if (lt > 0 && !seen['ledger-' + lt]) { const L = ledgerAt(lt); return { text: `${L.letter} He wants ${career.debt.toLocaleString()} denarii.${L.unlock ? ` Pay it and the ${L.name.replace(/^The /, '').toLowerCase()} is ours.` : ''}`, btn: 'Of course he does', act: 'seen', k: 'ledger-' + lt }; }
@@ -1628,7 +1634,7 @@ const YARD = { gate: { x: 50, y: 15, w: 34 }, barracks: { x: 22, y: 41, w: 36 },
 const SPOTS = {
   gate: { name: 'Arena', act: 'view', v: 'arena' },
   barracks: { name: 'Barracks', act: 'view', v: 'squad' },
-  training: { name: 'Training', act: 'open-fighter' },
+  training: { name: 'Training', act: 'view', v: 'training' },
   forge: { name: 'Armory', act: 'view', v: 'armory' },
   market: { name: 'Hasdrubal', act: 'view', v: 'market' },
   academy: { name: 'Academy', act: 'view', v: 'academy' },
@@ -1641,6 +1647,7 @@ function noteTarget(note) {
   if (note.act === 'story-storeroom') return 'forge';
   if (note.act === 'home-arrival' && note.k === 'card') return 'market';
   if (note.act === 'view' && note.v === 'academy') return 'academy';
+  if (note.act === 'view' && note.v === 'training') return 'training';
   if (note.act === 'view' && note.v === 'squad') return 'barracks';
   return null;
 }
@@ -1796,6 +1803,29 @@ function useCredit(skill) {
   if (!c || !(career.academyCredit > 0)) return 'No credit to use.';
   career.academyCredit--; c.end = Date.now(); finishCourses(); saveCareer(); return '';
 }
+// ---- The training posts: open posts first; tap one, pick a fighter, pick a stat ----
+function renderTrainingView() {
+  finishDrills();
+  const el = document.getElementById('view-training'); const n = drillSlots(); const tp = state.post || null;
+  const posts = []; for (let k = 0; k < n; k++) { const d = career.drills[k];
+    if (d) { const u = career.stable.find((x) => x.name === d.name && x.template === d.template); const t = UNITS[d.template];
+      posts.push(`<div class="post busy"><span class="mono cat-${category(t)}">${unitIcon(t, u && u.stars, u && u.castId)}</span><span class="post-txt"><b>${esc(d.name)}</b><span class="sub">${STAT_LABEL[d.stat]} → Lv ${((u && u.training) || {})[d.stat] + 1 || 1}</span></span><span class="num post-t" data-end="${d.end}">${clock(d.end - Date.now())}</span></div>`); }
+    else posts.push(`<button class="post open ${tp ? 'on' : ''}" data-act="post-open"><span class="post-plus">+</span><span class="post-txt"><b>Open post</b><span class="sub">Tap to train someone</span></span></button>`); }
+  let pick = '';
+  if (tp && tp.step === 'fighter') {
+    const can = career.stable.filter((u) => !drillFor(u) && Object.keys(UNITS[u.template].trainable).some((k) => ((u.training || {})[k] || 0) < GE.maxPerStat(u.stars)))
+      .sort((x, y) => (y.stars || 3) - (x.stars || 3) || x.name.localeCompare(y.name));
+    pick = `<div class="block"><div class="block-head"><h2>Who trains?</h2><button class="close-x" data-act="post-close" aria-label="Close">×</button></div>
+      <div class="bk-list">${can.map((u) => { const t = UNITS[u.template]; const L = Object.values(u.training || {}).reduce((a, x) => a + (x || 0), 0);
+        return `<button class="bk-row" data-act="post-fighter" data-uid="${u.uid}"><span class="mono cat-${category(t)}">${unitIcon(t, u.stars, u.castId)}</span><span class="bk-who"><b>${esc(u.name)}</b><span class="bk-sub">${u.stars || 3}★ ${esc(t.name)} · ${L} level${L === 1 ? '' : 's'} trained</span></span><span class="bk-pts">${cn(drillQuote(u, 'hp').coin)}</span></button>`; }).join('') || '<p class="sub">Everyone is training or at their limit.</p>'}</div></div>`;
+  } else if (tp && tp.step === 'stat') {
+    const u = career.stable.find((x) => x.uid === tp.uid);
+    if (u) { const t = UNITS[u.template];
+      pick = `<div class="block"><div class="block-head"><h2><span class="mono cat-${category(t)} post-mini">${unitIcon(t, u.stars, u.castId)}</span> ${esc(u.name)}</h2><button class="linkish" data-act="post-open">Someone else</button></div>${drillPanel(u, t, u.training || {})}</div>`; }
+  }
+  el.innerHTML = `<div class="training-page"><div class="block"><div class="block-head"><h2>Training posts</h2><span class="sub">${career.drills.length}/${n} in use · ${cn(career.coin)}</span></div>
+    <div class="posts">${posts.join('')}</div><p class="sub" style="margin:8px 0 0">A drill adds to one stat for good. Each level costs more time and coin; more posts open at later arenas.</p></div>${pick}</div>`;
+}
 function renderAcademyView() {
   finishCourses();
   const ac = academy(); const el = document.getElementById('view-academy');
@@ -1826,6 +1856,7 @@ function renderHomeView() {
 }
 let homeClock = null;
 setInterval(() => { if (state.view === 'academy') { if (finishCourses()) render(); else document.querySelectorAll('#view-academy [data-end]').forEach((el) => { el.textContent = clock(+el.dataset.end - Date.now()); }); }
+  if (state.view === 'training') document.querySelectorAll('#view-training [data-end]').forEach((el) => { if (+el.dataset.end <= Date.now()) { finishDrills(); render(); } else el.textContent = clock(+el.dataset.end - Date.now()); });
   if (state.view === 'fighter' || state.view === 'ledger') document.querySelectorAll('#view-fighter [data-end], #view-ledger [data-end]').forEach((el) => { const left = +el.dataset.end - Date.now(); if (left <= 0) { finishDrills(); render(); } else el.textContent = clock(left); }); }, 1000);
 function startHomeClock() {
   clearInterval(homeClock);
@@ -2343,7 +2374,7 @@ function render() {
   document.body.dataset.view = state.view;
   document.body.dataset.career = career.started && !state.sandbox ? '1' : '';
   renderTop();
-  if (state.view === 'home') renderHomeView(); else if (state.view === 'arena') renderArenaView(); else if (state.view === 'armory') renderArmoryView(); else if (state.view === 'market') renderMarketView(); else if (state.view === 'ledger') (career.started ? renderStableView() : renderLedgerView()); else if (state.view === 'squad') (career.started && !state.sandbox ? renderBarracksView() : renderSquadView()); else if (state.view === 'academy') renderAcademyView(); else if (state.view === 'roster') renderRosterView(); else renderFighterView();
+  if (state.view === 'home') renderHomeView(); else if (state.view === 'arena') renderArenaView(); else if (state.view === 'armory') renderArmoryView(); else if (state.view === 'market') renderMarketView(); else if (state.view === 'ledger') (career.started ? renderStableView() : renderLedgerView()); else if (state.view === 'squad') (career.started && !state.sandbox ? renderBarracksView() : renderSquadView()); else if (state.view === 'academy') renderAcademyView(); else if (state.view === 'training') renderTrainingView(); else if (state.view === 'roster') renderRosterView(); else renderFighterView();
   renderDrawer();
   persist();
   document.documentElement.style.setProperty('--top-h', document.getElementById('top').offsetHeight + 'px');
@@ -3766,7 +3797,7 @@ document.addEventListener('click', (e) => {
       return;
     }
     case 'close-chronicle': { const d = document.getElementById('drawer'); d.hidden = true; d.innerHTML = ''; d.dataset.key = ''; return; }
-    case 'drill': { const msg = startDrill(b, btn.dataset.k); toast(msg || 'Off to the training posts.'); break; }
+    case 'drill': { const msg = startDrill(b, btn.dataset.k); toast(msg || 'Off to the training posts.'); if (!msg && state.view === 'training') state.post = null; break; }
     case 'home-fighter': state.sel = +btn.dataset.i; state.arenaId = rung().arena; state.view = 'fighter'; window.scrollTo(0, 0); break;
     case 'home-seen-roster': career.seenRung = career.rung; saveCareer(); state.arenaId = rung().arena; state.view = 'ledger'; window.scrollTo(0, 0); break;
     case 'home-reset':
@@ -3816,6 +3847,9 @@ document.addEventListener('click', (e) => {
     }
     case 'afk-on': career.afkOn = true; career.afkAt = Date.now(); (career.seen || (career.seen = {})).ledger = true; saveCareer(); toast(`Small bouts start now: the first in ${Math.round(afkMs() / 60000)} minutes.`); break;
     case 'watch-afk': { const L = career.lastAfk; if (!L) return; battle.replay = { seed: L.seed }; battle.fromHome = true; state.arenaId = L.arena || state.arenaId; startBattle(L.k); return; }
+    case 'post-open': state.post = { step: 'fighter' }; break;
+    case 'post-close': state.post = null; break;
+    case 'post-fighter': state.post = { step: 'stat', uid: +btn.dataset.uid }; state.focusUid = +btn.dataset.uid; break;
     case 'intro-go': state.introSeen = true; break;
     case 'ar-tab': state.arTab = btn.dataset.k; break;
     case 'ar-sort': state.arSort = btn.dataset.k; break;
