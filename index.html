@@ -751,6 +751,8 @@ body[data-view="squad"][data-career="1"] #top .top-controls, body[data-view="fig
 .bld.guide img { animation: guide-bob 1.6s ease-in-out infinite; }
 @keyframes guide-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(217,162,79,.75), 0 2px 6px rgba(0,0,0,.3); } 60% { box-shadow: 0 0 0 9px rgba(217,162,79,0), 0 2px 6px rgba(0,0,0,.3); } }
 @keyframes guide-bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -3%; } }
+@keyframes bld-in { from { opacity: 0; transform: translate(-50%, -54%) scale(.9); } }
+.bld.fresh { animation: bld-in 1.2s ease-out both; }
 .yard .bld { z-index: 95; } .yard .bld img { position: relative; }
 .paper.magnus { padding: 14px 16px 14px 70px; font-family: "IM Fell English", Georgia, serif; font-style: italic; font-size: 16.5px; line-height: 1.32; border-radius: 3px; transform: rotate(-.4deg); }
 .paper.magnus p { margin: 0; } .paper.magnus .who { font-style: normal; font-family: "IM Fell English SC", serif; font-size: 14px; margin-right: 4px; color: #5e1712; }
@@ -1342,6 +1344,7 @@ const CAREER_KEY = 'ludus-career-v5';
 try { localStorage.removeItem('ludus-career-v4'); } catch (e) { /* storage unavailable */ }
 // Drop saves from older versions so nobody carries stale data forward.
 try { for (const k of ['ludus-roster-v3', 'ludus-career-v2', 'ludus-career-v3']) localStorage.removeItem(k); } catch (e) { /* storage unavailable */ }
+function wipeCareer() { for (const k of Object.keys(career)) delete career[k]; }
 function newCareer() { return { rung: 0, beaten: {}, coin: 0, renown: 0, fights: 0, last: null, afkAt: Date.now(), started: false, seenRung: 0, ledger: [], chronicle: [], drills: [], story: {}, debt: DEBT_START }; }
 // The uncle's debt to Vettius: the first hour's running goal.
 const DEBT_START = 200, DEBT_STEP = 25;
@@ -1599,9 +1602,10 @@ function magnusNote() {
     if (u && !seen.scarslot) return { text: `${u.name} has five fights behind them now. The sand leaves marks: from here, some fights leave a scar. Every scar gives and takes something, and you choose which to wear.`, btn: 'Understood', act: 'seen', k: 'scarslot' }; }
   { const u = stable.find((x) => (x.titles || []).length);
     if (u && !seen.firsttitle) return { text: `The crowd has a name for ${u.name} now: ${GE.TITLES[u.titles[0]].name}. A title costs nothing to wear, and some of them change what a fighter is.`, btn: 'Understood', act: 'seen', k: 'firsttitle' }; }
-  if (academyOpen() && !seen.academy) return { text: `Your uncle's old drill hall is still standing. Call it an academy: pay a teacher, wait out the course, and every fighter in the school can use what was taught. One course at a time to start.`, btn: 'To the Academy', act: 'view', v: 'academy', k: 'academy' };
+  // After the opening, one new place every couple of fights rather than all at once.
+  if (academyOpen() && !seen.academy && (career.fights || 0) >= 6) return { text: `Your uncle's old drill hall is still standing. Call it an academy: pay a teacher, wait out the course, and every fighter in the school can use what was taught. One course at a time to start.`, btn: 'To the Academy', act: 'view', v: 'academy', k: 'academy' };
   if (forgeOpen() && !seen.forge) return { text: `Tullus the smith has fired up the old forge behind the barracks. Bring him a piece and some scrap and he'll make it better. Spares he melts down for scrap.`, btn: 'Understood', act: 'seen', k: 'forge' };
-  if (marketOpen() && !career.bought) return { text: "Hasdrubal sent his card. He trades in the forum, past the fish market, and what you buy from him stays yours. Even his cheap pieces are worth a look.", btn: 'Visit Hasdrubal', act: 'home-arrival', k: 'card' };
+  if (marketOpen() && !career.bought && (career.fights || 0) >= 8) return { text: "Hasdrubal sent his card. He trades in the forum, past the fish market, and what you buy from him stays yours. Even his cheap pieces are worth a look.", btn: 'Visit Hasdrubal', act: 'home-arrival', k: 'card' };
   if (career.rung >= 1 && !career.drilled && career.coin >= 3) return { text: `${career.coin} in the strongbox and the posts are empty. A few minutes of drilling and they keep it for good.`, btn: 'To the training posts', act: 'view', v: 'training' };
   if (team.units.length >= 3 && !seen.roster) return { text: 'Three of us now, so where they stand matters. Shields shoulder to shoulder, archers and healers behind them.', btn: 'Set the formation', act: 'view', v: 'arena' };
   // After a loss, point at the biggest lever first: empty fighter slots, then unspent points, then gear testing.
@@ -1663,6 +1667,20 @@ function spotLine(id) {
   if (id === 'academy') { finishCourses(); const c = academy().courses[0]; return c ? `${GE.SKILLS[c.skill].name} ${c.level}: ${clock(c.end - Date.now())}` : 'No course running'; }
   return '';
 }
+// The yard fills in as the opening teaches each place: the gate first, then the storeroom, the barracks,
+// the posts, Hasdrubal and the Academy. A building appearing for the first time fades in.
+function spotOpen(id) {
+  if (!career.started) return id === 'gate';
+  const f = career.fights || 0, st = story();
+  if (id === 'gate') return true;
+  if (id === 'forge') return f >= 2 || !!st.storeroom || career.rung >= 1;
+  if (id === 'barracks') return (career.stable || []).length >= 2 || career.rung >= 1;
+  if (id === 'training') return f >= 4 || !!career.drilled;
+  const sn = career.seen || {};
+  if (id === 'market') return marketOpen() && !railsOn() && !!(sn.card || sn.market || career.bought);
+  if (id === 'academy') return academyOpen() && !!sn.academy;
+  return false;
+}
 function yardHTML() {
   const units = career.started ? state.team.units : [];
   const arch = schoolArchetype(units);
@@ -1671,7 +1689,8 @@ function yardHTML() {
   const L = ART.ludus || {};
   const guide = noteTarget(magnusNote());
   const bld = (id) => { const sp = SPOTS[id]; const line = spotLine(id);
-    return `<button class="bld ${guide === id ? 'guide' : ''}" style="left:${YARD[id].x}%;top:${YARD[id].y}%;width:${YARD[id].w}%" data-act="${sp.act}" ${sp.v ? `data-v="${sp.v}"` : ''} data-b="${id}" aria-label="${sp.name}${line ? ': ' + esc(line) : ''}">${L[id] ? `<img src="${L[id]}" alt="" draggable="false">` : id === 'academy' ? '' : `<span class="b-ph">${id}</span>`}<span class="bld-tag"><b>${sp.name}</b>${line ? `<span>${esc(line)}</span>` : ''}</span></button>`; };
+    const fresh = !(career.seenSpots || []).includes(id); if (fresh && career.started) career.seenSpots = [...(career.seenSpots || []), id];
+    return `<button class="bld ${guide === id ? 'guide' : ''} ${fresh && career.started && id !== 'gate' ? 'fresh' : ''}" style="left:${YARD[id].x}%;top:${YARD[id].y}%;width:${YARD[id].w}%" data-act="${sp.act}" ${sp.v ? `data-v="${sp.v}"` : ''} data-b="${id}" aria-label="${sp.name}${line ? ': ' + esc(line) : ''}">${L[id] ? `<img src="${L[id]}" alt="" draggable="false">` : id === 'academy' ? '' : `<span class="b-ph">${id}</span>`}<span class="bld-tag"><b>${sp.name}</b>${line ? `<span>${esc(line)}</span>` : ''}</span></button>`; };
   // Spots: drillers at the posts; everyone else by layout.
   let free = 0;
   const spot = (i, n) => {
@@ -1691,7 +1710,8 @@ function yardHTML() {
     return `<button class="yard-f ${d ? 'drilling' : 'lay-' + arch.layout}" style="left:${x}%;top:${y}%;z-index:${Math.round(y)};animation-delay:${(i * 0.37) % 1.6}s" data-act="home-fighter" data-i="${i}" title="${esc(fname(u))}">${fig}<span class="yf-name">${esc(fname(u))}</span>${d ? `<span class="yf-timer num" data-end="${d.end}">${clock(d.end - Date.now())}</span>` : ''}</button>`;
   }).join('');
   const bg = L.yard ? `style="background-image:url(${L.yard})"` : '';
-  const shown = career.started ? ['gate', 'barracks', 'training', 'forge', ...(marketOpen() ? ['market'] : []), ...(academyOpen() ? ['academy'] : [])] : ['gate'];
+  // A building also appears the moment Magnus points at it.
+  const shown = career.started ? ['gate', 'forge', 'barracks', 'training', 'market', 'academy'].filter((id) => spotOpen(id) || guide === id) : ['gate'];
   return `<div class="yard tod-${tod}" ${bg}>${shown.map(bld).join('')}${figs}<div class="tod-wash"></div></div>`;
 }
 
@@ -1735,7 +1755,7 @@ function boutsHTML() {
   return `<div class="block bouts"><div class="block-head"><h2>Small bouts</h2><span class="sub">${esc(aName(a))} · +${cn(afkPay(atIdx(), true))} a win</span></div>
     <div class="bt-row"><span class="bt-vs">${foe ? `Next: <b>${esc(foe.name)}</b>` : 'No crew booked here'}</span><span class="bt-next num" id="bout-timer">${clock(next)}</span></div>
     <span class="sandline"><i style="width:${((1 - next / afkMs()) * 100).toFixed(1)}%"></i></span>
-    ${L ? `<div class="bt-last ${L.won ? 'won' : 'lost'}"><span>Last: ${L.won ? 'beat' : 'lost to'} ${esc(squadTeam(L.k).name)} <b>+${cn(L.coin)}</b></span><button class="linkish" data-act="watch-afk">Watch it</button></div>` : '<p class="sub" style="margin:6px 0 0">The first result lands here.</p>'}</div>`;
+    ${L ? `<div class="bt-last ${L.won ? 'won' : 'lost'}"><span>Last: ${L.won ? 'beat' : 'lost to'} ${esc(squadTeam(L.k).name)} <b>+${cn(L.coin || 0)}</b></span><button class="linkish" data-act="watch-afk">Watch it</button></div>` : '<p class="sub" style="margin:6px 0 0">The first result lands here.</p>'}</div>`;
 }
 function recentHTML() {
   if (!career.started || !career.ledger.length) return '';
@@ -2415,7 +2435,7 @@ function renderTop() {
       <nav class="tabs" aria-label="Screens">
         <button data-act="view" data-v="home" ${state.view === 'home' ? 'aria-current="page"' : ''}>Ludus</button>
         ${career.started ? `<button data-act="view" data-v="arena" ${state.view === 'arena' ? 'aria-current="page"' : ''}>Arena</button>` : ''}
-        <button data-act="view" data-v="squad" ${state.view === 'squad' || (career.started && !state.sandbox && state.view === 'fighter') ? 'aria-current="page"' : ''}>${career.started && !state.sandbox ? 'Barracks' : 'Squad'}</button>
+        ${career.started && !state.sandbox && !spotOpen('barracks') ? '' : `<button data-act="view" data-v="squad" ${state.view === 'squad' || (career.started && !state.sandbox && state.view === 'fighter') ? 'aria-current="page"' : ''}>${career.started && !state.sandbox ? 'Barracks' : 'Squad'}</button>`}
         ${career.started && !state.sandbox ? '' : `<button data-act="view" data-v="fighter" ${state.view === 'fighter' ? 'aria-current="page"' : ''}>Fighter</button>`}
       </nav>
       <div class="top-controls">
@@ -3734,7 +3754,7 @@ document.addEventListener('click', (e) => {
     case 'home-start':
       state.team = clone(GE.SCENARIOS.first_night); state.team.name = "Your Uncle's Ludus"; state.team.stratagems = [];
       state.arenaId = 'gutter'; state.sel = 0;
-      Object.assign(career, newCareer(), { started: true, afkAt: Date.now() }); career.armory = null; career.stable = null; career.teamMeta = null; stableInit(); seedArmory(); saveCareer();
+      wipeCareer(); Object.assign(career, newCareer(), { started: true, afkAt: Date.now() }); career.armory = null; career.stable = null; career.teamMeta = null; stableInit(); seedArmory(); saveCareer();
       battle.fromHome = true; homeFight(); return; // land straight in the first bout
     case 'story': story()[btn.dataset.k] = true; saveCareer(); break;
     case 'story-gladius': {
@@ -3801,7 +3821,7 @@ document.addEventListener('click', (e) => {
     case 'home-fighter': state.sel = +btn.dataset.i; state.arenaId = rung().arena; state.view = 'fighter'; window.scrollTo(0, 0); break;
     case 'home-seen-roster': career.seenRung = career.rung; saveCareer(); state.arenaId = rung().arena; state.view = 'ledger'; window.scrollTo(0, 0); break;
     case 'home-reset':
-      if (btn.dataset.armed) { Object.assign(career, newCareer()); saveCareer(); state.team = clone(GE.SCENARIOS.lone_hoplite); break; }
+      if (btn.dataset.armed) { wipeCareer(); Object.assign(career, newCareer()); saveCareer(); state.team = clone(GE.SCENARIOS.lone_hoplite); state.introSeen = false; state.view = 'home'; uidSeq = 1; break; }
       btn.dataset.armed = '1'; btn.textContent = 'Tap again to wipe your ludus'; return;
     case 'sq-tile': if (!state.lift) return; squadPlace(+btn.dataset.x, +btn.dataset.y); break;
     case 'sq-bench': { const uid = +btn.dataset.uid; const u = career.stable.find((x) => x.uid === uid); const why = u && benchReason(u); if (why) { toast(why + '.'); return; } state.lift = state.lift && state.lift.uid === uid ? null : { uid }; break; }
