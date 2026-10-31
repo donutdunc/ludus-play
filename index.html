@@ -294,14 +294,22 @@ body[data-view="academy"] #top .purse, body[data-view="academy"] #top .top-contr
 .crews { padding-top: 10px; } .crews-note { margin: 8px 0 0; } .fight-btn { display: inline-flex; flex-direction: column; align-items: center; line-height: 1.1; } .fb-pay { font-size: 11px; opacity: .85; font-weight: 500; }
 .stat-row { cursor: pointer; } .more-i { font-size: 11px; color: var(--muted); margin-left: 2px; }
 .purse-chip { color: var(--ink); } .purse-chip b { color: var(--bronze); font-size: 15px; }
-.ludus-card.splash { position: fixed; inset: 0; z-index: 60; border-radius: 0; margin: 0; display: grid; place-items: center; padding: 24px; background: radial-gradient(ellipse at 50% 35%, #2a1d12, #0d0907 70%); }
-.lc-in { max-width: 520px; } .lc-go { margin-top: 26px; font: inherit; font-size: 16px; letter-spacing: .12em; text-transform: uppercase; color: #17110c; background: #d9b36a; border: 0; border-radius: 999px; padding: 12px 26px; cursor: pointer; animation: lc-in 2.4s ease-out both; }
+.ludus-card.splash { animation: none; position: fixed; inset: 0; z-index: 60; border-radius: 0; margin: 0; display: grid; place-items: center; padding: 24px; background: radial-gradient(ellipse at 50% 35%, #2a1d12, #0d0907 70%); }
+.lc-in { max-width: 520px; } .lc-go { margin-top: 26px; font: inherit; font-size: 16px; letter-spacing: .12em; text-transform: uppercase; color: #17110c; background: #d9b36a; border: 0; border-radius: 999px; padding: 12px 26px; cursor: pointer; }
 .ludus-card { background: #17110c; color: #efe2c8; border-radius: 14px; padding: 26px 22px 22px; margin-bottom: 14px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,.35); animation: lc-in 1.4s ease-out both; }
 .lc-word { font-family: var(--f-display, Georgia, serif); font-size: clamp(44px, 12vw, 72px); letter-spacing: .14em; text-transform: uppercase; color: #d9b36a; line-height: 1; }
 .lc-say { font-size: 14px; color: #b9a585; margin-top: 6px; letter-spacing: .04em; }
 .lc-def { font-family: var(--f-display, Georgia, serif); font-size: 18px; line-height: 1.45; margin: 16px auto 8px; max-width: 34ch; }
 .lc-you { font-size: 15px; color: #c98a6a; margin: 0; font-style: italic; }
-@keyframes lc-in { from { opacity: 0; transform: translateY(8px); letter-spacing: .3em; } }
+@keyframes lc-in { from { opacity: 0; transform: translateY(8px); } }
+/* The splash reads itself in: word, definition, then one sentence at a time, then the gates. Opacity only, so nothing reflows. */
+@keyframes lc-fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.splash .lc-word, .splash .lc-say, .splash .lc-s, .splash .lc-go { opacity: 0; animation: lc-fade .9s ease-out forwards; }
+.splash .lc-word { animation-duration: 1.4s; animation-delay: .2s; } .splash .lc-say { animation-delay: 1.5s; }
+.splash .s1 { animation-delay: 2.5s; } .splash .s2 { animation-delay: 3.5s; } .splash .s3 { animation-delay: 5.4s; } .splash .s4 { animation-delay: 6.3s; } .splash .s5 { animation-delay: 7.2s; }
+.splash .lc-go { animation-delay: 8.4s; }
+.splash.skip .lc-word, .splash.skip .lc-say, .splash.skip .lc-s, .splash.skip .lc-go { animation-delay: 0s; animation-duration: .3s; }
+@media (prefers-reduced-motion: reduce) { .splash .lc-word, .splash .lc-say, .splash .lc-s, .splash .lc-go { animation: none; opacity: 1; } }
 .lslot.perk-scar:not(.empty) .itm { color: var(--pompeii); } .lslot.perk-title:not(.empty) .itm { font-style: italic; } .lslot .li { font-size: 18px; color: var(--muted); }
 .scar-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
 .scar { display: grid; gap: 2px; text-align: left; padding: 7px 9px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); }
@@ -1817,8 +1825,8 @@ function magnusHTML(note) {
   if (!career.started) {
     const first = squadTeam(LADDER[0].squads[0]);
     return `${state.introSeen ? '' : `<div class="ludus-card splash" role="dialog" aria-label="Ludus"><div class="lc-in"><div class="lc-word">Ludus</div><div class="lc-say">lū·dus <i>(n.)</i>, pl. <i>lūdī</i></div>
-      <p class="lc-def">A school for gladiators. A house where men, beasts and worse are bought cheap, trained hard, and sold to the crowd one bloody evening at a time.</p>
-      <p class="lc-you">Your uncle ran one. He died owing money. It is yours now.</p>
+      <p class="lc-def"><span class="lc-s s1">A school for gladiators.</span> <span class="lc-s s2">A house where men, beasts and worse are bought cheap, trained hard, and sold to the crowd one bloody evening at a time.</span></p>
+      <p class="lc-you"><span class="lc-s s3">Your uncle ran one.</span> <span class="lc-s s4">He died owing money.</span> <span class="lc-s s5">It is yours now.</span></p>
       <button class="lc-go" data-act="intro-go">Open the gates</button></div></div>`}
       <div class="paper bill2 home-bill"><span class="nail"></span>
       <span class="b-small">Tonight at the Gutter Brawl</span><span class="b-big">${esc(first.name)}</span>
@@ -3979,6 +3987,8 @@ addEventListener('scroll', () => {
 // ---------------- Events ----------------
 document.addEventListener('click', (e) => {
   if (e.target.id === 'drawer') { state.picker = null; render(); return; }
+  // Tapping the splash before it finishes shows the rest at once.
+  const spl = e.target.closest('.splash'); if (spl && !e.target.closest('[data-act]')) { spl.classList.add('skip'); return; }
   const btn = e.target.closest('[data-act]');
   if (btn && btn.dataset.nocommit) { delete btn.dataset.nocommit; return; }
   // The phone sheet lets taps through to the page: another tile switches slot, anything else puts the sheet away.
