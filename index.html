@@ -275,6 +275,9 @@ body[data-view="academy"] #top .purse, body[data-view="academy"] #top .top-contr
 @media (max-width: 640px) { .ar-grid .wide-only { display: none; } } .ar-grid .ar-acts { white-space: nowrap; text-align: right; }
 @media (max-width: 640px) { .ar-grid .ar-acts .btn { padding: 3px 7px; font-size: 12px; } }
 .d-origin { margin: 12px 0 0; font-style: italic; font-size: 13.5px; }
+.bouts .bt-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 14px; } .bouts .bt-next { font-weight: 600; }
+.bouts .sandline { margin: 6px 0 8px; height: 4px; border-radius: 2px; overflow: hidden; } .bt-last { display: flex; justify-content: space-between; gap: 8px; font-size: 13.5px; padding: 6px 8px; border-radius: 8px; background: var(--raise, rgba(0,0,0,.04)); }
+.bt-last.won b { color: var(--verd); } .bt-last.lost { color: var(--muted); } .bout-tag { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; padding: 0 5px; border-radius: 4px; border: 1px solid var(--line); color: var(--muted); }
 .stat-row { cursor: pointer; } .more-i { font-size: 11px; color: var(--muted); margin-left: 2px; }
 .purse-chip { color: var(--ink); } .purse-chip b { color: var(--bronze); font-size: 15px; }
 .ludus-card.splash { position: fixed; inset: 0; z-index: 60; border-radius: 0; margin: 0; display: grid; place-items: center; padding: 24px; background: radial-gradient(ellipse at 50% 35%, #2a1d12, #0d0907 70%); }
@@ -1466,7 +1469,7 @@ function finishDrills() {
 // ---- Auto-bouts: one every 15 minutes against the current rung, written into the ledger ----
 function runAfk() {
   if (!career.started) return;
-  if (railsOn()) { career.afkAt = Date.now(); return; }
+  if (railsOn() || !career.afkOn) { career.afkAt = Date.now(); return; }
   const due = Math.min(AFK_CAP, Math.floor((Date.now() - career.afkAt) / afkMs()));
   if (due <= 0 || !rung().squads.length) return;
   if (!GE.teamCost(state.team, ARENAS[rung().arena]).legal) { career.afkAt += due * afkMs(); ledger(`${due} bout${due > 1 ? 's' : ''} missed: the roster broke the arena's rules`); saveCareer(); return; }
@@ -1474,13 +1477,14 @@ function runAfk() {
   let wins = 0, coin = 0; const lines = [];
   for (let i = 0; i < due; i++) {
     const k = rung().squads[i % rung().squads.length];
-    const r = GE.simulate(state.team, squadTeam(k), Math.floor(Math.random() * 1e9));
+    const sd = Math.floor(Math.random() * 1e9); const r = GE.simulate(state.team, squadTeam(k), sd);
     const w = r.winner === 0; wins += w; coin += pay(w); if (w && atIdx() >= 5) career.ore = (career.ore || 0) + 1; if (hasSpot('mine') && i % 3 === 2) career.ore = (career.ore || 0) + 1;
-    lines.push({ t: career.afkAt + (i + 1) * afkMs(), text: `${w ? 'Beat' : 'Lost to'} ${squadTeam(k).name}`, coin: pay(w) });
+    lines.push({ t: career.afkAt + (i + 1) * afkMs(), text: `${w ? 'Beat' : 'Lost to'} ${squadTeam(k).name}`, coin: pay(w), bout: true });
+    if (i === due - 1) career.lastAfk = { k, seed: sd, won: w, coin: pay(w), t: career.afkAt + (i + 1) * afkMs(), arena: rung().arena };
   }
-  career.coin += coin; career.afkAt += due * afkMs(); career.lastAfk = { k: rung().squads[(due - 1) % rung().squads.length], seed: Math.floor(Math.random() * 1e9) };
+  career.coin += coin; career.afkAt += due * afkMs();
   const shown = lines.slice(-6).reverse();
-  if (lines.length > 6) shown.push({ t: lines[0].t, text: `…and ${lines.length - 6} more bouts while you were away (${wins} won in all)`, coin: 0 });
+  if (lines.length > 6) shown.push({ t: lines[0].t, text: `…and ${lines.length - 6} more bouts while you were away (${wins} won in all)`, coin: 0, bout: true });
   career.ledger = [...shown, ...career.ledger].slice(0, 40);
   saveCareer();
 }
@@ -1554,7 +1558,7 @@ function magnusNote() {
     if (career.fights === 3) return { text: `${stable[1].name} and ${lead}, against two farmhands who drank their wages. Keep them close together.`, btn: null };
     return { text: `Three wins. Now the patient part: send one of them to the posts. A few minutes of drilling and they keep it for good.`, btn: 'To the training posts', act: 'open-fighter' };
   }
-  if (!seen.ledger) return { text: `While you sleep I'll keep them busy: small bouts every quarter hour, and the purses go in your uncle's ledger. Check it when you're back.`, btn: 'Understood', act: 'seen', k: 'ledger' };
+  if (!career.afkOn) return { text: `One more thing your uncle did right. While you're away, I take the school out to small bouts: one every quarter hour at whichever arena you've picked, with that arena's lineup. Small purses, but they add up, and every result goes in the ledger.`, btn: 'Send them out', act: 'afk-on' };
   if (career.rung > career.seenRung) {
     const arrived = LADDER[career.rung].arrives;
     return { text: `The ${aName(a)} sent word: they'll have us. ${a.maxUnits === 10 ? 'They want a whole school on the sand' : `They fight ${NUMW[a.maxUnits] || a.maxUnits} a side`}${stable.length < a.maxUnits ? ", and we don't have the bodies yet. The gate's the place to look." : '.'}${arrived ? ` Something came for you too; it's in the ledger.` : ''}`, btn: 'To the barracks', act: 'home-seen-roster' };
@@ -1699,13 +1703,22 @@ function purseHTML() {
     <span><span class="lbl">Purse</span> <b class="num">${cn(career.coin)}</b></span>
     <span><span class="lbl">Renown</span> <b class="num">${career.renown}</b></span>
     ${owed ? `<span><span class="lbl">Owed</span> <b class="num owed">${cn(career.debt.toLocaleString())}</b></span>` : ''}
-    ${railsOn() ? '' : `<span class="ps-next" title="Magnus runs a small bout every ${Math.round(afkMs() / 60000)} minutes and banks the purse"><span class="lbl">Next bout</span> <b class="num" id="afk-timer">${clock(next)}</b></span>`}
+    ${railsOn() || !career.afkOn ? '' : `<span class="ps-next" title="Magnus runs a small bout every ${Math.round(afkMs() / 60000)} minutes and banks the purse"><span class="lbl">Next bout</span> <b class="num" id="afk-timer">${clock(next)}</b></span>`}
   </div>`;
+}
+function boutsHTML() {
+  if (!career.started || railsOn() || !career.afkOn) return '';
+  const next = career.afkAt + afkMs() - Date.now(); const L = career.lastAfk; const a = ARENAS[rung().arena];
+  const k = rung().squads[0]; const foe = k && squadTeam(k);
+  return `<div class="block bouts"><div class="block-head"><h2>Small bouts</h2><span class="sub">${esc(aName(a))} · +${cn(afkPay(atIdx(), true))} a win</span></div>
+    <div class="bt-row"><span class="bt-vs">${foe ? `Next: <b>${esc(foe.name)}</b>` : 'No crew booked here'}</span><span class="bt-next num" id="bout-timer">${clock(next)}</span></div>
+    <span class="sandline"><i style="width:${((1 - next / afkMs()) * 100).toFixed(1)}%"></i></span>
+    ${L ? `<div class="bt-last ${L.won ? 'won' : 'lost'}"><span>Last: ${L.won ? 'beat' : 'lost to'} ${esc(squadTeam(L.k).name)} <b>+${cn(L.coin)}</b></span><button class="linkish" data-act="watch-afk">Watch it</button></div>` : '<p class="sub" style="margin:6px 0 0">The first result lands here.</p>'}</div>`;
 }
 function recentHTML() {
   if (!career.started || !career.ledger.length) return '';
   const post = LADDER.slice(0, career.rung + 1).map((r) => r.arrives).filter((k) => k && k !== 'card' && !railsOn());
-  const rows = career.ledger.slice(0, 4).map((l) => `<li><span class="t">${hhmm(l.t)}</span><span class="x">${esc(l.text)}</span><span class="c ${l.coin < 0 ? 'neg' : ''}">${l.coin ? (l.coin > 0 ? '+' : '−') + Math.abs(l.coin) : ''}</span></li>`).join('');
+  const rows = career.ledger.slice(0, 4).map((l) => `<li><span class="t">${hhmm(l.t)}</span><span class="x">${l.bout ? '<span class="bout-tag">bout</span> ' : ''}${esc(l.text)}</span><span class="c ${l.coin < 0 ? 'neg' : ''}">${l.coin ? (l.coin > 0 ? '+' : '−') + Math.abs(l.coin) : ''}</span></li>`).join('');
   return `<div class="block recent"><div class="block-head"><h2>The ledger</h2>${career.chronicle.length ? '<button class="linkish" data-act="home-chronicle">Chronicle</button>' : ''}</div>${post.length ? `<p class="post">${post.map((k) => `<button class="note-btn" data-act="home-arrival" data-k="${k}">${esc(ARRIVALS[k].name)}</button>`).join(' · ')}</p>` : ''}<ol class="rows">${rows}</ol></div>`;
 }
 
@@ -1791,7 +1804,7 @@ function renderHomeView() {
   const note = career.started ? magnusNote() : { text: '' };
   document.getElementById('view-home').innerHTML = `
     <div class="home-scene">${purseHTML()}${yardHTML()}</div>
-    <div class="home-side">${magnusHTML(note)}${recentHTML()}
+    <div class="home-side">${magnusHTML(note)}${boutsHTML()}${recentHTML()}
       ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-reset">Start over</button></p>` : ''}
     </div>`;
   startHomeClock();
@@ -1806,7 +1819,8 @@ function startHomeClock() {
     const next = career.afkAt + afkMs() - Date.now();
     if (next <= 0 || career.drills.some((d) => d.end <= Date.now())) { renderHomeView(); return; }
     const t = document.getElementById('afk-timer'); if (t) t.textContent = clock(next);
-    const s = document.querySelector('.sandline > i'); if (s) s.style.width = ((1 - next / afkMs()) * 100).toFixed(1) + '%';
+    document.querySelectorAll('.sandline > i').forEach((s) => { s.style.width = ((1 - next / afkMs()) * 100).toFixed(1) + '%'; });
+    const bt = document.getElementById('bout-timer'); if (bt) bt.textContent = clock(next);
     document.querySelectorAll('#view-home [data-end]').forEach((el) => { el.textContent = clock(+el.dataset.end - Date.now()); });
   }, 1000);
 }
@@ -3223,6 +3237,7 @@ function startBattle(key) {
   battle.oppKey = key || state.opponent || keys[Math.floor(Math.random() * keys.length)];
   battle.seed = Math.floor(Math.random() * 1e9);
   battle.mySide = Math.random() < 0.5 ? 0 : 1;
+  if (battle.replay) { battle.seed = battle.replay.seed; battle.mySide = 0; battle.replay = null; battle.career = null; }
   const opp = oppTeam(battle.oppKey);
   if (battle.career && battle.fromHome && railsOn()) battle.seed = railSeed(opp, battle.mySide, career.fights === 0 ? 'lose' : career.fights === 1 ? 'narrow' : 'win');
   battle.teams = battle.mySide === 0 ? [state.team, opp] : [opp, state.team];
@@ -3798,6 +3813,8 @@ document.addEventListener('click', (e) => {
       b.training = tr;
       break;
     }
+    case 'afk-on': career.afkOn = true; career.afkAt = Date.now(); (career.seen || (career.seen = {})).ledger = true; saveCareer(); toast(`Small bouts start now: the first in ${Math.round(afkMs() / 60000)} minutes.`); break;
+    case 'watch-afk': { const L = career.lastAfk; if (!L) return; battle.replay = { seed: L.seed }; battle.fromHome = true; state.arenaId = L.arena || state.arenaId; startBattle(L.k); return; }
     case 'intro-go': state.introSeen = true; break;
     case 'ar-tab': state.arTab = btn.dataset.k; break;
     case 'ar-sort': state.arSort = btn.dataset.k; break;
