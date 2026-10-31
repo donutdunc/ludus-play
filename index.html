@@ -2338,7 +2338,7 @@ function renderSquadView() {
       <span class="sq-badge ${f.id}" title="${esc(f.detail)}">${esc(f.name)}</span></div>
     ${state.lift ? `<p class="sq-hint">Tap a tile to place ${state.lift.i !== undefined ? esc(state.team.units[state.lift.i].name) : esc((career.stable.find((u) => u.uid === state.lift.uid) || {}).name || '')}. <button class="linkish" data-act="sq-drop">Cancel</button></p>` : ''}
     ${squadBoardHTML()}
-    <div class="sq-bench" id="sq-bench">${bench.map(benchCardHTML).join('')}${career.started && !state.sandbox ? '<button class="bcard recruit" data-act="pick-recruit"><b>+ Recruit</b><span class="bc-sub">the gate</span></button>' : ''}</div>
+    <div class="sq-bench" id="sq-bench">${bench.map(benchCardHTML).join('')}${career.started && !state.sandbox ? '<button class="bcard recruit" data-act="pick-recruit"><b>+ Recruit</b></button>' : ''}</div>
     ${sel ? cardHTML(state.sel, state.cardOpen === state.sel) : '<p class="muted">Field someone from the bench.</p>'}
     ${sel && career.started && !state.sandbox ? `<button class="btn small" data-act="sq-bench-sel" data-i="${state.sel}">Send ${esc(sel.name)} to the bench</button>` : ''}
     ${!career.started || state.sandbox ? `<div class="btn-row"><button class="btn" data-act="pick-recruit">Recruit a fighter</button><select id="opp-sel" data-act="opponent" aria-label="Opponent"><option value="" ${!state.opponent ? 'selected' : ''}>Random opponent</option>${arenaOpponents(state.arenaId).map((k) => `<option value="${k}" ${state.opponent === k ? 'selected' : ''}>${esc(OPPONENTS[k].name)}</option>`).join('')}</select><button class="btn primary big" data-act="fight" ${state.team.units.length ? '' : 'disabled'}>Fight</button></div>` : ''}
