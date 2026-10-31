@@ -260,6 +260,8 @@ body[data-view="academy"] #top .purse, body[data-view="academy"] #top .top-contr
 .recruit.legend { border-color: var(--bronze); box-shadow: 0 0 0 2px color-mix(in srgb, var(--bronze) 35%, transparent); }
 .fc-perks { gap: 4px; flex-wrap: wrap; } .chip-perk { font-size: 11.5px; padding: 2px 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--raise, var(--panel)); white-space: nowrap; }
 .chip-perk.empty { border-style: dashed; color: var(--muted); } .chip-perk.scar:not(.empty) { border-color: color-mix(in srgb, var(--pompeii) 45%, var(--line)); } .chip-perk.title:not(.empty) { font-style: italic; }
+.oicon img, .lslot .li img { width: 30px; height: 30px; object-fit: contain; }
+.lslot.perk-scar:not(.empty) .itm { color: var(--pompeii); } .lslot.perk-title:not(.empty) .itm { font-style: italic; } .lslot .li { font-size: 18px; color: var(--muted); }
 .scar-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
 .scar { display: grid; gap: 2px; text-align: left; padding: 7px 9px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); }
 .scar.on { border-color: var(--bronze); background: var(--raise); } .scar .num { font-size: 12.5px; } .scar .sub { font-size: 11px; }
@@ -2351,14 +2353,26 @@ function boardHTML() {
 // The fighter card: the whole fighter in ~90px. Active first, four numbers, five chips. Points are the only bold number.
 const pips = (n) => '●'.repeat(Math.min(n, 5)) + '○'.repeat(Math.max(0, 4 - n));
 const effectLine = (id) => { const w = (ACTIVE_DEF[id].description || '').replace(/\.$/, '').split(/\s+/); return w.length > 7 ? w.slice(0, 7).join(' ') + '…' : w.join(' '); };
-// Second chip row: skills (by slot), scars (by opened slot), the title. Tapping one opens its block.
+// Skills, scars and the title are loadout slots like gear: tiles on the fighter page, chips on the card.
+// Both open the same one-slot sheet (picker mode 'perk').
+function perkSlots(b) {
+  const sk = Object.entries(b.skills || {}).filter(([, v]) => v > 0); const out = [];
+  for (let n = 0; n < skillSlotsOf(b); n++) { const e = sk[n]; out.push({ kind: 'skill', n, label: 'Skill', name: e ? `${GE.SKILLS[e[0]].name} ${e[1]}` : '', line: e ? GE.SKILLS[e[0]].perLevel : '', cost: e ? BALANCE.skillPointCost[e[1]] : null }); }
+  const worn = b.wornScars || []; const open = GE.scarSlots(b.fights);
+  for (let n = 0; n < Math.max(1, open); n++) { const id = worn[n]; out.push({ kind: 'scar', n, label: 'Scar', name: id ? GE.SCARS[id].name : '', line: id ? GE.SCARS[id].line : n >= open ? `Opens at ${GE.SCAR_SLOT_AT[0]} fights (${b.fights || 0} so far)` : '', locked: n >= open }); }
+  out.push({ kind: 'title', n: 0, label: 'Title', name: b.title ? GE.TITLES[b.title].name : '', line: b.title ? GE.TITLES[b.title].line : (b.titles || []).length ? '' : 'None earned yet', locked: !(b.titles || []).length });
+  return out;
+}
+function perkTiles(b, i) {
+  const pk = state.picker && state.picker.mode === 'perk' && state.picker.unit === i ? state.picker : null;
+  return perkSlots(b).map((x) => `<button class="lslot perk-${x.kind} ${x.name ? '' : 'empty'} ${pk && pk.kind === x.kind && pk.n === x.n ? 'picking' : ''}" data-act="pick-perk" data-i="${i}" data-k="${x.kind}" data-n="${x.n}" ${x.locked ? 'disabled' : ''}>
+    <span class="li ${x.name ? '' : 'faint'}">${x.kind === 'skill' && x.name ? (ART.skill && ART.skill[Object.keys(GE.SKILLS).find((k) => x.name.startsWith(GE.SKILLS[k].name))] ? `<img src="${ART.skill[Object.keys(GE.SKILLS).find((k) => x.name.startsWith(GE.SKILLS[k].name))]}" alt="">` : '✦') : x.kind === 'scar' ? '⚔' : x.kind === 'title' ? '❦' : '✦'}</span>
+    <span class="lt"><span class="lbl">${x.label}</span><span class="itm ${x.name ? '' : 'muted'}">${x.name ? esc(x.name) : x.locked ? 'Locked' : 'Empty'}</span>${x.line ? `<span class="st">${esc(x.line)}</span>` : ''}</span>
+    <span class="cost ${x.cost ? '' : 'muted'}">${x.cost ?? (x.locked || x.name ? '' : '+')}</span></button>`).join('');
+}
+// Second chip row on the card: the same slots, compact.
 function perkChips(b, i) {
-  const out = []; const sk = Object.entries(b.skills || {}).filter(([, v]) => v > 0);
-  for (let n = 0; n < skillSlotsOf(b); n++) { const e = sk[n]; out.push(`<button class="chip-perk ${e ? '' : 'empty'}" data-act="open-block" data-i="${i}" data-k="skills" title="Skill slot">${e ? `${esc(GE.SKILLS[e[0]].name)} ${e[1]}` : '+ skill'}</button>`); }
-  const worn = b.wornScars || [];
-  for (let n = 0; n < GE.scarSlots(b.fights); n++) { const id = worn[n]; out.push(`<button class="chip-perk scar ${id ? '' : 'empty'}" data-act="open-block" data-i="${i}" data-k="scars" title="${id ? esc(GE.SCARS[id].line) : 'Scar slot'}">${id ? esc(GE.SCARS[id].name) : '+ scar'}</button>`); }
-  if ((b.titles || []).length) out.push(`<button class="chip-perk title ${b.title ? '' : 'empty'}" data-act="open-block" data-i="${i}" data-k="titles" title="${b.title ? esc(GE.TITLES[b.title].line) : 'Title'}">${b.title ? esc(GE.TITLES[b.title].name) : '+ title'}</button>`);
-  return out.join('');
+  return perkSlots(b).filter((x) => !x.locked || x.kind === 'scar').map((x) => `<button class="chip-perk ${x.kind} ${x.name ? '' : 'empty'}" data-act="pick-perk" data-i="${i}" data-k="${x.kind}" data-n="${x.n}" ${x.locked ? 'disabled' : ''} title="${esc(x.line || x.label)}">${x.name ? esc(x.name) : x.locked ? `scar at ${GE.SCAR_SLOT_AT[0]}` : '+ ' + x.label.toLowerCase()}</button>`).join('');
 }
 function cardHTML(i, expanded) {
   const b = state.team.units[i]; if (!b) return '';
@@ -2705,18 +2719,8 @@ function renderFighterView() {
   const skPts = wornSk.reduce((n, k) => n + BALANCE.skillPointCost[b.skills[k]], 0);
   const fixed = career.started && !state.sandbox;
   const nextAt = GE.SCAR_SLOT_AT.find((n) => (b.fights || 0) < n); const scarSl = GE.scarSlots(b.fights);
-  const rankBlock = `<div class="block" id="skills-block"><div class="block-head"><h2>${fixed ? 'Skills' : 'Rank and skills'}</h2><span class="sub num">${wornSk.length} / ${slots} skill slot${slots > 1 ? 's' : ''} · ${skPts} pts</span></div>
-    ${fixed ? `<p class="note" style="margin-top:0">${stars}★ ${esc(GE.STAR_LABELS[stars - 1])}, fixed for life. Skills come from the Academy; each level costs points: ${BALANCE.skillPointCost.slice(1).map((c, n) => `L${n + 1} ${c}`).join(', ')}.</p>`
-      : `<div class="stars" role="group" aria-label="Rank">${[1, 2, 3, 4, 5].map((n) => `<button data-act="stars" data-v="${n}" aria-pressed="${n === stars}" title="${GE.STAR_LABELS[n - 1]}"><span class="st-row">${'★'.repeat(n)}</span><span class="st-lbl">${GE.STAR_LABELS[n - 1]}</span></button>`).join('')}</div>`}
-    <div class="skills">${Object.entries(GE.SKILLS).map(([k, sk]) => { const L = (b.skills || {})[k] || 0; const cap = skillUnlocked(k); return `<div class="skill ${cap ? '' : 'locked'}">${ART.skill && ART.skill[k] ? `<img class="sk-art" src="${ART.skill[k]}" alt="">` : ''}<div><b>${esc(sk.name)}</b>${L ? ` <span class="num plus">${L}</span>` : ''}<div class="muted">${cap ? esc(sk.perLevel) : 'Not taught at the Academy yet'}</div></div>
-      <div class="pm"><button data-act="skill" data-k="${k}" data-d="-1" ${L ? '' : 'disabled'} aria-label="Lower ${esc(sk.name)}">−</button><span class="num">${L}</span><button data-act="skill" data-k="${k}" data-d="1" ${L < cap && (L || wornSk.length < slots) ? '' : 'disabled'} aria-label="Raise ${esc(sk.name)}">+</button></div></div>`; }).join('')}</div>
-  </div>
-  <div class="block" id="scars-block"><div class="block-head"><h2>Scars</h2><span class="sub num">${(b.wornScars || []).length} / ${scarSl} worn · ${b.fights || 0} fights${nextAt ? ` · next slot at ${nextAt}` : ''}</span></div>
-    ${(b.scars || []).length ? `<div class="scar-list">${b.scars.map((id) => { const S = GE.SCARS[id]; const on = (b.wornScars || []).includes(id); return `<button class="scar ${on ? 'on' : ''}" data-act="wear-scar" data-k="${id}" aria-pressed="${on}"><b>${esc(S.name)}</b><span class="num">${esc(S.line)}</span><span class="sub">${on ? 'Worn' : scarSl > (b.wornScars || []).length ? 'Tap to wear' : 'No free slot'}</span></button>`; }).join('')}</div>`
-      : `<p class="muted" style="margin:0">No scars yet. ${scarSl ? 'Every fight is a chance at one.' : `The first scar slot opens at ${GE.SCAR_SLOT_AT[0]} fights.`}</p>`}</div>
-  <div class="block" id="titles-block"><div class="block-head"><h2>Titles</h2><span class="sub">${(b.titles || []).length} earned · free to wear</span></div>
-    ${(b.titles || []).length ? `<div class="scar-list">${b.titles.map((id) => { const T = GE.TITLES[id]; const on = b.title === id; return `<button class="scar ${on ? 'on' : ''}" data-act="wear-title" data-k="${id}" aria-pressed="${on}"><b>${esc(T.name)}</b><span class="num">${esc(T.line)}</span><span class="sub">${on ? 'Worn' : 'Tap to wear'}</span></button>`; }).join('')}</div>`
-      : '<p class="muted" style="margin:0">None yet. Last stands, three-kill nights and giant-killing earn them.</p>'}</div>`;
+  const rankBlock = fixed ? '' : `<div class="block"><div class="block-head"><h2>Rank</h2><span class="sub">Sandbox only; in a career rank is fixed</span></div>
+    <div class="stars" role="group" aria-label="Rank">${[1, 2, 3, 4, 5].map((n) => `<button data-act="stars" data-v="${n}" aria-pressed="${n === stars}" title="${GE.STAR_LABELS[n - 1]}"><span class="st-row">${'★'.repeat(n)}</span><span class="st-lbl">${GE.STAR_LABELS[n - 1]}</span></button>`).join('')}</div></div>`;
   const trainRows = Object.keys(t.trainable).map((k) => {
     const L = lv[k] || 0;
     const gain = GE.trainingBonus(k, L);
@@ -2747,14 +2751,14 @@ function renderFighterView() {
     <div class="loadout" id="loadout-block">
       <div class="lo-fig"><span class="mono cat-${category(t)}">${unitIcon(t, stars)}</span>
         <span class="fig-line">${esc(r.weapon.name)}: ${r.weapon.damage} ${r.weapon.type}<br>${t.profs.length ? 'Trained: ' + t.profs.map((p) => PROF_LABELS[p].toLowerCase()).join(', ') : 'Untrained: basic gear only'}</span></div>
-      <div class="lo-slots">${DOLL_SLOTS[t.bodyPlan].map(slotTile).join('')}${kitLine(b)}</div>
+      <div class="lo-slots">${DOLL_SLOTS[t.bodyPlan].map(slotTile).join('')}${perkTiles(b, i)}${kitLine(b)}</div>
     </div>
     <p class="muted" style="margin:14px 0 0;max-width:62ch">${esc(t.description)}</p>
     <div class="receipt">
       <span>${stars}★ fighter <span class="num">${uc.lines[0].cost}</span></span><span>Gear score <span class="num">${gearCost}</span></span>
       ${tax ? `<span>Slot ${uc.slotNumber} upkeep <span class="num">${tax.cost}</span></span>` : uc.companion ? '<span class="muted">No roster slot</span>' : ''}
       <span class="total">Total <span class="num" style="font-size:20px">${uc.subtotal}</span></span>
-    </div>${spareHTML(b, t)}
+    </div>
   </div>`;
 
   const abilBlock = `<div class="block"><div class="block-head"><h2>Abilities</h2></div>
@@ -2783,7 +2787,7 @@ function renderFighterView() {
 
   let side = '';
   if (wide()) {
-    side = state.picker && state.picker.mode === 'slot'
+    side = state.picker && (state.picker.mode === 'slot' || state.picker.mode === 'perk')
       ? `<aside class="block catalog cat-inline" id="cat-inline">${catalogHTML(state.picker)}</aside>`
       : `<aside class="block cat-inline hint"><h2>Armory</h2><p class="muted">${career.started && !state.sandbox ? 'Tap a slot, or a piece from the armory below the figure, to see what you own for it.' : "Tap a slot on the figure to see everything that fits it. Items that don't fit stay listed with the reason."}</p></aside>`;
   }
@@ -2858,6 +2862,33 @@ function catalogHTML(p) {
           <span class="opt-cost">${it.cost}</span>
           <span class="opt-delta">${lockShort ? `<span class="minus">${esc(lockShort)}</span>` : diff.map(([k, d]) => `<span class="${d > 0 ? 'plus' : 'minus'}">${signed(d)} ${k}</span>`).join('')}${!locks.length && !isCur && dCost ? `<span class="${dCost > 0 ? 'minus' : 'plus'}">${dCost > 0 ? '+' : '−'}${Math.abs(dCost)} pt</span>` : ''}${ownMsg && !locks.length ? `<span class="muted">${forSale ? priceOf(it) + ' coin' : 'not owned'}</span>` : ''}</span></button>`;
       }).join('');
+  } else if (p.mode === 'perk') {
+    const b = state.team.units[p.unit]; const t = UNITS[b.template]; const who = esc(b.name || t.name);
+    if (p.kind === 'skill') {
+      const sk = Object.entries(b.skills || {}).filter(([, v]) => v > 0); const cur = sk[p.n];
+      title = `Skill slot ${p.n + 1} for ${who}`; sub = `${skillSlotsOf(b)} skill slot${skillSlotsOf(b) > 1 ? 's' : ''} · each level costs points`;
+      body = (cur ? `<button class="opt sheet-row" data-act="perk-skill" data-k="" data-v="0"><span class="opt-name">Leave empty</span><span class="opt-cost">−${BALANCE.skillPointCost[cur[1]]}</span></button>` : '')
+        + Object.entries(GE.SKILLS).map(([k, S]) => { const cap = skillUnlocked(k); const elsewhere = sk.some(([x], n) => x === k && n !== p.n);
+          return [1, 2, 3].map((L) => { const on = cur && cur[0] === k && cur[1] === L; const lock = L > cap ? (L === cap + 1 ? 'Not taught at the Academy yet' : '') : elsewhere ? 'Worn in another slot' : '';
+            if (L > cap + 1) return '';
+            const d = BALANCE.skillPointCost[L] - (cur ? BALANCE.skillPointCost[cur[1]] : 0);
+            return `<button class="opt opt-item sheet-row ${on ? 'current' : ''}" data-act="perk-skill" data-k="${k}" data-v="${L}" ${lock || on ? 'disabled' : ''} title="${esc(S.perLevel)}">
+              <span class="oicon">${ART.skill && ART.skill[k] ? `<img src="${ART.skill[k]}" alt="">` : '✦'}</span><span class="opt-name">${esc(S.name)} ${L}${on ? ' <span class="rtag anchor">on</span>' : ''}</span><span class="opt-cost">${BALANCE.skillPointCost[L]}</span>
+              <span class="opt-delta">${lock ? `<span class="minus">${esc(lock)}</span>` : `<span class="muted">${esc(S.perLevel.replace(/ per level\.?$/, '').replace(/\.$/, ''))}${L > 1 ? ` ×${L}` : ''}</span>${!on && d ? `<span class="${d > 0 ? 'minus' : 'plus'}">${d > 0 ? '+' : '−'}${Math.abs(d)} pt</span>` : ''}`}</span></button>`; }).join(''); }).join('');
+    } else if (p.kind === 'scar') {
+      const worn = b.wornScars || []; const cur = worn[p.n];
+      title = `Scar slot ${p.n + 1} for ${who}`; sub = `${GE.scarSlots(b.fights)} of 3 scar slots open · scars are free`;
+      body = (cur ? `<button class="opt sheet-row" data-act="perk-scar" data-k=""><span class="opt-name">Leave empty</span></button>` : '')
+        + ((b.scars || []).length ? b.scars.map((id) => { const S = GE.SCARS[id]; const on = id === cur; const other = !on && worn.includes(id);
+          return `<button class="opt opt-item sheet-row ${on ? 'current' : ''}" data-act="perk-scar" data-k="${id}" ${on || other ? 'disabled' : ''}><span class="oicon">⚔</span><span class="opt-name">${esc(S.name)}${on ? ' <span class="rtag anchor">on</span>' : ''}</span><span class="opt-cost">0</span>
+            <span class="opt-delta">${other ? '<span class="muted">Worn in another slot</span>' : S.line.split(', ').map((x) => `<span class="${/^\+/.test(x) || /Resolve|turn|reach|counts|stun|CRIT too|regen/.test(x) && !/^−/.test(x) ? 'plus' : 'minus'}">${esc(x)}</span>`).join('')}</span></button>`; }).join('')
+          : `<p class="sub">No scars yet. Every fight is a chance at one.</p>`);
+    } else {
+      title = `Title for ${who}`; sub = 'One worn at a time · titles are free';
+      body = (b.title ? `<button class="opt sheet-row" data-act="perk-title" data-k=""><span class="opt-name">Wear none</span></button>` : '')
+        + (b.titles || []).map((id) => { const T = GE.TITLES[id]; const on = b.title === id;
+          return `<button class="opt opt-item sheet-row ${on ? 'current' : ''}" data-act="perk-title" data-k="${id}" ${on ? 'disabled' : ''}><span class="oicon">❦</span><span class="opt-name">${esc(T.name)}${on ? ' <span class="rtag anchor">on</span>' : ''}</span><span class="opt-cost">0</span><span class="opt-delta"><span class="plus">${esc(T.line)}</span></span></button>`; }).join('');
+    }
   } else if (p.mode === 'recruit' || p.mode === 'companion') {
     const handler = p.mode === 'companion' ? state.team.units[p.unit] : null;
     title = handler ? `Companion for ${esc(handler.name)}` : 'Recruit a fighter';
@@ -2907,7 +2938,7 @@ function catalogHTML(p) {
 function renderDrawer() {
   const d = document.getElementById('drawer');
   const p = state.picker;
-  const inline = p && p.mode === 'slot' && state.view === 'fighter' && wide();
+  const inline = p && (p.mode === 'slot' || p.mode === 'perk') && state.view === 'fighter' && wide();
   if (!p || inline) { d.hidden = true; d.innerHTML = ''; d.dataset.key = ''; return; }
   const key = JSON.stringify(p);
   const prev = d.dataset.key === key ? (d.querySelector('.catalog-list') || {}).scrollTop || 0 : 0;
@@ -3668,15 +3699,21 @@ document.addEventListener('click', (e) => {
       b.training = tr;
       break;
     }
-    case 'open-block': state.sel = +btn.dataset.i; state.view = 'fighter'; state.picker = null; state.scrollTo = btn.dataset.k; window.scrollTo(0, 0); break;
-    case 'wear-scar': {
-      const k = btn.dataset.k; const w = [...(b.wornScars || [])];
-      if (w.includes(k)) b.wornScars = w.filter((x) => x !== k);
-      else if (w.length < GE.scarSlots(b.fights)) b.wornScars = [...w, k];
-      else { toast(`${b.name} has ${GE.scarSlots(b.fights)} scar slot${GE.scarSlots(b.fights) === 1 ? '' : 's'}. Take one off first.`); break; }
-      if (career.started) saveCareer(); break;
+    case 'pick-perk': { const u = +btn.dataset.i; state.sel = u; state.picker = { mode: 'perk', unit: u, kind: btn.dataset.k, n: +btn.dataset.n }; break; }
+    case 'perk-skill': {
+      const p = state.picker; const pb = state.team.units[p.unit]; const sk = Object.entries(pb.skills || {}).filter(([, v]) => v > 0);
+      const k = btn.dataset.k, L = +btn.dataset.v;
+      if (k && L > skillUnlocked(k)) { toast(`The Academy hasn't taught ${GE.SKILLS[k].name} ${L} yet.`); break; }
+      if (k && !sk[p.n] && sk.length >= skillSlotsOf(pb)) { toast('No free skill slot.'); break; }
+      if (sk[p.n]) sk.splice(p.n, 1, ...(k ? [[k, L]] : [])); else if (k) sk.push([k, L]);
+      pb.skills = Object.fromEntries(sk); if (career.started) saveCareer(); if (!wide()) state.picker = null; break;
     }
-    case 'wear-title': b.title = b.title === btn.dataset.k ? undefined : btn.dataset.k; if (career.started) saveCareer(); break;
+    case 'perk-scar': {
+      const p = state.picker; const pb = state.team.units[p.unit]; const w = [...(pb.wornScars || [])];
+      if (btn.dataset.k) w[p.n] = btn.dataset.k; else w.splice(p.n, 1);
+      pb.wornScars = w.filter(Boolean).slice(0, GE.scarSlots(pb.fights)); if (career.started) saveCareer(); if (!wide()) state.picker = null; break;
+    }
+    case 'perk-title': { const pb = state.team.units[state.picker.unit]; pb.title = btn.dataset.k || undefined; if (career.started) saveCareer(); if (!wide()) state.picker = null; break; }
     case 'skill': {
       const k = btn.dataset.k; const sk = { ...(b.skills || {}) };
       const slots = skillSlotsOf(b); const worn = Object.keys(sk).filter((x) => sk[x] > 0).length;
