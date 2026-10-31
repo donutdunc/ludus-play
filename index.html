@@ -1445,6 +1445,11 @@ const SPEED = () => (career && career.speed) || 1; // test-speed switch: 1 or 20
 const afkMs = () => 15 * 60 * 1000 / SPEED();
 const AFK_CAP = 32; // 8 hours banked while away
 const CAREER_KEY = 'ludus-career-v5';
+// Open the page with ?reset to wipe this device's save and start fresh (handy on a phone).
+if (/[?&]reset\b/.test(location.search)) {
+  try { localStorage.removeItem(CAREER_KEY); localStorage.removeItem(STORE_KEY); } catch (e) { /* storage unavailable */ }
+  try { history.replaceState(null, '', location.pathname); } catch (e) { /* file:// */ }
+}
 try { localStorage.removeItem('ludus-career-v4'); } catch (e) { /* storage unavailable */ }
 // Drop saves from older versions so nobody carries stale data forward.
 try { for (const k of ['ludus-roster-v3', 'ludus-career-v2', 'ludus-career-v3']) localStorage.removeItem(k); } catch (e) { /* storage unavailable */ }
