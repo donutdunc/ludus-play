@@ -2031,7 +2031,7 @@ function renderHomeView() {
   document.getElementById('view-home').innerHTML = `
     <div class="home-scene">${purseHTML()}${yardHTML()}</div>
     <div class="home-side">${magnusHTML(note)}${boutsHTML()}${recentHTML()}
-      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 2:20 PM</span></p>` : ''}
+      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 2:25 PM</span></p>` : ''}
     </div>`;
   startHomeClock();
 }
@@ -2565,6 +2565,7 @@ function renderArmoryView() {
 
 // ---------------- Render root ----------------
 let cost, chem;
+let lastRenderedView = null;
 function render() {
   if (career.started) registerRefs();
   if (career.started && !state.sandbox) { finishForge(); stableInit(); state.arenaId = rung().arena; if (career.stable && career.lineupArena !== rung().arena) useArenaLineup(rung().arena); }
@@ -2572,6 +2573,8 @@ function render() {
   chem = GE.chemistry(state.team);
   document.body.dataset.view = state.view;
   if (state.view !== 'fighter') { sheetShown = null; state.statPop = null; }
+  // A new screen always opens at its top, wherever the last one was scrolled to.
+  if (state.view !== lastRenderedView) { lastRenderedView = state.view; if (!state.scrollTo) window.scrollTo(0, 0); }
   previewOn = null;
   document.body.dataset.career = career.started && !state.sandbox ? '1' : '';
   renderTop();
