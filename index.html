@@ -289,6 +289,7 @@ body[data-view="academy"] #top .purse, body[data-view="academy"] #top .top-contr
 .post .mono { width: 40px; height: 40px; } .post-txt { display: flex; flex-direction: column; min-width: 0; } .post-txt b { font-size: 14px; } .post-t { position: absolute; top: 6px; right: 8px; font-size: 12px; color: var(--verd); }
 .post.open { border-style: dashed; cursor: pointer; } .post.open.on { border-color: var(--bronze); } .post-plus { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 22px; color: var(--bronze); border: 1px dashed var(--bronze); }
 .post-mini { width: 26px !important; height: 26px !important; display: inline-grid; vertical-align: middle; } body[data-view="training"] #top .purse, body[data-view="training"] #top .top-controls { display: none; }
+.crews { padding-top: 10px; } .crews-note { margin: 8px 0 0; } .fight-btn { display: inline-flex; flex-direction: column; align-items: center; line-height: 1.1; } .fb-pay { font-size: 11px; opacity: .85; font-weight: 500; }
 .stat-row { cursor: pointer; } .more-i { font-size: 11px; color: var(--muted); margin-left: 2px; }
 .purse-chip { color: var(--ink); } .purse-chip b { color: var(--bronze); font-size: 15px; }
 .ludus-card.splash { position: fixed; inset: 0; z-index: 60; border-radius: 0; margin: 0; display: grid; place-items: center; padding: 24px; background: radial-gradient(ellipse at 50% 35%, #2a1d12, #0d0907 70%); }
@@ -732,7 +733,7 @@ body { background:
 .bt:has(.has-art) .hpbar { right: 24%; left: 10%; }
 .bt.dead:has(.has-art) { opacity: .28; }
 /* ---------------- Home: the yard and the lanista's desk ---------------- */
-body[data-view="squad"][data-career="1"] #top .top-controls, body[data-view="fighter"][data-career="1"] #top .top-controls, body[data-view="fighter"][data-career="1"] #top .purse, body[data-view="ledger"][data-career="1"] #top .top-controls, body[data-view="ledger"][data-career="1"] #top .purse, body[data-view="home"] #top .purse, body[data-view="home"] #top .top-controls, body[data-view="arena"] #top .top-controls, body[data-view="armory"] #top .purse, body[data-view="armory"] #top .top-controls { display: none; }
+body[data-view="squad"][data-career="1"] #top .top-controls, body[data-view="fighter"][data-career="1"] #top .top-controls, body[data-view="fighter"][data-career="1"] #top .purse, body[data-view="arena"][data-career="1"] #top .purse, body[data-view="ledger"][data-career="1"] #top .top-controls, body[data-view="ledger"][data-career="1"] #top .purse, body[data-view="home"] #top .purse, body[data-view="home"] #top .top-controls, body[data-view="arena"] #top .top-controls, body[data-view="armory"] #top .purse, body[data-view="armory"] #top .top-controls { display: none; }
 #view-home { grid-template-columns: minmax(0, 1fr); gap: 12px; }
 @media (min-width: 900px) { #view-home { grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr); align-items: start; } }
 .home-scene { display: grid; gap: 8px; min-width: 0; }
@@ -1744,7 +1745,7 @@ function purseHTML() {
   return `<div class="purse-strip"><span class="ps-name"><b>${esc(state.team.name)}</b> <i>${esc(arch.title)}</i></span>
     <span><span class="lbl">Purse</span> <b class="num">${cn(career.coin)}</b></span>
     <span><span class="lbl">Renown</span> <b class="num">${career.renown}</b></span>
-    ${owed ? `<span><span class="lbl">Owed</span> <b class="num owed">${cn(career.debt.toLocaleString())}</b></span>` : ''}
+    ${owed ? `<span><span class="lbl">Owed</span> <b class="num owed">${cn(career.debt.toLocaleString())}</b>${!railsOn() && career.coin >= Math.min(debtStep(), career.debt) ? ` <button class="linkish" data-act="pay-debt">pay ${Math.min(debtStep(), career.debt).toLocaleString()}</button>` : ''}</span>` : ''}
     ${railsOn() || !career.afkOn ? '' : `<span class="ps-next" title="Magnus runs a small bout every ${Math.round(afkMs() / 60000)} minutes and banks the purse"><span class="lbl">Next bout</span> <b class="num" id="afk-timer">${clock(next)}</b></span>`}
   </div>`;
 }
@@ -1758,9 +1759,9 @@ function boutsHTML() {
     ${L ? `<div class="bt-last ${L.won ? 'won' : 'lost'}"><span>Last: ${L.won ? 'beat' : 'lost to'} ${esc(squadTeam(L.k).name)} <b>+${cn(L.coin || 0)}</b></span><button class="linkish" data-act="watch-afk">Watch it</button></div>` : '<p class="sub" style="margin:6px 0 0">The first result lands here.</p>'}</div>`;
 }
 function recentHTML() {
-  if (!career.started || !career.ledger.length) return '';
+  if (!career.started || railsOn() || !career.ledger.some((l) => l.coin)) return '';
   const post = LADDER.slice(0, career.rung + 1).map((r) => r.arrives).filter((k) => k && k !== 'card' && !railsOn());
-  const rows = career.ledger.slice(0, 4).map((l) => `<li><span class="t">${hhmm(l.t)}</span><span class="x">${l.bout ? '<span class="bout-tag">bout</span> ' : ''}${esc(l.text)}</span><span class="c ${l.coin < 0 ? 'neg' : ''}">${l.coin ? (l.coin > 0 ? '+' : '−') + Math.abs(l.coin) : ''}</span></li>`).join('');
+  const rows = career.ledger.filter((l) => l.coin).slice(0, 4).map((l) => `<li><span class="t">${hhmm(l.t)}</span><span class="x">${l.bout ? '<span class="bout-tag">bout</span> ' : ''}${esc(l.text)}</span><span class="c ${l.coin < 0 ? 'neg' : ''}">${l.coin ? (l.coin > 0 ? '+' : '−') + Math.abs(l.coin) : ''}</span></li>`).join('');
   return `<div class="block recent"><div class="block-head"><h2>The ledger</h2>${career.chronicle.length ? '<button class="linkish" data-act="home-chronicle">Chronicle</button>' : ''}</div>${post.length ? `<p class="post">${post.map((k) => `<button class="note-btn" data-act="home-arrival" data-k="${k}">${esc(ARRIVALS[k].name)}</button>`).join(' · ')}</p>` : ''}<ol class="rows">${rows}</ol></div>`;
 }
 
@@ -2304,14 +2305,14 @@ function renderArenaView() {
   // Rails: Magnus has the floor until his errand is done.
   const held = railsOn() && note.btn && note.act !== 'home-fight';
   const nx = nextSquad();
-  const squads = r.squads.map((k) => {
+  const squads = r.squads.filter((k) => !railsOn() || k === nx).map((k) => {
     const t = squadTeam(k); const beat = !!career.beaten[k]; const isNext = k === nx && !beat;
     const can = !held && lc.legal && (!railsOn() || k === nx);
     return `<li class="sq ${beat ? 'beat' : ''} ${isNext ? 'next' : ''}">
       <div class="sq-txt"><b>${esc(t.name)}</b>${beat ? ' <span class="sq-tag">beaten</span>' : isNext ? ' <span class="sq-tag next">tonight</span>' : ''}
         ${t.blurb ? `<span class="sq-blurb">${esc(t.blurb)}</span>` : ''}${t.tell ? `<span class="b-tell">${esc(t.tell)}</span>` : ''}
 </div>
-      <button class="btn ${isNext ? 'primary' : ''}" data-act="home-fight" data-k="${k}" ${can ? '' : 'disabled'}>${beat ? 'Rematch' : 'Fight'}</button></li>`;
+      <button class="btn ${isNext ? 'primary' : ''} fight-btn" data-act="home-fight" data-k="${k}" ${can ? '' : 'disabled'}>${beat ? 'Rematch' : 'Fight'}<span class="fb-pay">+${cn(winPay(i))}</span></button></li>`;
   }).join('');
   const left = r.squads.filter((k) => !career.beaten[k]).length;
   const nextA = LADDER[i + 1] && ARENAS[LADDER[i + 1].arena];
@@ -2327,20 +2328,12 @@ function renderArenaView() {
       <div class="ap-head" ${floor ? `style="background-image:url(${floor})"` : ''}>
         <div class="ap-title"><span class="b-small">${i === career.rung ? 'Fighting at' : 'Back at'}</span><h2>${esc(aName(a))}</h2><span class="ap-rules">${arenaRules(a)}</span></div>
       </div>
-      <nav class="road2" aria-label="Arenas">${road}</nav>
+      ${career.rung >= 1 ? `<nav class="road2" aria-label="Arenas">${road}</nav>` : ''}
       ${held ? `<div class="block held">${magnusHTML(note)}</div>` : ''}
-      ${held ? '' : lineupHTML()}
-      <div class="block"><div class="block-head"><h2>Crews</h2><span class="sub">${progress}</span></div>
-        ${lc.legal ? '' : `<p class="warn">The arena master won't let this lineup in: ${esc(lc.violations[0].message.replace(/^./, (m) => m.toLowerCase()))}. <button class="linkish" data-act="view" data-v="ledger">Fix it in the barracks</button></p>`}
-        <ol class="squads">${squads || '<li class="sub">Nobody booked yet.</li>'}</ol></div>
-      <div class="block"><div class="block-head"><h2>What it pays</h2>${railsOn() ? '' : `<span class="sub">Next small bout in <b class="num" id="afk-timer">${clock(next)}</b></span>`}</div>
-        <ul class="pays">
-          <li><span class="lbl">Win</span><b>+${cn(winPay(i))}</b><span class="sub">and renown the first time you beat a crew</span></li>
-          <li><span class="lbl">Loss</span><b>+${cn(lossPay(i))}</b><span class="sub">the crowd tosses a little</span></li>
-          <li><span class="lbl">Small bouts</span><span class="sub">${afkLine}</span></li>
-          ${story().met ? `<li><span class="lbl">Vettius</span><b class="owed">${cn(career.debt.toLocaleString())} owed</b><span class="sub">${(career.debtTier || 0) ? `ledger ${(career.debtTier || 0) + 1}` : "your uncle's debt"}${ledgerAt(career.debtTier || 0).unlock ? `; pays off with ${esc(ledgerAt(career.debtTier || 0).name)}` : ''}.${career.coin >= Math.min(debtStep(), career.debt) ? ` <button class="linkish" data-act="pay-debt">Pay ${Math.min(debtStep(), career.debt).toLocaleString()}</button>` : ''}</span></li>
-          ${(career.spots || []).map((k) => { const L = LEDGERS.find((x) => x.unlock === k); return `<li><span class="lbl">${esc(L.name)}</span><span class="sub">${esc(L.does)}</span></li>`; }).join('')}` : ''}
-        </ul></div>
+      <div class="block crews"><ol class="squads">${squads || '<li class="sub">Nobody booked yet.</li>'}</ol>
+        ${lc.legal ? '' : `<p class="warn">The arena master won't let this lineup in: ${esc(lc.violations[0].message.replace(/^./, (m) => m.toLowerCase()))}.</p>`}
+        ${railsOn() ? '' : `<p class="sub crews-note">${progress}</p>`}</div>
+      ${held || a.maxUnits < 2 ? '' : lineupHTML()}
     </div>`;
   const on = el.querySelector('.rd.on'); if (on) { const r = on.parentElement; r.scrollLeft = Math.max(0, on.offsetLeft - r.offsetLeft - (r.clientWidth - on.offsetWidth) / 2); }
 }
