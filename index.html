@@ -278,6 +278,12 @@ body[data-view="academy"] #top .purse, body[data-view="academy"] #top .top-contr
 .bouts .bt-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 14px; } .bouts .bt-next { font-weight: 600; }
 .bouts .sandline { margin: 6px 0 8px; height: 4px; border-radius: 2px; overflow: hidden; } .bt-last { display: flex; justify-content: space-between; gap: 8px; font-size: 13.5px; padding: 6px 8px; border-radius: 8px; background: var(--raise, rgba(0,0,0,.04)); }
 .bt-last.won b { color: var(--verd); } .bt-last.lost { color: var(--muted); } .bout-tag { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; padding: 0 5px; border-radius: 4px; border: 1px solid var(--line); color: var(--muted); }
+.fp { padding-top: 12px; } .fp-head { display: grid; grid-template-columns: 34px 56px minmax(0, 1fr) auto 34px; gap: 10px; align-items: center; }
+.fp-head .nav { width: 34px; height: 34px; font-size: 18px; padding: 0; } .fp-por { width: 56px !important; height: 56px !important; }
+.fp-who { min-width: 0; display: flex; flex-direction: column; } .fp-name { font-family: var(--f-display, Georgia, serif); font-size: 24px; line-height: 1.1; border: 0; background: none; padding: 0; color: var(--ink); width: 100%; min-width: 0; }
+.fp-sub { font-size: 13px; color: var(--muted); } .fp-pts { font-size: 12px; color: var(--muted); text-align: right; } .fp-pts b { font-size: 22px; color: var(--bronze); display: block; line-height: 1; }
+.fp-origin { margin: 8px 0 10px; font-size: 13px; font-style: italic; color: var(--muted); }
+.fp .lslot { min-height: 46px; padding: 5px 8px 5px 6px; } .fp .lslot .lbl { font-size: 9.5px; } .fp .lslot .itm { font-size: 13.5px; } .fp .lslot .st { font-size: 11px; display: block !important; }
 .stat-row { cursor: pointer; } .more-i { font-size: 11px; color: var(--muted); margin-left: 2px; }
 .purse-chip { color: var(--ink); } .purse-chip b { color: var(--bronze); font-size: 15px; }
 .ludus-card.splash { position: fixed; inset: 0; z-index: 60; border-radius: 0; margin: 0; display: grid; place-items: center; padding: 24px; background: radial-gradient(ellipse at 50% 35%, #2a1d12, #0d0907 70%); }
@@ -721,7 +727,7 @@ body { background:
 .bt:has(.has-art) .hpbar { right: 24%; left: 10%; }
 .bt.dead:has(.has-art) { opacity: .28; }
 /* ---------------- Home: the yard and the lanista's desk ---------------- */
-body[data-view="squad"][data-career="1"] #top .top-controls, body[data-view="fighter"][data-career="1"] #top .top-controls, body[data-view="ledger"][data-career="1"] #top .top-controls, body[data-view="ledger"][data-career="1"] #top .purse, body[data-view="home"] #top .purse, body[data-view="home"] #top .top-controls, body[data-view="arena"] #top .top-controls, body[data-view="armory"] #top .purse, body[data-view="armory"] #top .top-controls { display: none; }
+body[data-view="squad"][data-career="1"] #top .top-controls, body[data-view="fighter"][data-career="1"] #top .top-controls, body[data-view="fighter"][data-career="1"] #top .purse, body[data-view="ledger"][data-career="1"] #top .top-controls, body[data-view="ledger"][data-career="1"] #top .purse, body[data-view="home"] #top .purse, body[data-view="home"] #top .top-controls, body[data-view="arena"] #top .top-controls, body[data-view="armory"] #top .purse, body[data-view="armory"] #top .top-controls { display: none; }
 #view-home { grid-template-columns: minmax(0, 1fr); gap: 12px; }
 @media (min-width: 900px) { #view-home { grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr); align-items: start; } }
 .home-scene { display: grid; gap: 8px; min-width: 0; }
@@ -1375,6 +1381,15 @@ const focusB = () => { if (career.started && !state.sandbox && state.focusUid !=
 const focusI = () => state.team.units.indexOf(focusB());
 const pbOf = (p) => p.b || state.team.units[p.unit];
 const soloCost = (b) => GE.teamCost({ name: 'x', units: [{ ...b, pos: undefined }] }, ARENAS.imperial).units[0];
+// One short line of what an item does: the number that matters for its slot.
+function itemStat(it) {
+  if (it.weapon) return `${it.weapon.damage} ${it.weapon.type}${it.weapon.range > 1 ? ` · reach ${it.weapon.range}` : ''}${it.weapon.hands === 2 ? ' · 2h' : ''}`;
+  if (it.armor) return `DEF ${it.armor.def}${it.armor.weight ? ` · weight ${it.armor.weight}` : ''}`;
+  const m = Object.entries((it.effects && it.effects.mods) || {}).filter(([, v]) => v).map(([k, v]) => `${v > 0 ? '+' : '−'}${Math.abs(v)} ${STAT_LABEL[k] || k}`);
+  if (it.effects && it.effects.evasion) m.push(`+${it.effects.evasion} EVA`);
+  if (it.effects && it.effects.regen) m.push(`+${it.effects.regen} regen`);
+  return m.join(' · ') || itemSummary(it).split(/[.;]/)[0].slice(0, 42);
+}
 const skillSlotsOf = (b) => Math.min(3, (UNITS[b.template].skillSlots || 1) + (b.extraSkillSlots || 0));
 const gainTxt = (k, n) => (k === 'res' ? `${Math.round(n * BALANCE.resolvePerLevel * 100)}%` : fmt(n));
 function drillQuote(b, stat) {
@@ -2290,7 +2305,8 @@ function renderArmoryView() {
   const slotsHave = Object.keys(SLOT_LABELS).filter((sl) => ids.some((id) => ITEMS[id].slot === sl));
   const tab = slotsHave.includes(state.arTab) ? state.arTab : 'all';
   const sort = state.arSort || 'pts';
-  const statLine = (it) => {
+  const statLine = itemStat;
+  const _unusedStatLine = (it) => {
     if (it.weapon) return `${it.weapon.damage} ${it.weapon.type}${it.weapon.range > 1 ? ` · reach ${it.weapon.range}` : ''}${it.weapon.hands === 2 ? ' · 2h' : ''}`;
     if (it.armor) return `DEF ${it.armor.def}${it.armor.weight ? ` · weight ${it.armor.weight}` : ''}`;
     const m = Object.entries((it.effects && it.effects.mods) || {}).filter(([, v]) => v).map(([k, v]) => `${v > 0 ? '+' : '−'}${Math.abs(v)} ${STAT_LABEL[k] || k}`);
@@ -2790,10 +2806,10 @@ function renderFighterView() {
     const blocked = s === 'off' && GE.isTwoHanded(b.equip && b.equip.main);
     if (!it) return `<button class="lslot empty ${picking ? 'picking' : ''}" data-act="pick-slot" data-slot="${s}" ${blocked ? 'disabled' : ''}>
       <span class="li faint">${slotIcon(s)}</span><span class="lt"><span class="lbl">${SLOT_LABELS[s]}</span>
-      <span class="itm muted">${blocked ? 'Both hands on the weapon' : s === 'main' && t.naturalWeapon ? `${esc(t.naturalWeapon.name)} (natural)` : s === 'main' ? 'Fists' : 'Empty'}</span></span><span class="cost muted">+</span></button>`;
+      <span class="itm muted">${blocked ? 'Both hands on the weapon' : s === 'main' && t.naturalWeapon ? esc(t.naturalWeapon.name) : s === 'main' ? 'Fists' : 'Empty'}</span>${s === 'main' && !blocked ? `<span class="st">${r.weapon.damage} ${r.weapon.type}</span>` : ''}</span><span class="cost muted">+</span></button>`;
     return `<button class="lslot rar-${it.rarity} ${picking ? 'picking' : ''} ${sv.length ? 'invalid' : ''}" data-act="pick-slot" data-slot="${s}" title="${esc(it.description)}">
-      <span class="li">${itemIcon(it)}</span><span class="lt"><span class="lbl">${SLOT_LABELS[s]}${it.anchor ? ' <span class="rtag anchor">starter</span>' : ''}</span>
-      <span class="itm">${esc(it.name)}</span><span class="st">${esc(sv.length ? sv[0].message.split(' — ').pop() : itemSummary(it))}</span></span>
+      <span class="li">${itemIcon(it)}</span><span class="lt"><span class="lbl">${SLOT_LABELS[s]}</span>
+      <span class="itm">${esc(it.name)}</span><span class="st">${esc(sv.length ? sv[0].message.split(' — ').pop() : itemStat(it))}</span></span>
       <span class="cost">${it.cost}</span></button>`;
   };
 
@@ -2845,33 +2861,18 @@ function renderFighterView() {
   const capacity = r.traits.includes('handler') ? BALANCE.companionsWithHandlerTrait : BALANCE.companionsPerHandler;
   const canHandle = !t.companion && t.bodyPlan !== 'beast';
 
-  const dollBlock = `<div class="block">
-    <div class="switcher">
+  // Header: who, rank, points. Everything else lives on the slots or in the numbers below.
+  const dollBlock = `<div class="block fp">
+    <div class="fp-head">
       <button class="nav" data-act="${careerNav ? 'focus' : 'select'}" ${careerNav ? `data-uid="${prevI}"` : `data-i="${prevI}"`} aria-label="Previous fighter" ${order.length < 2 ? 'disabled' : ''}>‹</button>
-      <div style="min-width:0">
-        <div class="d-class"><span class="d-stars">${'★'.repeat(r.stars)}</span> ${esc(rankName(r.stars, t))}${buildTitle(b) ? ` <span class="lean">${esc(buildTitle(b))}</span>` : ''}</div>
-        ${(() => { const uc0 = unitCost(i); const pts = uc0 ? uc0.subtotal : 0; const rt = ratingOf(b); const v = valueTag(rt, pts); return `<div class="d-rating"><span>Rating <b class="num">${rt}</b></span><span><b class="num">${pts}</b> pts</span>${v.html}</div>`; })()}
-        <input class="d-name" id="unit-name" data-act="unit-name" value="${esc(b.name || t.name)}" aria-label="Fighter name">
-        <div class="chips">
-          ${t.anchor ? '<span class="chip anchor">1-point anchor</span>' : ''}
-          <span class="chip">${t.size}</span>
-          <span class="chip">${t.bodyPlan === 'beast' ? 'beast' : t.role === 'back' ? 'back line' : 'front line'}</span>
-          ${t.companion ? `<span class="chip">companion of ${esc(handler ? dname(UNITS[handler.template], handler.name) : 'no one')}</span>` : ''}
-        </div>
-      </div>
+      <span class="mono fp-por cat-${category(t)}">${unitIcon(t, stars, b.castId)}</span>
+      <div class="fp-who"><input class="fp-name" id="unit-name" data-act="unit-name" value="${esc(b.name || t.name)}" aria-label="Fighter name">
+        <span class="fp-sub">${stars}★ ${esc(t.name)}${titleName(b) ? ` · <i>${esc(titleName(b))}</i>` : ''}</span></div>
+      <span class="fp-pts"><b class="num">${uc.subtotal}</b> pts</span>
       <button class="nav" data-act="${careerNav ? 'focus' : 'select'}" ${careerNav ? `data-uid="${nextI}"` : `data-i="${nextI}"`} aria-label="Next fighter" ${order.length < 2 ? 'disabled' : ''}>›</button>
     </div>
-    <div class="loadout" id="loadout-block">
-      <div class="lo-fig"><span class="mono cat-${category(t)}">${unitIcon(t, stars, b.castId)}</span>
-        <span class="fig-line">${esc(r.weapon.name)}: ${r.weapon.damage} ${r.weapon.type}<br>${t.profs.length ? 'Trained: ' + t.profs.map((p) => PROF_LABELS[p].toLowerCase()).join(', ') : 'Untrained: basic gear only'}</span></div>
-      <div class="lo-slots">${DOLL_SLOTS[t.bodyPlan].map(slotTile).join('')}${perkTiles(b, i)}${kitLine(b)}</div>
-    </div>
-    ${b.castId && GE.CAST_BY_ID[b.castId] ? `<p class="muted d-origin">${esc(GE.CAST_BY_ID[b.castId].origin)}</p>` : ''}
-    <div class="receipt">
-      <span>${stars}★ fighter <span class="num">${uc.lines[0].cost}</span></span><span>Gear score <span class="num">${gearCost}</span></span>
-      ${tax ? `<span>Slot ${uc.slotNumber} upkeep <span class="num">${tax.cost}</span></span>` : uc.companion ? '<span class="muted">No roster slot</span>' : ''}
-      <span class="total">Total <span class="num" style="font-size:20px">${uc.subtotal}</span></span>
-    </div>
+    ${b.castId && GE.CAST_BY_ID[b.castId] ? `<p class="fp-origin">${esc(GE.CAST_BY_ID[b.castId].origin)}</p>` : ''}
+    <div class="lo-slots" id="loadout-block">${DOLL_SLOTS[t.bodyPlan].map(slotTile).join('')}${perkTiles(b, i)}${kitLine(b)}</div>
   </div>`;
 
   const abilBlock = `<div class="block"><div class="block-head"><h2>Abilities</h2></div>
@@ -2901,7 +2902,7 @@ function renderFighterView() {
       : `<aside class="block cat-inline hint"><h2>Armory</h2><p class="muted">${career.started && !state.sandbox ? 'Tap a slot, or a piece from the armory below the figure, to see what you own for it.' : "Tap a slot on the figure to see everything that fits it. Items that don't fit stay listed with the reason."}</p></aside>`;
   }
   const prevScroll = document.querySelector('#cat-inline .catalog-list')?.scrollTop || 0;
-  el.innerHTML = `<div class="col">${abilBlock}${dollBlock}${rest}</div>${side}`;
+  el.innerHTML = `<div class="col">${dollBlock}${abilBlock}${rest}</div>${side}`;
   const list = document.querySelector('#cat-inline .catalog-list');
   if (list) list.scrollTop = prevScroll;
 }
