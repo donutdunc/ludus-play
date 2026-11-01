@@ -263,10 +263,17 @@ body[data-view="squad"] .purse { display: none; }
 .bcard.no { opacity: .55; } .bc-why { font-size: 10.5px; color: var(--pompeii); } .bcard.lift { outline: 3px solid var(--bronze); } .bcard.recruit b { font-size: 12px; overflow: visible; } .bcard.recruit { flex-basis: 84px; border-style: dashed; align-content: center; justify-items: center; }
 .sqd .fcard { margin-top: 0; }
 .lineup-block .sq-head h2 { margin: 0 4px 0 0; } .lineup-block .sq-hint { color: var(--muted); margin: 2px 0 8px; font-size: 13px; }
-.bk-list { display: grid; gap: 4px; } .bk-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; align-items: center; width: 100%; text-align: left; padding: 5px 8px 5px 5px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); min-height: 52px; }
+.bk-list { display: grid; gap: 4px; } .bk-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) 84px 52px; gap: 10px; align-items: center; width: 100%; text-align: left; padding: 5px 8px 5px 5px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); min-height: 52px; }
+.bk-row.tr { grid-template-columns: 40px minmax(0, 1fr) 120px; } .bk-row.fielded .mono { box-shadow: 0 0 0 2px var(--bronze); } .bk-row { grid-template-columns: 40px minmax(0, 1fr) 76px 46px !important; } .bk-row.tr .bk-pts { justify-self: end; }
 .bk-row .mono { width: 40px; height: 40px; font-size: 15px; } .bk-who { min-width: 0; display: flex; flex-direction: column; line-height: 1.25; } .bk-who b { font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bk-sub { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .bk-in { color: var(--bronze); } .bk-pts { font-size: 12px; color: var(--muted); } .bk-pts b { font-family: var(--f-num); font-size: 16px; color: var(--bronze); }
+.bk-sub { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .bk-in { color: var(--bronze); } .bk-pts { font-size: 12px; color: var(--muted); text-align: right; } .bk-job { font-size: 12.5px; color: var(--muted); } .bk-pts b { font-family: var(--f-num); font-size: 16px; color: var(--bronze); }
 body[data-view="squad"][data-career="1"] #top .purse { display: none; } .sq-label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 4px 0 -4px; }
+.ag-r { display: grid; grid-template-columns: minmax(0, 1fr) 46px 56px 54px; column-gap: 8px; row-gap: 2px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
+.ag-r > .ag-d { grid-column: 1 / -1; display: block; padding-left: 32px; font-size: 12.5px; color: var(--muted); }
+.ag-r.dg-hr { min-height: 0; border-top: 0; padding: 0 0 5px; } .ag-r > * { display: flex; align-items: center; min-width: 0; }
+.ag-s { gap: 6px; } .ag-s b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; } .ag-s > span:last-child { display: flex; flex-direction: column; min-width: 0; } .ag-s .sub { font-size: 12px; } .ag-s .sk-art { width: 24px; height: 24px; flex-shrink: 0; } .ag-s b { font-size: 14px; letter-spacing: -.01em; }
+.ag-next { flex-direction: column; align-items: flex-start !important; font-size: 13px; line-height: 1.2; } .ag-run { color: var(--verd); font-weight: 600; }
+.ag-r .sub.r { justify-content: flex-end; }
 .academy .ac-list { display: grid; gap: 8px; } .ac-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
 .ac-name { display: flex; flex-wrap: wrap; column-gap: 8px; align-items: center; min-width: 0; } .ac-name .sub { flex-basis: 100%; font-size: 12.5px; } .ac-name .sk-art { width: 26px; height: 26px; }
 .ac-act { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
@@ -1176,11 +1183,11 @@ table.cmp td { font-family: var(--f-num); font-size: 16px; } table.cmp td.win { 
 .wares { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
 /* Market, tightened: short banner, one compact row per piece. */
 .mkt-head { min-height: 150px; } .mkt-who img { width: 64px; height: 64px; } .mkt-line { font-size: 14.5px; } .mkt-who b { font-size: 19px; }
-.ware.mk { grid-template-columns: 36px minmax(0, 1fr) auto; padding: 8px 10px; gap: 10px; } .ware.mk .w-ico { width: 34px; height: 34px; } .ware.mk .w-ico img, .ware.mk .w-ico svg { width: 34px; height: 34px; }
+.ware.mk { grid-template-columns: 36px minmax(0, 1fr) 76px; padding: 8px 10px; gap: 10px; } .ware.mk .w-ico { width: 34px; height: 34px; } .ware.mk .w-ico img, .ware.mk .w-ico svg { width: 34px; height: 34px; }
 .mk-top { display: flex; align-items: baseline; gap: 8px; min-width: 0; } .mk-top b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 15px; }
 .mk-meta { font-family: var(--f-body); font-size: 12.5px; color: var(--muted); white-space: nowrap; }
 .mk-eff { display: flex; flex-wrap: wrap; gap: 0 8px; font-family: var(--f-num); font-size: 13.5px; } .mk-eff .eff { color: var(--steel); }
-.ware.mk .w-who { font-size: 12px; } .ware.mk .w-buy { padding: 6px 10px; min-width: 64px; }
+.ware.mk .w-who { font-size: 12px; } .ware.mk .w-buy { padding: 6px 4px; width: 76px; justify-content: center; }
 .mk-clock { font-size: 13px; color: var(--muted); } .mk-clock b { color: var(--ink); font-size: 16px; }
 .ware { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--raise); }
 .ware.sold { opacity: .5; }
@@ -1188,7 +1195,7 @@ table.cmp td { font-family: var(--f-num); font-size: 16px; } table.cmp td.win { 
 .w-txt { display: grid; gap: 1px; min-width: 0; } .w-sum { font-size: 13px; } .w-who { font-size: 12px; color: var(--verd); } .w-who.none { color: var(--muted); }
 .w-buy { border: 0; cursor: pointer; border-radius: 8px; padding: 8px 12px; background: var(--bronze); color: #fff; font-weight: 700; font-size: 17px; display: grid; justify-items: center; line-height: 1; min-width: 64px; }
 .w-buy i { font-style: normal; font-weight: 500; font-size: 11px; opacity: .85; margin-top: 2px; } .w-buy:disabled { background: var(--line); color: var(--muted); cursor: default; }
-.armory { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; } .armory li.sub { display: block; } .armory li { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.armory { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; } .armory li.sub { display: block; } .armory li { display: grid; grid-template-columns: 34px minmax(0, 1fr) 104px; min-height: 44px; border-top: 1px solid var(--line); gap: 10px; align-items: center; }
 .opt.not-owned { border-style: dashed; } .opt-own { grid-column: 2 / -1; font-size: 12px; font-weight: 600; color: var(--bronze); }
 
 /* Stable */
@@ -2029,7 +2036,7 @@ function renderTrainingView() {
       .sort((x, y) => (y.stars || 3) - (x.stars || 3) || x.name.localeCompare(y.name));
     pick = `<div class="block"><div class="block-head"><h2>Who trains?</h2><button class="close-x" data-act="post-close" aria-label="Close">×</button></div>
       <div class="bk-list">${can.map((u) => { const t = UNITS[u.template]; const L = Object.values(u.training || {}).reduce((a, x) => a + (x || 0), 0);
-        return `<button class="bk-row" data-act="post-fighter" data-uid="${u.uid}"><span class="mono cat-${category(t)}">${unitIcon(t, u.stars, u.castId)}</span><span class="bk-who"><b>${esc(u.name)}</b><span class="bk-sub">${u.stars || 3}★ ${esc(t.name)} · ${L} level${L === 1 ? '' : 's'} trained</span></span><span class="bk-pts"><span class="sub">next drill</span> ${cn(drillQuote(u, 'hp').coin)} <span class="sub">· ${clock(drillQuote(u, 'hp').min * 60000 / SPEED())}</span></span></button>`; }).join('') || '<p class="sub">Everyone is training or at their limit.</p>'}</div></div>`;
+        return `<button class="bk-row tr" data-act="post-fighter" data-uid="${u.uid}"><span class="mono cat-${category(t)}">${unitIcon(t, u.stars, u.castId)}</span><span class="bk-who"><b>${esc(u.name)}</b><span class="bk-sub">${u.stars || 3}★ ${esc(t.name)} · ${L} level${L === 1 ? '' : 's'} trained</span></span><span class="bk-pts"><span class="sub">next drill</span> ${cn(drillQuote(u, 'hp').coin)} <span class="sub">· ${clock(drillQuote(u, 'hp').min * 60000 / SPEED())}</span></span></button>`; }).join('') || '<p class="sub">Everyone is training or at their limit.</p>'}</div></div>`;
   } else if (tp && tp.step === 'stat') {
     const u = career.stable.find((x) => x.uid === tp.uid);
     if (u) { const t = UNITS[u.template];
@@ -2044,16 +2051,18 @@ function renderAcademyView() {
   const rows = Object.entries(GE.SKILLS).map(([k, sk]) => {
     const L = ac.unlocked[k] || 0; const run = ac.courses.find((c) => c.skill === k); const next = L + 1;
     const why = next > BALANCE.skillMaxLevel ? 'Mastered' : run ? '' : career.rung < COURSE.rung[next] ? 'Opens at a later arena' : ac.courses.length >= courseSlots() ? 'No free course slot' : career.coin < COURSE.coin[next] ? `Needs ${COURSE.coin[next]} coin` : '';
-    return `<div class="ac-row">
-      <div class="ac-name">${ART.skill && ART.skill[k] ? `<img class="sk-art" src="${ART.skill[k]}" alt="">` : ''}<b>${esc(sk.name)}</b><span class="fc-pips">${'●'.repeat(L)}${'○'.repeat(BALANCE.skillMaxLevel - L)}</span>
-        <span class="sub">${esc(sk.perLevel.replace(/ per level/, '').replace(/\.$/, ''))}${next <= BALANCE.skillMaxLevel && next > 1 ? ` ×${next}` : ''} · ${BALANCE.skillPointCost[Math.min(next, BALANCE.skillMaxLevel)]} pt to wear</span></div>
-      <div class="ac-act">${run ? `<span class="drill-on num">Level ${run.level}… <span data-end="${run.end}">${clock(run.end - Date.now())}</span></span>${career.academyCredit > 0 ? `<button class="btn small" data-act="ac-credit" data-k="${k}">Use credit</button>` : ''}`
-        : next > BALANCE.skillMaxLevel ? '<span class="sub">Mastered</span>'
-        : `<button class="btn small ${why ? '' : 'primary'}" data-act="ac-course" data-k="${k}" ${why ? 'disabled' : ''}>${why ? esc(why) : `Level ${next} · ${COURSE.min[next]} min · ${cn(COURSE.coin[next])}`}</button>`}</div></div>`;
+    const pipsH = Array.from({ length: BALANCE.skillMaxLevel }, (_, n) => `<i class="${n < L ? 'on' : ''}"></i>`).join('');
+    const nextCell = run ? `<span class="num ag-run" data-end="${run.end}">${clock(run.end - Date.now())}</span>` : next > BALANCE.skillMaxLevel ? '<span class="sub">Mastered</span>'
+      : `<span class="ag-next"><b class="num">${COURSE.min[next]} min</b>${cn(COURSE.coin[next])}</span>`;
+    const btn = run ? (career.academyCredit > 0 ? `<button class="dg-go" data-act="ac-credit" data-k="${k}">Credit</button>` : '<span class="sub r">Teaching</span>')
+      : next > BALANCE.skillMaxLevel ? '' : `<button class="dg-go" data-act="ac-course" data-k="${k}" ${why ? 'disabled' : ''} title="${esc(why || `Teach level ${next}`)}">Lv ${next}</button>`;
+    return `<div class="ag-r"><span class="ag-s">${ART.skill && ART.skill[k] ? `<img class="sk-art" src="${ART.skill[k]}" alt="">` : '<span class="sk-art"></span>'}<b>${esc(sk.name)}</b></span>
+      <span class="dg-pips">${pipsH}</span>${nextCell}${btn}
+      <span class="ag-d">${esc(sk.perLevel.replace(/ per level/, '').replace(/\.$/, ''))} · ${BALANCE.skillPointCost[Math.min(next, BALANCE.skillMaxLevel)]} pt to wear</span></div>`;
   }).join('');
   el.innerHTML = `<div class="block academy"><div class="block-head"><h2>The Battle Academy</h2><span class="sub">${ac.courses.length}/${courseSlots()} course slot${courseSlots() > 1 ? 's' : ''} in use · ${cn(career.coin)}${career.academyCredit ? ` · ${career.academyCredit} credit` : ''}</span></div>
     <p class="note">A course teaches the whole school. Once a level is unlocked, any fighter with a free skill slot can wear it; it costs points in the arena, not coin.</p>
-    <div class="ac-list">${rows}</div></div>`;
+    <div class="ag"><div class="ag-r dg-hr"><span>Skill</span><span>Taught</span><span>Next</span><span></span></div>${rows}</div></div>`;
 }
 
 function renderHomeView() {
@@ -2062,7 +2071,7 @@ function renderHomeView() {
   document.getElementById('view-home').innerHTML = `
     <div class="home-scene">${purseHTML()}${yardHTML()}</div>
     <div class="home-side">${magnusHTML(note)}${boutsHTML()}${recentHTML()}
-      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 10:06 PM</span></p>` : ''}
+      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 10:09 PM</span></p>` : ''}
     </div>`;
   startHomeClock();
 }
@@ -2833,9 +2842,9 @@ function renderBarracksView() {
   const el = document.getElementById('view-squad'); const bl = barracksList(arena());
   const rowOf = (u) => { const t = UNITS[u.template]; const act = (GE.resolveUnit(u).actives || [])[0]; const pts = soloCost(u).subtotal; const where = Object.entries(career.lineups || {}).filter(([ar, L]) => ar !== career.lineupArena && L.uids.includes(u.uid)).map(([ar]) => aName(ARENAS[ar]));
     if (inLineup(u)) where.unshift(aName(arena()));
-    return `<button class="bk-row" data-act="focus" data-uid="${u.uid}"><span class="mono cat-${category(t)}">${unitIcon(t, u.stars, u.castId)}</span>
-      <span class="bk-who"><b>${esc(u.name)}</b>${titleName(u) ? ` <i class="ep">${esc(titleName(u))}</i>` : ''}<span class="bk-sub">${u.stars || 3}★ ${esc(t.name)} · ${jobOf(t)}${where.length ? ` · <span class="bk-in">${esc(where.join(', '))}</span>` : ''}</span></span>
-      <span class="bk-pts"><b>${pts}</b> pts</span></button>`; };
+    return `<button class="bk-row ${inLineup(u) ? 'fielded' : ''}" data-act="focus" data-uid="${u.uid}" title="${esc(where.length ? 'Fighting at ' + where.join(', ') : 'Not in a lineup')}"><span class="mono cat-${category(t)}">${unitIcon(t, u.stars, u.castId)}</span>
+      <span class="bk-who"><b>${esc(u.name)}</b>${titleName(u) ? ` <i class="ep">${esc(titleName(u))}</i>` : ''}<span class="bk-sub">${u.stars || 3}★ ${esc(t.name)}</span></span>
+      <span class="bk-job">${jobOf(t)}</span><span class="bk-pts"><b>${pts}</b> pts</span></button>`; };
   el.innerHTML = `<div class="block barracks"><div class="block-head"><h2>Barracks</h2><span class="sub">${career.stable.length} fighter${career.stable.length === 1 ? '' : 's'} · <button class="linkish" data-act="view" data-v="ledger">The gate</button></span></div>
     ${bl.toolbar}<div class="bk-list">${bl.list.map(({ u }) => rowOf(u)).join('')}</div>${bl.total > bl.LIMIT ? `<button class="linkish" data-act="rf-more">Show more</button>` : ''}</div>`;
 }
