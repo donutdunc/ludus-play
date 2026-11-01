@@ -2173,7 +2173,7 @@ function renderHomeView() {
   document.getElementById('view-home').innerHTML = `
     <div class="home-scene">${purseHTML()}${yardHTML()}</div>
     <div class="home-side">${magnusHTML(note)}${boutsHTML()}${recentHTML()}
-      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-showcase">Imperial fight</button> · <button class="linkish" data-act="home-lategame">Late game</button> · <button class="linkish" data-act="home-midgame">Mid game</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Nov 1, 5:26 PM</span></p>` : ''}
+      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-showcase">Imperial fight</button> · <button class="linkish" data-act="home-lategame">Late game</button> · <button class="linkish" data-act="home-midgame">Mid game</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Nov 1, 5:52 PM</span></p>` : ''}
     </div>`;
   startHomeClock();
 }
@@ -2293,7 +2293,9 @@ function toggleLineup(uid) {
 // New arrivals bring the junk they own: a sharp stick and thick rags, where they can use them.
 function starterKit(template) {
   const t = UNITS[template]; const kit = {};
-  for (const [slot, id] of [['main', 'sharp_stick'], ['body', 'thick_rags']]) if (ITEMS[id] && !GE.itemLocks(t, ITEMS[id], slot, {}).length) kit[slot] = id;
+  // Shooters arrive with something to shoot; everyone else gets the free stick.
+  const ranged = { kobold_slinger: 'sling', archer: 'shortbow', crossbowman: 'crossbow' }[template] || (t.job === 'shooter' ? 'sling' : null);
+  for (const [slot, id] of [['main', ranged], ['main', 'sharp_stick'], ['body', 'thick_rags']]) if (id && !kit[slot] && ITEMS[id] && !GE.itemLocks(t, ITEMS[id], slot, {}).length) kit[slot] = id;
   return kit;
 }
 function addToStable(build) {
@@ -2337,9 +2339,30 @@ function markFighters(res, k, won) {
 }
 // The recruiting board: a few hopefuls for hire, seeded per window so it doesn't reshuffle on reload.
 function recruitPrice(t, stars) { return Math.round(4 + t.cost * 3 * BALANCE.starCostMult[stars - 1]); }
+// The first recruits are on rails: a slinger to throw from behind Garth, then a shield to stand beside him.
+// Each rail card waits at the gate until it's hired; after them the gate draws at random.
+const GATE_RAILS = [
+  { castId: 'kobold_slinger-plink', line: 'Garth: "Someone who can throw from behind me. I\'ll keep them busy up front."' },
+  { castId: 'hoplite-kevin', line: 'Garth: "A shield. Two of us holding the front, and Plink keeps throwing."' },
+];
+function railStock(win) {
+  if (career.hires === undefined) career.hires = Math.max(0, (career.stable || []).length - 1);
+  const owned = new Set((career.stable || []).map((u) => u.castId).filter(Boolean));
+  const hiredNow = career.hired && career.hired.win === win;
+  // Hired from the rail this window: keep showing that card, marked hired.
+  const shown = career.railShown && career.railShown.win === win ? GATE_RAILS[career.railShown.idx] : null;
+  const rail = hiredNow ? (shown && career.hired.keys.includes(`rail-${career.railShown.idx}`) ? shown : null) : GATE_RAILS[career.hires];
+  if (!rail || (!hiredNow && owned.has(rail.castId))) return null;
+  const idx = GATE_RAILS.indexOf(rail), c = GE.CAST_BY_ID[rail.castId]; if (!c) return null;
+  career.railShown = { win, idx };
+  const key = `rail-${idx}`;
+  return { list: [{ key, template: c.template, stars: c.stars, name: c.name, cast: c, duplicate: false, five: false, price: recruitPrice(UNITS[c.template], c.stars) }],
+    hired: hiredNow ? career.hired.keys : [], win, next: (win + 1) * BOARD_MS(), fiveChance: 0, rail: rail.line };
+}
 function boardStock() {
   const win = Math.floor(Date.now() / BOARD_MS());
   if (career.boardStart === undefined) career.boardStart = win;
+  const railed = railStock(win); if (railed) return railed;
   const n = 3 + (career.rung >= 2 ? 1 : 0) + (career.rung >= 3 ? 1 : 0);
   const cheapSlots = career.rung >= 3 ? 2 : 1;
   const owned = new Set((career.stable || []).map((u) => u.castId).filter(Boolean));
@@ -2365,7 +2388,7 @@ function hire(key) {
   if (st.hired.length) return 'You took your pick. New faces at the next refresh.';
   if (c.duplicate) return `${c.name} is already yours. Take the Legacy instead.`;
   if (career.coin < c.price) return `${c.name} wants ${c.price} coin; the strongbox has ${career.coin}.`;
-  career.coin -= c.price; career.hired = { win: st.win, keys: [...st.hired, key] };
+  career.coin -= c.price; career.hired = { win: st.win, keys: [...st.hired, key] }; career.hires = (career.hires || 0) + 1;
   addToStable({ template: c.template, name: c.name, stars: c.stars, castId: c.cast.id, titles: [...(c.cast.titles || [])], equip: starterKit(c.template) });
   ledger(`Hired ${c.name}, ${c.stars}★ ${UNITS[c.template].name}`, -c.price);
   chronicle(`${c.name} joined ${state.team.name}.${c.stars === 5 ? ' A legend walks into the yard.' : ''}`);
@@ -2498,8 +2521,8 @@ function renderStableView() {
       <span class="btn-row"><button class="btn small primary" data-act="accept-offer" data-i="${i}">Take them in</button><button class="btn small" data-act="decline-offer" data-i="${i}">Send away</button></span></div>`).join('');
   document.getElementById('view-ledger').innerHTML = `
     ${offers ? `<div class="block"><div class="block-head"><h2>Asking to join</h2></div><div class="wares">${offers}</div></div>` : ''}
-    <div class="block"><div class="block-head"><h2>The gate</h2><span class="sub"><span class="purse-chip">Strongbox <b class="num">${cn(career.coin)}</b></span> · new faces in ${clock(bd.next - Date.now())}</span></div>
-      <p class="gate-rule">${bd.hired.length ? 'You took your pick. The rest have moved on.' : 'Take one. The others won\'t wait.'}</p>
+    <div class="block"><div class="block-head"><h2>The gate</h2><span class="sub"><span class="purse-chip">Strongbox <b class="num">${cn(career.coin)}</b></span>${bd.rail && !bd.hired.length ? '' : ` · new faces in ${clock(bd.next - Date.now())}`}</span></div>
+      <p class="gate-rule">${bd.rail ? (bd.hired.length ? 'Hired. More faces at the gate after the next refresh.' : esc(bd.rail)) : bd.hired.length ? 'You took your pick. The rest have moved on.' : 'Take one. The others won\'t wait.'}</p>
       <div class="wares">${cards}</div>
       <p class="note">New hires land in the Barracks. Field and place them on the <button class="linkish" data-act="view" data-v="arena">Arena</button> page.</p></div>`;
 }
