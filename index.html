@@ -2070,7 +2070,7 @@ function renderHomeView() {
   document.getElementById('view-home').innerHTML = `
     <div class="home-scene">${purseHTML()}${yardHTML()}</div>
     <div class="home-side">${magnusHTML(note)}${boutsHTML()}${recentHTML()}
-      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 10:18 PM</span></p>` : ''}
+      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-midgame">Mid game</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 10:23 PM</span></p>` : ''}
     </div>`;
   startHomeClock();
 }
@@ -4291,6 +4291,34 @@ document.addEventListener('click', (e) => {
     case 'drill': { const msg = startDrill(b, btn.dataset.k); toast(msg || 'Off to the training posts.'); if (!msg && state.view === 'training') state.post = null; break; }
     case 'home-fighter': state.sel = +btn.dataset.i; state.arenaId = rung().arena; state.view = 'fighter'; window.scrollTo(0, 0); break;
     case 'home-seen-roster': career.seenRung = career.rung; saveCareer(); state.arenaId = rung().arena; state.view = 'ledger'; window.scrollTo(0, 0); break;
+    case 'home-midgame': {
+      // Test helper: a school about an hour in. Fourth arena, six fighters, some gear, training, scars and titles,
+      // every yard building open, the first debt paid.
+      wipeCareer(); Object.assign(career, newCareer(), { started: true, afkAt: Date.now() });
+      Object.assign(career, { rung: 3, at: 3, seenRung: 3, coin: 400, renown: 70, fights: 28, drilled: true, afkOn: true, debtTier: 1, debt: ledgerAt(1).owed, ore: 2, scrap: 6,
+        story: { met: true, gladius: 'broken', storeroom: true }, seen: { card: true, market: true, academy: true, roster: true }, bought: true,
+        beaten: Object.fromEntries(LADDER.slice(0, 3).flatMap((r) => r.squads).map((k) => [k, true])),
+        armory: { leather_cap: 2, hand_wraps: 2, rope_sandals: 2, leather_gloves: 1, pot_helm: 1, leather: 1, buckler: 1, dagger: 1, lucky_charm: 1, whetstone: 1, rat_salve: 1 },
+        academy: { unlocked: { ferocity: 2, toughness: 1, marksmanship: 1 }, courses: [] }, stable: [], lineup: [], teamMeta: { name: "Your Uncle's Ludus", stratagems: [] } });
+      for (const k of Object.keys(career.armory)) if (!ITEMS[k]) delete career.armory[k];
+      uidSeq = 1;
+      const add = (castId, extra) => { const c = GE.CAST_BY_ID[castId]; if (!c) return; addToStable({ template: c.template, name: c.name, stars: c.stars, castId, titles: [...(c.titles || [])], equip: starterKit(c.template), ...extra }); };
+      add('peasant-garth', { fights: 28, wins: 20, equip: { main: 'club', body: 'thick_rags', head: 'leather_cap', hands: 'hand_wraps', feet: 'rope_sandals' }, training: { hp: 2, atk: 1 }, scars: ['old_wound'], wornScars: ['old_wound'], titles: ['unbroken'], title: 'unbroken', skills: { ferocity: 1 } });
+      add('kobold_slinger-plink', { fights: 14, wins: 9, training: { acc: 1 }, skills: { marksmanship: 1 } });
+      add('hungry_dog-pepper', { fights: 12, wins: 8 });
+      add('thrall-terry', { fights: 9, wins: 6, equip: { main: 'sharp_stick', body: 'thick_rags', hands: 'hand_wraps' }, training: { hp: 1 } });
+      add('goblin-snot', { fights: 6, wins: 4 });
+      add('crow-beaky', { fights: 4, wins: 3 });
+      for (const u of career.stable) u.seenPerks = [...(u.scars || []), ...(u.titles || [])];
+      // Field as many as the cap allows, strongest first.
+      career.lineup = [];
+      for (const u of [...career.stable].sort((a, b) => ratingOf(b) - ratingOf(a))) {
+        career.lineup.push(u.uid); syncLineup();
+        if (GE.teamCost(state.team, ARENAS[LADDER[3].arena]).total > ARENAS[LADDER[3].arena].cap) { career.lineup.pop(); syncLineup(); }
+      }
+      career.lineupArena = LADDER[3].arena; state.introSeen = true; state.view = 'home'; state.sandbox = false; saveCareer();
+      toast('Jumped to mid game: fourth arena, six fighters, 400 coin.'); break;
+    }
     case 'home-reset':
       if (btn.dataset.armed) { wipeCareer(); Object.assign(career, newCareer()); saveCareer(); state.team = clone(GE.SCENARIOS.lone_hoplite); state.introSeen = false; state.view = 'home'; uidSeq = 1; break; }
       btn.dataset.armed = '1'; btn.textContent = 'Tap again to wipe your ludus'; return;
