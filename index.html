@@ -709,6 +709,21 @@ table.stats tr.explain .rule { color: var(--ink); opacity: .75; }
 .hpsum .bar { height: 10px; border-radius: 5px; background: var(--line); overflow: hidden; position: relative; }
 .hpsum .bar i { position: absolute; inset: 0 auto 0 0; transition: width .3s ease; }
 .arena-wrap { overflow-x: auto; padding: 2px; }
+.crowd { position: relative; height: clamp(30px, 8vw, 46px); margin: 0 6px -4px; z-index: 2; pointer-events: none; overflow: visible; }
+.crowd .stands { position: absolute; left: -6px; right: -6px; bottom: 0; height: 46%; border-radius: 8px 8px 0 0; background: linear-gradient(#6b5236, #4a3826); box-shadow: inset 0 2px 0 rgba(255,255,255,.08); }
+.fan { position: absolute; bottom: 18%; width: 3.6%; max-width: 22px; aspect-ratio: 2 / 3; transform: translateX(-50%); animation: fan-idle 2.4s ease-in-out infinite; animation-delay: var(--d); }
+.fan.back { bottom: 34%; filter: brightness(.82); z-index: -1; }
+.fan svg { width: 100%; height: 100%; display: block; overflow: visible; } .fan .arms { opacity: 0; transition: opacity .1s; }
+@keyframes fan-idle { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, -4%); } }
+.crowd.cheer .fan, .crowd.roar .fan { animation: fan-jump .38s ease-out 2 alternate; animation-delay: var(--r); } .crowd.roar .fan { animation-iteration-count: 4; }
+.crowd.cheer .fan .arms, .crowd.roar .fan .arms { opacity: 1; }
+@keyframes fan-jump { from { transform: translate(-50%, 0); } to { transform: translate(-50%, -38%); } }
+.crowd.gasp .fan { animation: fan-gasp .5s ease-out forwards; animation-delay: var(--r); }
+@keyframes fan-gasp { to { transform: translate(-50%, 10%) scaleY(.94); } }
+.shout { position: absolute; bottom: 30%; transform: translateX(-50%); padding: 1px 8px; border-radius: 10px; background: #fff8ea; color: #3a2614; font-family: var(--f-display); font-size: clamp(11px, 2.6vw, 15px); white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,.25); opacity: 0; animation: shout 1.6s ease-out forwards; z-index: 5; }
+.shout.bad { background: #f6dcd6; color: #6b1d12; }
+@keyframes shout { 0% { opacity: 0; transform: translate(-50%, 6px) scale(.7); } 12% { opacity: 1; transform: translate(-50%, 0) scale(1.06); } 22% { transform: translate(-50%, 0) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -8px); } }
+@media (prefers-reduced-motion: reduce) { .fan, .crowd.cheer .fan, .crowd.roar .fan, .crowd.gasp .fan { animation: none; } }
 .arena { position: relative; width: 100%; min-width: 340px; aspect-ratio: 10 / 6; border-radius: 14px; overflow: hidden;
   background:
     radial-gradient(ellipse at 50% 50%, color-mix(in srgb, var(--sand) 92%, white) 0%, var(--sand) 55%, color-mix(in srgb, var(--sand) 80%, var(--ink)) 100%);
@@ -737,7 +752,8 @@ table.stats tr.explain .rule { color: var(--ink); opacity: .75; }
   .b-title { font-size: 15px; line-height: 1.25; } .b-title .vs { display: block; margin: 0; font-size: 12px; }
   .score, .battle-inner > .note, .b-stage .upnext { display: none; }
   .arena-wrap { padding: 0; overflow: visible; }
-  .arena { min-width: 0; width: auto; height: calc(100svh - 12px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+  .arena { min-width: 0; width: auto; height: calc(100svh - 12px - 30px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+  .crowd { height: 30px; margin: 0 6px -2px; } .fan { max-width: 16px; }
   .b-stage .caption { position: fixed; z-index: 3; min-height: 0; padding: 8px 10px; font-size: 13px; gap: 6px; background: var(--panel);
     top: calc(56px + env(safe-area-inset-top, 0px)); right: max(8px, env(safe-area-inset-right, 0px));
     left: calc(max(8px, env(safe-area-inset-left, 0px)) + (100svh - 12px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) * 10 / 6 + 10px); }
@@ -790,7 +806,7 @@ table.stats tr.explain .rule { color: var(--ink); opacity: .75; }
 .hitfx.fx-crit { width: 12%; } .hitfx.fx-heal { animation-duration: .9s; }
 @keyframes hitfx { 0% { opacity: 0; transform: translate(-50%, -50%) scale(calc(var(--flip, 1) * .4), .4); } 25% { opacity: 1; transform: translate(-50%, -50%) scale(calc(var(--flip, 1) * 1.05), 1.05); } 100% { opacity: 0; transform: translate(-50%, -60%) scale(calc(var(--flip, 1) * 1.15), 1.15); } }
 @keyframes floatup { 0% { opacity: 0; margin-top: 6px; } 15% { opacity: 1; margin-top: 0; } 75% { opacity: 1; } 100% { opacity: 0; margin-top: -22px; } }
-.pulse { display: grid; gap: 6px; width: 100%; }
+.pulse { display: grid; gap: 6px; width: 100%; } #caption { display: none !important; }
 .pl-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .pl-mood { font-family: var(--f-display); font-size: 20px; } .pl-mood.good { color: var(--bronze); } .pl-mood.bad { color: var(--pompeii); }
 .pl-hp { font-size: 14px; } .pl-bar { height: 8px; border-radius: 4px; background: var(--pompeii); overflow: hidden; } .pl-bar i { display: block; height: 100%; background: var(--bronze); transition: width .35s ease; }
@@ -2086,7 +2102,7 @@ function renderHomeView() {
   document.getElementById('view-home').innerHTML = `
     <div class="home-scene">${purseHTML()}${yardHTML()}</div>
     <div class="home-side">${magnusHTML(note)}${boutsHTML()}${recentHTML()}
-      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-midgame">Mid game</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 10:38 PM</span></p>` : ''}
+      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-midgame">Mid game</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 10:44 PM</span></p>` : ''}
     </div>`;
   startHomeClock();
 }
@@ -3741,6 +3757,7 @@ function startBattle(key) {
     <div class="b-head"><div class="b-title"></div>
       <button class="close-x" data-act="close-battle" aria-label="Leave the arena">×</button></div>
     <div class="b-main"><div class="b-stage">
+    <div class="crowd" id="crowd" aria-hidden="true">${crowdHTML(battle.seed)}</div>
     <div class="arena-wrap"><div class="arena ${ARENA_FLOOR(state.arenaId) ? 'has-floor' : ''}" id="arena" ${ARENA_FLOOR(state.arenaId) ? `style="background-image:url(${ARENA_FLOOR(state.arenaId)})"` : ''}><div class="grid"></div><div class="midline"></div>${tokens}
       <svg class="fx" id="fx" viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true"></svg></div></div>
     <div class="caption" id="caption" aria-live="polite"></div>
@@ -3903,7 +3920,10 @@ function showFrame(idx, animate = true) {
     const burst = (uid, cls, at) => { const s = f.snap[uid]; if (!s) return; const b = document.createElement('span'); b.className = 'burst ' + cls;
       b.style.left = pct(X(s.x) + 0.5, GRID_W) + '%'; b.style.top = pct(s.y + 0.5, GRID_H) + '%'; b.style.animationDelay = at + 's'; arenaEl.appendChild(b); setTimeout(() => b.remove(), (at + 0.8) * 1000); };
     const critHit = f.ev.find((e) => e.kind === 'attack' && e.outcome === 'crit');
-    if (critHit) { shake('shake-s', ((projDelay[critHit.tid] || 0.18)) * 1000); burst(critHit.tid, 'crit', projDelay[critHit.tid] || 0.18); }
+    if (critHit) { shake('shake-s', ((projDelay[critHit.tid] || 0.18)) * 1000); burst(critHit.tid, 'crit', projDelay[critHit.tid] || 0.18); crowdReact('crit', (projDelay[critHit.tid] || 0.18) * 1000, res.start[critHit.aid].side === battle.mySide); }
+    const close = f.ev.find((e) => e.kind === 'attack' && e.tid !== undefined && f.snap[e.tid] && f.snap[e.tid].alive && f.snap[e.tid].hp > 0 && f.snap[e.tid].hp <= res.start[e.tid].hp * 0.12);
+    if (close && !critHit) crowdReact('gasp', 300, res.start[close.tid].side === battle.mySide);
+    if (f.ev.some((e) => e.kind === 'active') && !critHit && !close && Math.random() < 0.35) crowdReact('special', 200, true);
     for (const e of f.ev) if (e.kind === 'active' && e.aid !== undefined) {
       const s = f.snap[e.aid]; if (!s) continue; const c = document.createElement('span');
       c.className = 'actcard s' + (res.start[e.aid].side === battle.mySide ? 0 : 1); c.textContent = e.label;
@@ -3912,11 +3932,10 @@ function showFrame(idx, animate = true) {
     // Fade out the fallen after their hit lands
     f.snap.forEach((s, uid) => { if (!s.alive && prevSnap[uid].alive) {
       const at = Math.max(0.35, (projDelay[uid] || 0.18) + 0.15);
-      shake('shake-l', at * 1000); burst(uid, 'ko', at);
+      shake('shake-l', at * 1000); burst(uid, 'ko', at); crowdReact('ko', at * 1000, res.start[uid].side !== battle.mySide);
       setTimeout(() => document.getElementById('bt-' + uid)?.classList.add('ko'), at * 1000);
       setTimeout(() => document.getElementById('bt-' + uid)?.classList.add('dead'), at * 1000 + 450); } });
   }
-  renderPulse(idx);
   // Up next (gone: the order of turns isn't worth the attention)
   const next = [];
   for (let k = idx + 1; k < battle.frames.length && next.length < 6; k++) if (battle.frames[k].actor !== null) next.push(battle.frames[k].actor);
@@ -4011,6 +4030,39 @@ function renderScore(f, targets) {
 }
 // The pulse: who's winning, and only the moments worth looking up for (crits, knockouts, specials,
 // narrow escapes, the tide turning). Replaces the blow-by-blow caption.
+// ---- The crowd: a strip of fans above the sand who react to the big moments (no sound needed) ----
+const FAN_TUNIC = ['#9b3b2e', '#c08a3a', '#6e5236', '#4f6c8a', '#7b6a4f', '#a8562c', '#556b3f', '#8c7a5b'];
+const FAN_SKIN = ['#e8c39e', '#c99a6e', '#a8754d', '#7a5236', '#f0d2b0'];
+function crowdHTML(seed) {
+  let x = (seed * 9301 + 49297) % 233280; const rnd = () => (x = (x * 9301 + 49297) % 233280) / 233280;
+  const n = 34; let out = '';
+  for (let k = 0; k < n; k++) {
+    const t = FAN_TUNIC[Math.floor(rnd() * FAN_TUNIC.length)], sk = FAN_SKIN[Math.floor(rnd() * FAN_SKIN.length)], back = k % 2;
+    const hair = rnd() < 0.5 ? '#2b1d12' : rnd() < 0.5 ? '#5a3a1c' : '#8a8478';
+    out += `<span class="fan ${back ? 'back' : ''}" style="--d:${(rnd() * 1.6).toFixed(2)}s;--r:${(rnd() * 0.22).toFixed(2)}s;left:${((k + 0.5) / n * 100).toFixed(2)}%">
+      <svg viewBox="0 0 20 30"><g class="arms"><path d="M4 18 L1 7" stroke="${sk}" stroke-width="2.6" stroke-linecap="round"/><path d="M16 18 L19 7" stroke="${sk}" stroke-width="2.6" stroke-linecap="round"/></g>
+      <path d="M2 30 Q2 16 10 15 Q18 16 18 30 Z" fill="${t}"/><circle cx="10" cy="10" r="5.2" fill="${sk}"/><path d="M4.8 9.5 Q5 4.4 10 4.4 Q15 4.4 15.2 9.5 Q12 6.6 10 7 Q7.6 6.6 4.8 9.5Z" fill="${hair}"/></svg></span>`;
+  }
+  return `<div class="stands"></div>${out}`;
+}
+const SHOUTS = { ko: ['Finish!', 'Blood!', 'Down!', 'Ohhh!'], crit: ['Ooh!', 'Again!', 'What a blow!', 'Yes!'], gasp: ['Ohh!', 'Get up!', 'No!'], win: ['Victory!', 'Hail!', 'Again! Again!'], special: ['Look!', 'Ha!'] };
+let crowdTimer = 0;
+function crowdReact(kind, at = 0, good = true) {
+  const el = document.getElementById('crowd'); if (!el) return;
+  setTimeout(() => {
+    clearTimeout(crowdTimer);
+    el.classList.remove('cheer', 'gasp', 'roar'); void el.offsetWidth;
+    el.classList.add(kind === 'gasp' ? 'gasp' : kind === 'ko' || kind === 'win' ? 'roar' : 'cheer');
+    const pool = SHOUTS[kind] || SHOUTS.crit; const fans = el.querySelectorAll('.fan');
+    const n = kind === 'win' || kind === 'ko' ? 2 : 1;
+    for (let k = 0; k < n; k++) {
+      const f = fans[Math.floor(Math.random() * fans.length)]; if (!f) continue;
+      const b = document.createElement('span'); b.className = 'shout ' + (good ? 'good' : 'bad'); b.textContent = pool[Math.floor(Math.random() * pool.length)];
+      b.style.left = f.style.left; b.style.animationDelay = (k * 0.25) + 's'; el.appendChild(b); setTimeout(() => b.remove(), 1700);
+    }
+    crowdTimer = setTimeout(() => el.classList.remove('cheer', 'gasp', 'roar'), kind === 'win' ? 2600 : 1100);
+  }, at);
+}
 function teamShare(snap) {
   const me = battle.mySide, start = battle.res.start; let a = 0, A = 0, b = 0, B = 0;
   snap.forEach((s, uid) => { const st = start[uid]; const hp = s.alive && !s.fled ? Math.max(0, s.hp) : 0; if (st.side === me) { a += hp; A += st.hp; } else { b += hp; B += st.hp; } });
@@ -4112,6 +4164,7 @@ function stop() {
   const b = document.getElementById('b-play'); if (b) b.textContent = 'Play';
 }
 function showResult() {
+  if (battle.res && battle.res.winner === battle.mySide) crowdReact('win', 150, true);
   const res = battle.res, me = battle.mySide;
   const text = GE.battleReport(res);
   const section = (name) => { const lines = text.split('\n'); const s = lines.indexOf(name); const out = []; if (s < 0) return out; for (let k = s + 1; k < lines.length && lines[k].startsWith('  •'); k++) out.push(lines[k].replace(/^ {2}• /, '')); return out; };
