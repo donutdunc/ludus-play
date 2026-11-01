@@ -2058,10 +2058,9 @@ function renderAcademyView() {
       : next > BALANCE.skillMaxLevel ? '' : `<button class="dg-go" data-act="ac-course" data-k="${k}" ${why ? 'disabled' : ''} title="${esc(why || `Teach level ${next}`)}">Lv ${next}</button>`;
     return `<div class="ag-r"><span class="ag-s">${ART.skill && ART.skill[k] ? `<img class="sk-art" src="${ART.skill[k]}" alt="">` : '<span class="sk-art"></span>'}<b>${esc(sk.name)}</b></span>
       <span class="dg-pips">${pipsH}</span>${nextCell}${btn}
-      <span class="ag-d">${esc(sk.perLevel.replace(/ per level/, '').replace(/\.$/, ''))} · ${BALANCE.skillPointCost[Math.min(next, BALANCE.skillMaxLevel)]} pt to wear</span></div>`;
+      <span class="ag-d">${esc(sk.perLevel.replace(/ per level/, '').replace(/\.$/, ''))}</span></div>`;
   }).join('');
   el.innerHTML = `<div class="block academy"><div class="block-head"><h2>The Battle Academy</h2><span class="sub">${ac.courses.length}/${courseSlots()} course slot${courseSlots() > 1 ? 's' : ''} in use · ${cn(career.coin)}${career.academyCredit ? ` · ${career.academyCredit} credit` : ''}</span></div>
-    <p class="note">A course teaches the whole school. Once a level is unlocked, any fighter with a free skill slot can wear it; it costs points in the arena, not coin.</p>
     <div class="ag"><div class="ag-r dg-hr"><span>Skill</span><span>Taught</span><span>Next</span><span></span></div>${rows}</div></div>`;
 }
 
@@ -2071,7 +2070,7 @@ function renderHomeView() {
   document.getElementById('view-home').innerHTML = `
     <div class="home-scene">${purseHTML()}${yardHTML()}</div>
     <div class="home-side">${magnusHTML(note)}${boutsHTML()}${recentHTML()}
-      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 10:09 PM</span></p>` : ''}
+      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 10:18 PM</span></p>` : ''}
     </div>`;
   startHomeClock();
 }
@@ -3440,7 +3439,7 @@ function catalogHTML(p) {
     const b = pbOf(p); const t = UNITS[b.template]; const who = esc(b.name || t.name);
     if (p.kind === 'skill') {
       const sk = Object.entries(b.skills || {}).filter(([, v]) => v > 0); const cur = sk[p.n];
-      title = `Skill slot ${p.n + 1} for ${who}`; sub = `${skillSlotsOf(b)} skill slot${skillSlotsOf(b) > 1 ? 's' : ''} · each level costs points`;
+      title = `Skill slot ${p.n + 1} for ${who}`; sub = 'Wearing a skill costs arena points; higher levels cost more';
       body = (cur ? `<button class="opt sheet-row unequip" data-act="perk-skill" data-k="" data-v="0"><span class="opt-name">Unequip ${esc(GE.SKILLS[cur[0]].name)}</span><span class="opt-cost">−${BALANCE.skillPointCost[cur[1]]}</span></button>` : '')
         + Object.entries(GE.SKILLS).map(([k, S]) => { const cap = skillUnlocked(k); const elsewhere = sk.some(([x], n) => x === k && n !== p.n);
           return [1, 2, 3].map((L) => { const on = cur && cur[0] === k && cur[1] === L; const lock = L > cap ? (L === cap + 1 ? 'Not taught at the Academy yet' : '') : elsewhere ? 'Worn in another slot' : '';
