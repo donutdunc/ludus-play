@@ -676,6 +676,15 @@ table.stats tr.explain .rule { color: var(--ink); opacity: .75; }
 .res-card .res-sub { font-size: 13px; margin-top: 2px; }
 @media (max-width: 899px) { #b-result { position: fixed; inset: 0; z-index: 70; place-items: end center; padding: 12px; border-radius: 0; } .res-card { max-height: 70vh; } }
 .res-card .btn-row { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+.res-card .btn-row.res-three { display: grid; grid-template-columns: 1.3fr 1fr 1fr; } .res-card .btn-row.res-three .btn { width: 100%; justify-content: center; }
+.rep-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 4px 0 10px; }
+.rep-tabs button { font: inherit; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--muted); text-align: left; display: flex; flex-direction: column; line-height: 1.2; cursor: pointer; }
+.rep-tabs button span { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rep-tabs button[aria-selected="true"] { background: var(--raise); color: var(--ink); border-color: var(--bronze); font-weight: 600; }
+.rep-table.rep-grid th.n { text-align: right; } .rep-table.rep-grid th, .rep-table.rep-grid td { padding-left: 4px; padding-right: 4px; vertical-align: middle; } .rep-table.rep-grid th:first-child, .rep-table.rep-grid td:first-child { padding-left: 0; }
+.rep-grid .rep-who b { display: block; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; } .rep-grid .rep-who span { display: block; font-size: 11.5px; color: var(--muted); font-family: var(--f-num); }
+.rep-table.rep-grid tfoot td { border-top: 2px solid var(--line); font-weight: 600; } .rep-table.rep-grid tr.dead td:first-child { text-decoration: none; color: inherit; } .rep-grid tr.dead .rep-who b { text-decoration: line-through; color: var(--muted); }
+.rep-key { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
 .rep-body { padding: 8px 14px 14px; overflow-y: auto; flex: 1; } .rep-body h3 { font-size: 14px; margin: 12px 0 6px; } .rep-body .rep-teams { display: grid; grid-template-columns: minmax(0, 1fr) !important; gap: 10px; } .rep-body .rep-table { font-size: 12.5px; width: 100%; } .rep-body .momentum { width: 100%; height: auto; }
 .score { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 @media (min-width: 600px) and (max-width: 899px) { .score { display: grid; grid-template-columns: 1fr 1fr; } }
@@ -2164,7 +2173,7 @@ function renderHomeView() {
   document.getElementById('view-home').innerHTML = `
     <div class="home-scene">${purseHTML()}${yardHTML()}</div>
     <div class="home-side">${magnusHTML(note)}${boutsHTML()}${recentHTML()}
-      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-showcase">Imperial fight</button> · <button class="linkish" data-act="home-lategame">Late game</button> · <button class="linkish" data-act="home-midgame">Mid game</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Nov 1, 4:47 PM</span></p>` : ''}
+      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-showcase">Imperial fight</button> · <button class="linkish" data-act="home-lategame">Late game</button> · <button class="linkish" data-act="home-midgame">Mid game</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Nov 1, 5:26 PM</span></p>` : ''}
     </div>`;
   startHomeClock();
 }
@@ -4356,21 +4365,37 @@ function showResult() {
   const section = (name) => { const lines = text.split('\n'); const s = lines.indexOf(name); const out = []; if (s < 0) return out; for (let k = s + 1; k < lines.length && lines[k].startsWith('  •'); k++) out.push(lines[k].replace(/^ {2}• /, '')); return out; };
   const verdict = res.winner === null ? 'Draw' : res.winner === me ? 'Victory' : 'Defeat';
   const cls = res.winner === null ? '' : res.winner === me ? 'win' : 'loss';
-  const table = (side) => `<div><h3>${esc(res.teams[side])}${side === me ? ' (yours)' : ''}</h3><div class="rep-table-wrap"><table class="rep-table">
-    <thead><tr><th>Fighter</th><th>HP left</th><th style="text-align:right">Damage</th><th style="text-align:right">Kills</th><th style="text-align:right">Healed</th></tr></thead><tbody>
-    ${res.combatants.filter((c) => c.side === side).map((c) => `<tr class="${c.alive ? '' : 'dead'}"><td>${esc(dname(UNITS[c.template], c.name))}</td><td>${c.alive ? `<span class="num">${c.hp}/${c.maxHp}</span>` : c.fled ? 'fled' : 'fell'}</td><td class="n">${c.counters.dealt}</td><td class="n">${c.counters.kills}</td><td class="n">${c.counters.healed || ''}</td></tr>`).join('')}
-    </tbody></table></div></div>`;
   if (battle.career) battle.careerNote = recordCareerResult(); // once per fight; replays keep the note
   const cn = battle.fromHome && battle.careerNote;
   document.getElementById('b-result').innerHTML = `<div class="res-card ${cls}">
     <p class="verdict ${cls}">${verdict}</p>${cn ? `<p class="career-note">${esc(cn.note)}</p>` : ''}
     <div class="muted res-sub">${res.reason === 'timeout' ? 'Decided on remaining HP at the time limit' : `Decided in ${res.actions} turns`}</div>
-    <div class="btn-row"><button class="btn primary" data-act="close-battle">${battle.fromHome ? 'Back to the ludus' : 'Back to roster'}</button>
+    <div class="btn-row ${battle.fromHome ? 'res-three' : ''}"><button class="btn primary" data-act="close-battle">${battle.fromHome ? 'Ludus' : 'Back to roster'}</button>
       ${battle.fromHome ? '' : '<button class="btn" data-act="rematch">Rematch</button><button class="btn" data-act="new-opponent">Someone else</button>'}
-      <button class="btn" data-act="b-replay">Watch again</button><button class="btn" data-act="b-report">Full report</button></div></div>`;
-  document.getElementById('b-report-body').innerHTML = `<h3>Momentum</h3>${momentumSVG()}
-    <h3>Why it went this way</h3><ul class="rep-list">${section('Why it went this way').map((l) => `<li>${esc(l)}</li>`).join('')}</ul>
-    <div class="rep-teams">${table(me)}${table(1 - me)}</div>`;
+      <button class="btn" data-act="b-replay">Replay</button><button class="btn" data-act="b-report">Report</button></div></div>`;
+  battle.repTab = me; renderReport();
+}
+// The fight report: one tab per side, one row per fighter, every number in a column.
+function renderReport() {
+  const res = battle.res, me = battle.mySide, side = battle.repTab ?? me;
+  const mine = res.combatants.filter((c) => c.side === side);
+  const teamDmg = mine.reduce((s, c) => s + c.counters.dealt + c.counters.dotDealt, 0) || 1;
+  const pct = (a, b) => (b ? `${Math.round(a / b * 100)}%` : '–');
+  const row = (c) => { const k = c.counters, dmg = k.dealt + k.dotDealt;
+    return `<tr class="${c.alive ? '' : 'dead'}"><td class="rep-who"><b>${esc(c.name)}</b><span>${c.alive ? `${c.hp}/${c.maxHp} HP` : c.fled ? 'fled' : 'fell'}</span></td>
+      <td class="n">${dmg}</td><td class="n">${pct(dmg, teamDmg)}</td><td class="n">${pct(k.attacks - k.misses, k.attacks)}</td><td class="n">${pct(k.armorAbsorbed + k.resisted, k.rawDealt)}</td>
+      <td class="n">${k.taken}</td><td class="n">${k.kills || ''}</td><td class="n">${k.healed || ''}</td></tr>`; };
+  const tot = mine.reduce((t, c) => { const k = c.counters; t.dmg += k.dealt + k.dotDealt; t.att += k.attacks; t.miss += k.misses; t.soak += k.armorAbsorbed + k.resisted; t.raw += k.rawDealt; t.taken += k.taken; t.kills += k.kills; t.healed += k.healed; return t; }, { dmg: 0, att: 0, miss: 0, soak: 0, raw: 0, taken: 0, kills: 0, healed: 0 });
+  const standing = mine.filter((c) => c.alive).length;
+  document.getElementById('b-report-body').innerHTML = `
+    <div class="rep-tabs" role="tablist">${[me, 1 - me].map((sd) => `<button role="tab" aria-selected="${sd === side}" data-act="rep-tab" data-side="${sd}">${sd === me ? 'You' : 'Them'} <span>${esc(res.teams[sd])}</span></button>`).join('')}</div>
+    <div class="rep-table-wrap"><table class="rep-table rep-grid">
+      <thead><tr><th>Fighter</th><th class="n" title="Damage dealt">Dmg</th><th class="n" title="Share of the team's damage">Share</th><th class="n" title="Attacks that connected">Hit</th><th class="n" title="Share of their damage soaked by enemy armor and resistance">Soaked</th><th class="n" title="Damage taken">Taken</th><th class="n" title="Knockouts">KOs</th><th class="n" title="HP healed">Heal</th></tr></thead>
+      <tbody>${mine.map(row).join('')}</tbody>
+      <tfoot><tr><td class="rep-who"><b>Team</b><span>${standing}/${mine.length} standing</span></td><td class="n">${tot.dmg}</td><td class="n"></td><td class="n">${pct(tot.att - tot.miss, tot.att)}</td><td class="n">${pct(tot.soak, tot.raw)}</td><td class="n">${tot.taken}</td><td class="n">${tot.kills || ''}</td><td class="n">${tot.healed || ''}</td></tr></tfoot>
+    </table></div>
+    <p class="rep-key">Hit: attacks that connected. Soaked: how much of their damage the enemy's armor and resistance took off.</p>
+    <h3>Momentum</h3>${momentumSVG()}`;
 }
 function momentumSVG() {
   const res = battle.res, me = battle.mySide, fr = battle.frames;
@@ -4713,6 +4738,7 @@ document.addEventListener('click', (e) => {
     case 'b-next': stop(); showFrame(Math.min(battle.frames.length - 1, battle.idx + 1)); return;
     case 'b-speed': battle.speed = +btn.dataset.v; document.querySelectorAll('[data-act="b-speed"]').forEach((x) => x.setAttribute('aria-pressed', String(x === btn))); if (battle.playing) play(); return;
     case 'b-log': { const w = document.getElementById('b-logwrap'); w.hidden = !w.hidden; if (!w.hidden) document.getElementById('b-report').hidden = true; const lb = document.getElementById('b-logbtn'); if (lb) lb.setAttribute('aria-pressed', String(!w.hidden)); renderLog(); return; }
+    case 'rep-tab': battle.repTab = +btn.dataset.side; renderReport(); return;
     case 'b-report': { const w = document.getElementById('b-report'); w.hidden = !w.hidden; if (!w.hidden) document.getElementById('b-logwrap').hidden = true; return; }
     case 'b-replay': document.getElementById('b-result').innerHTML = ''; document.getElementById('b-report').hidden = true; showFrame(0, false); play(); return;
     case 'b-end': stop(); showFrame(battle.frames.length - 1, false); return;
