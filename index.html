@@ -738,8 +738,10 @@ table.stats tr.explain .rule { color: var(--ink); opacity: .75; }
   .score, .battle-inner > .note, .b-stage .upnext { display: none; }
   .arena-wrap { padding: 0; overflow: visible; }
   .arena { min-width: 0; width: auto; height: calc(100svh - 12px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
-  .b-stage .caption { grid-column: 2; position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 3; min-height: 0; padding: 4px 8px; font-size: 13px; gap: 6px;
-    background: color-mix(in srgb, var(--panel) 86%, transparent); backdrop-filter: blur(3px); }
+  .b-stage .caption { position: fixed; z-index: 3; min-height: 0; padding: 8px 10px; font-size: 13px; gap: 6px; background: var(--panel);
+    top: calc(56px + env(safe-area-inset-top, 0px)); right: max(8px, env(safe-area-inset-right, 0px));
+    left: calc(max(8px, env(safe-area-inset-left, 0px)) + (100svh - 12px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) * 10 / 6 + 10px); }
+  .b-stage .caption .pl-mood { font-size: 16px; } .b-stage .caption .pl-hl { font-size: 13px; } .b-stage .caption .pl-hp { font-size: 12.5px; }
   .b-controls { grid-column: 2; grid-row: 3; flex-direction: column; align-items: stretch; flex-wrap: nowrap; gap: 6px; }
   .b-controls input[type=range], .b-controls .b-turn, .b-controls #b-logbtn { display: none; }
   .b-controls .seg-ctl button { flex: 1; padding: 6px 4px; }
@@ -754,6 +756,20 @@ table.stats tr.explain .rule { color: var(--ink); opacity: .75; }
 .bt .hpbar i { position: absolute; inset: 0 auto 0 0; background: var(--verd); transition: width .3s ease; }
 .bt.s1 .hpbar i { background: var(--pompeii); }
 .bt.dead { opacity: .16; z-index: 0; filter: grayscale(1); }
+.bt.ko .disc { animation: topple .45s ease-in forwards; transform-origin: 50% 90%; }
+@keyframes topple { 0% { transform: none; } 30% { transform: translateY(-6%) rotate(-8deg); } 100% { transform: translateY(8%) rotate(78deg) scale(.92); } }
+.arena.shake-s { animation: arena-shake-s .3s ease-out; } .arena.shake-l { animation: arena-shake-l .42s ease-out; }
+@keyframes arena-shake-s { 0%, 100% { transform: none; } 25% { transform: translate(-3px, 1px); } 50% { transform: translate(3px, -1px); } 75% { transform: translate(-1px, 1px); } }
+@keyframes arena-shake-l { 0%, 100% { transform: none; } 15% { transform: translate(-6px, 2px); } 35% { transform: translate(5px, -3px); } 55% { transform: translate(-4px, 2px); } 75% { transform: translate(2px, -1px); } }
+.burst { position: absolute; width: 0; height: 0; z-index: 3; pointer-events: none; opacity: 0; animation: burst .6s ease-out forwards; }
+.burst::before { content: ''; position: absolute; left: 50%; top: 50%; width: 9vmin; height: 9vmin; max-width: 90px; max-height: 90px; transform: translate(-50%, -50%) scale(.2); border-radius: 50%; border: 3px solid currentColor; box-shadow: 0 0 18px currentColor; animation: burst-ring .6s ease-out forwards; animation-delay: inherit; }
+.burst.crit { color: #f6c445; } .burst.ko { color: var(--pompeii); }
+@keyframes burst { 0% { opacity: 0; } 10% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes burst-ring { 0% { transform: translate(-50%, -50%) scale(.2); } 100% { transform: translate(-50%, -50%) scale(1.4); border-width: 1px; } }
+.actcard { position: absolute; z-index: 4; transform: translate(-50%, -120%); padding: 2px 9px; border-radius: 999px; font-family: var(--f-display); font-size: clamp(11px, 1.6vw, 15px); white-space: nowrap; pointer-events: none; color: #fff; box-shadow: 0 3px 10px rgba(0,0,0,.3); animation: actcard 1.3s ease-out forwards; }
+.actcard.s0 { background: var(--bronze); } .actcard.s1 { background: var(--pompeii); }
+@keyframes actcard { 0% { opacity: 0; transform: translate(-50%, -80%) scale(.7); } 15% { opacity: 1; transform: translate(-50%, -125%) scale(1.08); } 25% { transform: translate(-50%, -120%) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -150%); } }
+@media (prefers-reduced-motion: reduce) { .arena.shake-s, .arena.shake-l, .bt.ko .disc { animation: none; } }
 .bt.idle { opacity: .5; }
 .bt.target .disc { box-shadow: 0 0 0 3px var(--panel), 0 0 0 5px var(--pompeii); }
 .bt.acting { z-index: 3; }
@@ -769,7 +785,7 @@ table.stats tr.explain .rule { color: var(--ink); opacity: .75; }
 @keyframes shake { 25% { translate: -3px 0; } 75% { translate: 3px 0; } }
 .floater { position: absolute; transform: translate(-50%, 0); font-family: var(--f-num); font-weight: 600; font-size: clamp(13px, 2vw, 20px); pointer-events: none;
   animation: floatup 1.1s ease-out both; z-index: 4; padding: 0 4px; border-radius: 4px; background: var(--panel); }
-.floater.dmg { color: var(--pompeii); } .floater.heal { color: var(--verd); } .floater.miss { color: var(--muted); } .floater.crit { color: var(--pompeii); font-size: clamp(16px, 2.6vw, 26px); }
+.floater.dmg { color: var(--pompeii); } .floater.heal { color: var(--verd); } .floater.miss { color: var(--muted); } .floater.crit { color: #f6c445; font-size: clamp(20px, 3.4vw, 34px); -webkit-text-stroke: 1.5px #5b1a12; paint-order: stroke fill; text-shadow: 0 2px 6px rgba(0,0,0,.4); }
 .hitfx { position: absolute; width: 9%; transform: translate(-50%, -50%) scale(calc(var(--flip, 1) * .4), .4); opacity: 0; pointer-events: none; z-index: 5; animation: hitfx .55s ease-out both; }
 .hitfx.fx-crit { width: 12%; } .hitfx.fx-heal { animation-duration: .9s; }
 @keyframes hitfx { 0% { opacity: 0; transform: translate(-50%, -50%) scale(calc(var(--flip, 1) * .4), .4); } 25% { opacity: 1; transform: translate(-50%, -50%) scale(calc(var(--flip, 1) * 1.05), 1.05); } 100% { opacity: 0; transform: translate(-50%, -60%) scale(calc(var(--flip, 1) * 1.15), 1.15); } }
@@ -2070,7 +2086,7 @@ function renderHomeView() {
   document.getElementById('view-home').innerHTML = `
     <div class="home-scene">${purseHTML()}${yardHTML()}</div>
     <div class="home-side">${magnusHTML(note)}${boutsHTML()}${recentHTML()}
-      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-midgame">Mid game</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 10:23 PM</span></p>` : ''}
+      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-midgame">Mid game</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 10:38 PM</span></p>` : ''}
     </div>`;
   startHomeClock();
 }
@@ -3722,7 +3738,7 @@ function startBattle(key) {
     return `<button class="bt s${s.side === me ? 0 : 1}" id="bt-${s.uid}" data-act="drill" data-uid="${s.uid}" title="${esc(dname(t, s.name))}: tap for details">${battleFigure(t, battle.builds[s.uid])}<span class="gs num">${battle.gs[s.uid]}</span><span class="hpbar"><i></i></span></button>`;
   }).join('');
   el.innerHTML = `<div class="battle-inner">
-    <div class="b-head"><div class="b-title"><span class="you">${esc(state.team.name)}</span><span class="vs">against</span><span class="them">${esc(opp.name)}</span></div>
+    <div class="b-head"><div class="b-title"></div>
       <button class="close-x" data-act="close-battle" aria-label="Leave the arena">×</button></div>
     <div class="b-main"><div class="b-stage">
     <div class="arena-wrap"><div class="arena ${ARENA_FLOOR(state.arenaId) ? 'has-floor' : ''}" id="arena" ${ARENA_FLOOR(state.arenaId) ? `style="background-image:url(${ARENA_FLOOR(state.arenaId)})"` : ''}><div class="grid"></div><div class="midline"></div>${tokens}
@@ -3860,7 +3876,7 @@ function showFrame(idx, animate = true) {
       if (e.kind === 'attack') {
         if (e.label === 'Cast Net') { txt = e.outcome === 'miss' ? 'miss' : 'netted'; cls = e.outcome === 'miss' ? 'miss' : 'dmg'; }
         else if (e.outcome === 'miss') { txt = 'miss'; cls = 'miss'; }
-        else { txt = (e.outcome === 'block' ? 'block −' : '−') + e.amount; cls = e.outcome === 'crit' ? 'crit' : 'dmg'; const hitEl = document.getElementById('bt-' + e.tid); if (projDelay[e.tid]) setTimeout(() => hitEl.classList.add('hit'), projDelay[e.tid] * 1000 - 150); else hitEl.classList.add('hit'); }
+        else { txt = (e.outcome === 'block' ? 'block −' : '−') + e.amount + (e.outcome === 'crit' ? '!' : ''); cls = e.outcome === 'crit' ? 'crit' : 'dmg'; const hitEl = document.getElementById('bt-' + e.tid); if (projDelay[e.tid]) setTimeout(() => hitEl.classList.add('hit'), projDelay[e.tid] * 1000 - 150); else hitEl.classList.add('hit'); }
       } else if (e.kind === 'dot') { txt = '−' + e.amount; cls = 'dmg'; }
       else if (e.kind === 'heal' && e.amount) { txt = '+' + e.amount; cls = 'heal'; }
       if (!txt) continue;
@@ -3882,8 +3898,23 @@ function showFrame(idx, animate = true) {
       arenaEl.appendChild(fl); k++;
       setTimeout(() => fl.remove(), (flDelay + 1.3) * 1000);
     }
+    // Pizzazz: shake on crits and knockouts, a burst and a topple for the fallen, a name card when a special fires.
+    const shake = (kind, at) => setTimeout(() => { arenaEl.classList.remove('shake-s', 'shake-l'); void arenaEl.offsetWidth; arenaEl.classList.add(kind); setTimeout(() => arenaEl.classList.remove(kind), 450); }, at);
+    const burst = (uid, cls, at) => { const s = f.snap[uid]; if (!s) return; const b = document.createElement('span'); b.className = 'burst ' + cls;
+      b.style.left = pct(X(s.x) + 0.5, GRID_W) + '%'; b.style.top = pct(s.y + 0.5, GRID_H) + '%'; b.style.animationDelay = at + 's'; arenaEl.appendChild(b); setTimeout(() => b.remove(), (at + 0.8) * 1000); };
+    const critHit = f.ev.find((e) => e.kind === 'attack' && e.outcome === 'crit');
+    if (critHit) { shake('shake-s', ((projDelay[critHit.tid] || 0.18)) * 1000); burst(critHit.tid, 'crit', projDelay[critHit.tid] || 0.18); }
+    for (const e of f.ev) if (e.kind === 'active' && e.aid !== undefined) {
+      const s = f.snap[e.aid]; if (!s) continue; const c = document.createElement('span');
+      c.className = 'actcard s' + (res.start[e.aid].side === battle.mySide ? 0 : 1); c.textContent = e.label;
+      c.style.left = pct(X(s.x) + 0.5, GRID_W) + '%'; c.style.top = pct(s.y, GRID_H) + '%'; arenaEl.appendChild(c); setTimeout(() => c.remove(), 1300);
+    }
     // Fade out the fallen after their hit lands
-    f.snap.forEach((s, uid) => { if (!s.alive && prevSnap[uid].alive) setTimeout(() => document.getElementById('bt-' + uid)?.classList.add('dead'), 500); });
+    f.snap.forEach((s, uid) => { if (!s.alive && prevSnap[uid].alive) {
+      const at = Math.max(0.35, (projDelay[uid] || 0.18) + 0.15);
+      shake('shake-l', at * 1000); burst(uid, 'ko', at);
+      setTimeout(() => document.getElementById('bt-' + uid)?.classList.add('ko'), at * 1000);
+      setTimeout(() => document.getElementById('bt-' + uid)?.classList.add('dead'), at * 1000 + 450); } });
   }
   renderPulse(idx);
   // Up next (gone: the order of turns isn't worth the attention)
