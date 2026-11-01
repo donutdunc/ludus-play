@@ -1217,6 +1217,16 @@ table.cmp td { font-family: var(--f-num); font-size: 16px; } table.cmp td.win { 
 .sandbox-pill { border: 0; border-radius: 99px; padding: 4px 12px; background: var(--pompeii); color: #fff; font-weight: 600; font-size: 12.5px; cursor: pointer; margin-left: 8px; }
 /* Drills on the Fighter screen */
 .drill-list { display: grid; gap: 8px; }
+.dg-head { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; font-size: 13.5px; color: var(--muted); margin-bottom: 8px; } .dg-head b { color: var(--ink); font-size: 16px; } .dg-why { margin-left: auto; color: var(--pompeii); }
+.dg { display: grid; }
+.dg-r { display: grid; grid-template-columns: minmax(0, 1fr) 76px 52px 76px; column-gap: 10px; align-items: center; min-height: 46px; border-top: 1px solid var(--line); }
+.dg-r > * { display: flex; align-items: center; } .dg-r .r { justify-content: flex-end; }
+.dg-hr { min-height: 0; border-top: 0; padding-bottom: 5px; font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.dg-s { font-weight: 600; } .dg-n { justify-content: flex-end; color: var(--verd); font-size: 16px; }
+.dg-pips { display: flex; gap: 4px; } .dg-pips i { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--bronze); } .dg-pips i.on { background: var(--bronze); }
+.dg-go { justify-content: center; border: 1px solid var(--line); border-radius: 8px; background: var(--raise); font-family: var(--f-num); font-weight: 600; font-size: 16px; color: var(--ink); height: 34px; }
+.dg-go:hover:not(:disabled) { border-color: var(--bronze); } .dg-go:disabled { color: var(--muted); background: transparent; }
+.dg-on { justify-content: flex-end; color: var(--verd); font-weight: 600; }
 .drill-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; }
 .btn.small { padding: 6px 10px; font-size: 13px; }
 .drill-on { font-weight: 600; color: var(--verd); }
@@ -1954,18 +1964,23 @@ function drillPanel(b, t, lv) {
   finishDrills();
   const d = drillFor(b);
   const busy = career.drills.length >= drillSlots(); const cap = GE.maxPerStat(b.stars);
+  // A fixed grid: same columns on every row. Time and coin are the same for every stat, so they sit in the header once.
+  const q0 = drillQuote(b, Object.keys(t.trainable)[0]);
+  const why = d ? 'Already drilling' : busy ? 'No free post' : career.coin < q0.coin ? `Needs ${q0.coin} coin` : '';
   const rows = Object.keys(t.trainable).map((k) => {
     const L = lv[k] || 0;
     const gain = GE.trainingBonus(k, L);
     const nextGain = GE.trainingBonus(k, L + 1) - gain;
     const q = drillQuote(b, k);
-    const blocked = d ? 'already drilling' : L >= cap ? `${b.stars || 3}★ cap` : busy ? 'no free slot' : career.coin < q.coin ? `needs ${q.coin} coin` : q.ore && (career.ore || 0) < q.ore ? 'needs ore' : '';
+    const maxed = L >= cap; const noOre = q.ore && (career.ore || 0) < q.ore;
     const here = d && d.stat === k;
-    return `<div class="drill-row"><span><b>${STAT_LABEL[k]}</b> <span class="num">Lv ${L}/${cap}</span>${L ? ` <span class="plus num">+${fmt(gain)}</span>` : ''}</span>
-      ${here ? `<span class="drill-on num">Drilling… <span data-end="${d.end}">${clock(d.end - Date.now())}</span></span>` : `<button class="btn small" data-act="drill" data-k="${k}" ${blocked ? 'disabled' : ''} title="${blocked ? esc(blocked) : `Next level: +${gainTxt(k, nextGain)} ${STAT_LABEL[k]}`}">${blocked && !d ? esc(blocked) : `${q.tier !== 'Basic' ? q.tier + ' · ' : ''}+${gainTxt(k, nextGain)} · ${q.min} min · ${cn(q.coin)}${q.ore ? ' · 1 ore' : ''}`}</button>`}</div>`;
+    const pipsH = Array.from({ length: cap }, (_, n) => `<i class="${n < L ? 'on' : ''}"></i>`).join('');
+    const cell = here ? `<span class="dg-on num" data-end="${d.end}">${clock(d.end - Date.now())}</span>`
+      : `<button class="dg-go" data-act="drill" data-k="${k}" ${maxed || why || noOre ? 'disabled' : ''} title="${esc(maxed ? `${b.stars || 3}★ cap` : noOre ? 'Needs ore' : why || `Drill ${STAT_LABEL[k]}`)}">${maxed ? 'Max' : `+${gainTxt(k, nextGain)}`}</button>`;
+    return `<div class="dg-r"><span class="dg-s">${STAT_LABEL[k]}</span><span class="dg-l"><span class="dg-pips">${pipsH}</span></span><span class="dg-n num">${L ? `+${gainTxt(k, gain)}` : '–'}</span>${cell}</div>`;
   }).join('');
-  return `<div class="drill-list">${rows}</div>
-`;
+  return `<div class="dg-head"><span>Next drill</span><b class="num">${q0.min} min</b><span>·</span>${cn(q0.coin)}${q0.tier !== 'Basic' ? `<span>· ${esc(q0.tier)}</span>` : ''}${why ? `<span class="dg-why">${esc(why)}</span>` : ''}</div>
+    <div class="dg"><div class="dg-r dg-hr"><span>Stat</span><span>Level</span><span class="r">Now</span><span class="r">Drill</span></div>${rows}</div>`;
 }
 // ---- The Battle Academy: skills are school-wide unlocks, paid in coin and time ----
 // One course at a time at first (more slots with later arenas). Once a level is unlocked
@@ -2047,7 +2062,7 @@ function renderHomeView() {
   document.getElementById('view-home').innerHTML = `
     <div class="home-scene">${purseHTML()}${yardHTML()}</div>
     <div class="home-side">${magnusHTML(note)}${boutsHTML()}${recentHTML()}
-      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 3:46 PM</span></p>` : ''}
+      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 10:06 PM</span></p>` : ''}
     </div>`;
   startHomeClock();
 }
