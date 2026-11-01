@@ -2164,7 +2164,7 @@ function renderHomeView() {
   document.getElementById('view-home').innerHTML = `
     <div class="home-scene">${purseHTML()}${yardHTML()}</div>
     <div class="home-side">${magnusHTML(note)}${boutsHTML()}${recentHTML()}
-      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-showcase">Imperial fight</button> · <button class="linkish" data-act="home-lategame">Late game</button> · <button class="linkish" data-act="home-midgame">Mid game</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Nov 1, 11:50 AM</span></p>` : ''}
+      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-showcase">Imperial fight</button> · <button class="linkish" data-act="home-lategame">Late game</button> · <button class="linkish" data-act="home-midgame">Mid game</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Nov 1, 4:47 PM</span></p>` : ''}
     </div>`;
   startHomeClock();
 }
@@ -3517,7 +3517,6 @@ function catalogHTML(p) {
     const b = pbOf(p); const t = UNITS[b.template];
     const curId = b.equip && b.equip[p.slot];
     title = `${SLOT_LABELS[p.slot]} for ${esc(b.name || t.name)}`;
-    sub = `${t.name}, ${t.size}`;
     seedArmory();
     const opts = Object.values(ITEMS).filter((it) => it.slot === p.slot && visibleItem(it, curId)).map((it) => ({ it, own: ownLock(it, p.unit, p.slot), locks: GE.itemLocks(t, it, p.slot, { arena: a, equip: b.equip }), notes: GE.itemNotes(t, it, p.slot, { equip: b.equip }) }));
     const gainOf = (it) => { if (it.id === curId) return 0; const nb = clone(b); applyEquip(nb, p.slot, it.id); return ratingOf(nb) - ratingOf(b); };
@@ -3530,8 +3529,7 @@ function catalogHTML(p) {
     const curKey = curId || '__none';
     const base = vt && vt.results[curKey];
     const opp = fieldKeys().length === 1 ? oppTeam(fieldKeys()[0]).name : 'the field';
-    filters = `<div class="cat-filters">${nLocked ? `<button data-act="toggle-locked" aria-pressed="${state.hideLocked}">Hide ${nLocked} that don't fit</button>` : ''}
-      <button data-act="vtest" ${vt && vt.running ? 'disabled' : ''}>${vt && vt.running ? 'Testing…' : vt ? 'Test again' : `Test each option vs ${esc(opp)}`}</button></div>`;
+    filters = nLocked ? `<div class="cat-filters"><button data-act="toggle-locked" aria-pressed="${state.hideLocked}">Hide ${nLocked} that don't fit</button></div>` : '';
     const badge = (key) => { if (!vt || vt.results[key] === undefined) return vt && vt.running ? '<span class="wbadge muted">…</span>' : '';
       const w = vt.results[key]; const dlt = base !== undefined && key !== curKey ? Math.round((w - base) * 100) : null;
       return `<span class="wbadge"><b class="num">${Math.round(w * 100)}%</b>${dlt ? `<span class="num ${dlt > 0 ? 'plus' : 'minus'}">${dlt > 0 ? '+' : '−'}${Math.abs(dlt)}</span>` : ''}</span>`; };
@@ -3627,7 +3625,7 @@ function catalogHTML(p) {
           <span class="opt-line">${esc(s.description)}</span>${locks.map((l) => `<span class="opt-lock">${esc(l)}</span>`).join('')}</button>`;
       }).join('');
   }
-  return `<div class="cat-head"><div><h2>${title}</h2><div class="sub">${esc(sub)}</div></div><button class="close-x" data-act="close-picker" aria-label="Close">×</button></div>
+  return `<div class="cat-head"><div><h2>${title}</h2>${sub ? `<div class="sub">${esc(sub)}</div>` : ''}</div><button class="close-x" data-act="close-picker" aria-label="Close">×</button></div>
     ${filters}<div class="catalog-list">${body}</div>`;
 }
 
