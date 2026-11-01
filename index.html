@@ -1339,6 +1339,31 @@ const PRESETS = [
 // NPC squads by arena: low arenas use hand-built scenario squads, the rest use the sample teams.
 const SCENARIO_OPPONENTS = ['drunkard', 'stray_kobold', 'stray_dog', 'first_night', 'tavern_toughs', 'cellar_rats', 'rat_catchers', 'pit_regulars', 'raz_and_runts', 'kobold_pack', 'alley_dogs', 'cutpurses', 'raz_crew', 'kobold_band', 'tannery_gang', 'sell_swords'];
 const OPPONENTS = { ...Object.fromEntries(SCENARIO_OPPONENTS.map((k) => [k, GE.SCENARIOS[k]])), ...GE.TEAMS };
+// Test helper: a full Imperial Games headliner, legends against legends, to feel the top end. Nothing is saved.
+const CAST_UNIT = (id, equip, extra = {}) => { const c = GE.CAST_BY_ID[id]; return { template: c.template, name: c.name, stars: c.stars, castId: id, titles: [...(c.titles || [])], title: (c.titles || [])[0], equip, training: { hp: 4, atk: 3 }, skills: { ferocity: 2, toughness: 2 }, ...extra }; };
+const SHOWCASE = {
+  us: { name: "Your Uncle's Ludus", stratagems: ['crowd_favorite'], units: [
+    CAST_UNIT('knight-the-iron-penitent', { main: 'longsword', off: 'tower_shield', body: 'gothic_plate', head: 'visored_helm', hands: 'mail_gauntlets', feet: 'bronze_greaves', trinket: 'lucky_charm' }),
+    CAST_UNIT('hoplite-theo-of-the-wall', { main: 'spear', off: 'tower_shield', body: 'lamellar', head: 'crested_helm', feet: 'bronze_greaves' }),
+    CAST_UNIT('duelist-valerio-the-untouched', { main: 'gladius', off: 'parrying_dagger', body: 'studded_leather', boon: 'fleet_footed', trinket: 'quickblade_ring' }),
+    CAST_UNIT('veteran-marcus-the-last', { main: 'warhammer', body: 'chain_hauberk', head: 'visored_helm', boon: 'oath_vengeance' }),
+    CAST_UNIT('standard_bearer-lady-corvina', { main: 'arming_sword', off: 'imperial_eagle', body: 'lamellar' }),
+    CAST_UNIT('archer-the-quiet-fletcher', { main: 'longbow', body: 'studded_leather', trinket: 'wolf_tooth' }, { skills: { marksmanship: 3 } }),
+    CAST_UNIT('priest-the-pale-abbess', { main: 'blessed_mace', off: 'holy_standard', body: 'vestments' }, { skills: { medicine: 3 } }),
+    CAST_UNIT('dire_wolf-fenra', { collar: 'spiked_collar', barding: 'iron_barding' }),
+  ] },
+  them: { name: 'The Emperor\'s Own', stratagems: ['crowd_favorite'], units: [
+    CAST_UNIT('ogre-big-lou', { main: 'ogre_cleaver', body: 'ogre_harness' }),
+    CAST_UNIT('brute-mother-bone', { main: 'maul', body: 'battered_plate', boon: 'berserker_tattoos' }),
+    CAST_UNIT('bear-ursa-the-mountain', { barding: 'iron_barding', collar: 'iron_collar' }),
+    CAST_UNIT('beastmaster-ash-of-the-wilds', { main: 'longbow', body: 'studded_leather', trinket: 'wolf_tooth' }),
+    CAST_UNIT('retiarius-marina-the-tide', { main: 'trident', off: 'weighted_net', body: 'leather', boon: 'fleet_footed' }),
+    CAST_UNIT('crossbowman-captain-ferro', { main: 'crossbow', body: 'chain_hauberk', head: 'pot_helm' }),
+    CAST_UNIT('duelist-ines-quickstep', { main: 'venom_dagger', off: 'parrying_dagger', body: 'studded_leather', trinket: 'quickblade_ring' }),
+    CAST_UNIT('knight-sir-aldric', { main: 'flanged_mace', off: 'round_shield', body: 'gothic_plate', head: 'visored_helm' }),
+  ] },
+};
+OPPONENTS.__showcase = SHOWCASE.them;
 const arenaOpponents = (arenaId) => { const ks = SCENARIO_OPPONENTS.filter((k) => GE.SCENARIOS[k].arena === arenaId); return ks.length ? ks : Object.keys(GE.TEAMS); };
 const oppTeam = (k) => OPPONENTS[k] || GE.SCENARIOS[k] || GE.TEAMS[k] || (GE.SHOWCASE_TEAMS || {})[k];
 const fieldKeys = () => arenaOpponents(state.arenaId);
@@ -2111,7 +2136,7 @@ function renderHomeView() {
   document.getElementById('view-home').innerHTML = `
     <div class="home-scene">${purseHTML()}${yardHTML()}</div>
     <div class="home-side">${magnusHTML(note)}${boutsHTML()}${recentHTML()}
-      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-midgame">Mid game</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 11:34 PM</span></p>` : ''}
+      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-showcase">Imperial fight</button> · <button class="linkish" data-act="home-midgame">Mid game</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Oct 31, 11:42 PM</span></p>` : ''}
     </div>`;
   startHomeClock();
 }
@@ -4241,7 +4266,7 @@ function momentumSVG() {
     <text x="${W - P + 4}" y="${y(frac(fr[fr.length - 1], 1 - me)) - 2}" font-size="11" fill="var(--pompeii)">Them</text>
     ${kos}<text x="${P}" y="${H - 1}" font-size="10" fill="var(--muted)">Knockouts</text></svg>`;
 }
-function closeBattle() { stop(); const el = document.getElementById('battle'); el.hidden = true; el.innerHTML = ''; document.body.style.overflow = ''; state.view = battle.fromHome ? 'home' : 'squad'; battle.fromHome = false; render(); window.scrollTo(0, 0); }
+function closeBattle() { if (battle.showcaseRestore) { state.team = battle.showcaseRestore.team; state.arenaId = battle.showcaseRestore.arenaId; battle.showcaseRestore = null; } stop(); const el = document.getElementById('battle'); el.hidden = true; el.innerHTML = ''; document.body.style.overflow = ''; state.view = battle.fromHome ? 'home' : 'squad'; battle.fromHome = false; render(); window.scrollTo(0, 0); }
 
 // ---------------- Odds (worker with fallback) ----------------
 let worker = null;
@@ -4412,6 +4437,11 @@ document.addEventListener('click', (e) => {
     case 'drill': { const msg = startDrill(b, btn.dataset.k); toast(msg || 'Off to the training posts.'); if (!msg && state.view === 'training') state.post = null; break; }
     case 'home-fighter': state.sel = +btn.dataset.i; state.arenaId = rung().arena; state.view = 'fighter'; window.scrollTo(0, 0); break;
     case 'home-seen-roster': career.seenRung = career.rung; saveCareer(); state.arenaId = rung().arena; state.view = 'ledger'; window.scrollTo(0, 0); break;
+    case 'home-showcase': {
+      battle.showcaseRestore = { team: state.team, arenaId: state.arenaId };
+      state.team = clone(SHOWCASE.us); state.arenaId = 'imperial'; battle.career = null; battle.fromHome = true;
+      startBattle('__showcase'); return;
+    }
     case 'home-midgame': {
       // Test helper: a school about an hour in. Fourth arena, six fighters, some gear, training, scars and titles,
       // every yard building open, the first debt paid.
@@ -4530,7 +4560,7 @@ document.addEventListener('click', (e) => {
     case 'sim': runSim(); return;
     case 'fight': startBattle(); return;
     case 'close-battle': closeBattle(); return;
-    case 'rematch': if (battle.fromHome) battle.career = { k: battle.oppKey }; startBattle(battle.oppKey); return;
+    case 'rematch': if (battle.oppKey === '__showcase') { battle.showcaseRestore = battle.showcaseRestore || { team: state.team, arenaId: state.arenaId }; state.team = clone(SHOWCASE.us); state.arenaId = 'imperial'; } else if (battle.fromHome) battle.career = { k: battle.oppKey }; startBattle(battle.oppKey); return;
     case 'new-opponent': { const all = arenaOpponents(state.arenaId); const ks = all.length > 1 ? all.filter((k) => k !== battle.oppKey) : all; startBattle(ks[Math.floor(Math.random() * ks.length)]); return; }
     case 'b-play': if (battle.playing) stop(); else play(); return;
     case 'b-prev': stop(); showFrame(Math.max(0, battle.idx - 1), false); return;
