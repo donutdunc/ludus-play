@@ -177,6 +177,8 @@ h3 { font-size: 13px; font-weight: 600; margin: 0 0 8px; color: var(--muted); }
 .oicon { width: 30px; height: 30px; grid-row: span 1; color: var(--ink); }
 .opt:disabled .oicon { opacity: .35; }
 .sicon { width: 28px; height: 28px; flex-shrink: 0; color: var(--ink); margin-right: 4px; }
+body[data-career="1"] .credit { display: none; }
+.credit-line { font-size: 12px; margin: 4px 0 0; } .credit-line a { color: inherit; }
 .credit { font-size: 12px; color: var(--muted); padding-block: 0 24px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 .credit a { color: inherit; }
 .d-class { text-align: center; font-size: 13px; color: var(--muted); letter-spacing: .02em; }
@@ -2183,7 +2185,8 @@ function renderHomeView() {
   document.getElementById('view-home').innerHTML = `
     <div class="home-scene">${purseHTML()}${yardHTML()}</div>
     <div class="home-side">${magnusHTML(note)}${boutsHTML()}${recentHTML()}
-      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-showcase">Imperial fight</button> · <button class="linkish" data-act="home-lategame">Late game</button> · <button class="linkish" data-act="home-midgame">Mid game</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Nov 1, 7:07 PM</span></p>` : ''}
+      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-showcase">Imperial fight</button> · <button class="linkish" data-act="home-lategame">Late game</button> · <button class="linkish" data-act="home-midgame">Mid game</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Nov 1, 7:18 PM</span></p>` : ''}
+      ${career.started ? `<p class="sub credit-line">Icons by Lorc, Delapouite and contributors at <a href="https://game-icons.net" target="_blank" rel="noopener">game-icons.net</a>, CC BY 3.0.</p>` : ''}
     </div>`;
   startHomeClock();
 }
@@ -3919,7 +3922,6 @@ function startBattle(key) {
       <button class="btn" data-act="b-log" id="b-logbtn" aria-pressed="false">Log</button>
       <button class="btn" data-act="b-end">Skip<span class="wide-only"> to result</span></button>
     </div>
-    <p class="note">Icons by game-icons.net, CC BY 3.0.</p>
   </div>`;
   el.hidden = false;
   document.body.style.overflow = 'hidden';
