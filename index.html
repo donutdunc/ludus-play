@@ -1022,7 +1022,6 @@ body[data-view="squad"][data-career="1"] #top .top-controls, body[data-view="fig
 .bld-tag b { font-family: "IM Fell English SC", var(--f-display); font-size: clamp(13px, 1.5vw, 16px); letter-spacing: .03em; }
 .bld-tag span { font-size: clamp(10.5px, 1.1vw, 12px); opacity: .85; }
 .bld.guide .bld-tag { background: #8c2d2d; animation: guide-pulse 1.6s ease-in-out infinite; }
-.bld.guide img { animation: guide-bob 1.6s ease-in-out infinite; }
 @keyframes guide-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(217,162,79,.75), 0 2px 6px rgba(0,0,0,.3); } 60% { box-shadow: 0 0 0 9px rgba(217,162,79,0), 0 2px 6px rgba(0,0,0,.3); } }
 @keyframes guide-bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -3%; } }
 @keyframes bld-in { from { opacity: 0; transform: translate(-50%, -54%) scale(.9); } }
@@ -2038,7 +2037,7 @@ function yardHTML() {
   const guide = noteTarget(magnusNote());
   const bld = (id) => { const sp = SPOTS[id]; const line = spotLine(id);
     const fresh = !(career.seenSpots || []).includes(id); if (fresh && career.started) career.seenSpots = [...(career.seenSpots || []), id];
-    return `<button class="bld ${guide === id ? 'guide' : ''} ${fresh && career.started && id !== 'gate' ? 'fresh' : ''}" style="left:${YARD[id].x}%;top:${YARD[id].y}%;width:${YARD[id].w}%" data-act="${sp.act}" ${sp.v ? `data-v="${sp.v}"` : ''} data-b="${id}" aria-label="${sp.name}${line ? ': ' + esc(line) : ''}">${L[id] ? `<img src="${L[id]}" alt="" draggable="false">` : id === 'academy' ? '' : `<span class="b-ph">${id}</span>`}<span class="bld-tag"><b>${sp.name}</b>${line ? `<span>${esc(line)}</span>` : ''}</span></button>`; };
+    return `<button class="bld ${guide === id ? 'guide' : ''} ${fresh && career.started && id !== 'gate' ? 'fresh' : ''}" style="left:${YARD[id].x}%;top:${YARD[id].y}%;width:${YARD[id].w}%" data-act="${sp.act}" ${sp.v ? `data-v="${sp.v}"` : ''} data-b="${id}" aria-label="${sp.name}${line ? ': ' + esc(line) : ''}">${L[id] ? `<img src="${L[id]}" alt="" draggable="false">` : id === 'academy' ? '' : `<span class="b-ph">${id}</span>`}<span class="bld-tag"><b>${sp.name}</b></span></button>`; };
   // Spots: drillers at the posts; everyone else by layout.
   let free = 0;
   const spot = (i, n) => {
@@ -2223,7 +2222,7 @@ function renderHomeView() {
   document.getElementById('view-home').innerHTML = `
     <div class="home-scene">${purseHTML()}${yardHTML()}</div>
     <div class="home-side">${magnusHTML(note)}${boutsHTML()}${recentHTML()}
-      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-showcase">Imperial fight</button> · <button class="linkish" data-act="home-lategame">Late game</button> · <button class="linkish" data-act="home-midgame">Mid game</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Nov 1, 7:37 PM</span></p>` : ''}
+      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-showcase">Imperial fight</button> · <button class="linkish" data-act="home-lategame">Late game</button> · <button class="linkish" data-act="home-midgame">Mid game</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Nov 2, 5:40 AM</span></p>` : ''}
       ${career.started ? `<p class="sub credit-line">Icons by Lorc, Delapouite and contributors at <a href="https://game-icons.net" target="_blank" rel="noopener">game-icons.net</a>, CC BY 3.0.</p>` : ''}
     </div>`;
   startHomeClock();
