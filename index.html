@@ -1061,6 +1061,29 @@ body[data-view="squad"][data-career="1"] #top .top-controls, body[data-view="fig
 .sq-rival { display: block; font-size: 12.5px; color: var(--bronze); } .sq-rival b { color: var(--ink); } .sq-doc { display: inline-block; margin-top: 3px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; font-weight: 600; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; }
 .sq-tag { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); } .sq-tag.next { color: var(--bronze); }
 .sq .b-tell { color: var(--pompeii); font-size: 13px; }
+/* Arena page: tight cards so the formation is the screen. */
+.arena-page { gap: 8px; }
+.arena-page .ap-head { min-height: 0; }
+.arena-page .ap-title { padding: 12px 14px; grid-template-columns: auto 1fr; align-items: baseline; column-gap: 10px; }
+.arena-page .ap-title .b-small { display: none; }
+.arena-page .ap-title h2 { font-size: clamp(22px, 5vw, 30px); }
+.arena-page .ap-rules { font-size: 13px; }
+.arena-page .road2 { padding: 0 2px 2px; }
+.arena-page .rd { display: flex; align-items: center; gap: 6px; min-width: 0; padding: 5px 10px 5px 6px; border-radius: 999px; }
+.arena-page .rd-dot { width: 20px; height: 20px; font-size: 11px; }
+.arena-page .rd .sub { font-size: 11px; }
+.arena-page .crews { padding: 8px 10px; }
+.arena-page .squads { gap: 6px; }
+.arena-page .sq { padding: 6px 8px 6px 12px; gap: 8px; }
+.arena-page .sq-name { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.arena-page .sq-name b { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.arena-page .sq-blurb { font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.arena-page .fight-btn { min-height: 40px; padding: 4px 14px; }
+.arena-page .crews-note { margin: 6px 0 0; font-size: 12.5px; }
+.arena-page .lineup-block { padding-top: 10px; padding-bottom: 10px; }
+.arena-page .lineup-block .sq-hint:empty { display: none; }
+.arena-page .lineup-block .sq-head { margin-bottom: 6px; } .arena-page .lineup-block .sq-head h2 { font-size: 20px; } .arena-page .lineup-block .sq-pts { font-size: 22px; }
+.arena-page .sq-board .cell { height: 38px; }
 .pays { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .pays li { display: grid; grid-template-columns: 92px auto minmax(0, 1fr); gap: 4px 10px; align-items: baseline; font-size: 14px; }
 .pays li:has(> .lbl + .sub) { grid-template-columns: 92px minmax(0, 1fr); }
@@ -2232,7 +2255,7 @@ function renderHomeView() {
   document.getElementById('view-home').innerHTML = `
     <div class="home-scene">${purseHTML()}${yardHTML()}</div>
     <div class="home-side">${magnusHTML(note)}${boutsHTML()}${recentHTML()}
-      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-showcase">Imperial fight</button> · <button class="linkish" data-act="home-lategame">Late game</button> · <button class="linkish" data-act="home-midgame">Mid game</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Nov 2, 6:05 AM</span></p>` : ''}
+      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-showcase">Imperial fight</button> · <button class="linkish" data-act="home-lategame">Late game</button> · <button class="linkish" data-act="home-midgame">Mid game</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Nov 2, 7:04 AM</span></p>` : ''}
       ${career.started ? `<p class="sub credit-line">Icons by Lorc, Delapouite and contributors at <a href="https://game-icons.net" target="_blank" rel="noopener">game-icons.net</a>, CC BY 3.0.</p>` : ''}
     </div>`;
   startHomeClock();
@@ -2728,8 +2751,8 @@ function renderArenaView() {
     const t = squadTeam(k); const beat = !!career.beaten[k]; const isNext = k === nx && !beat;
     const can = !held && lc.legal && (!railsOn() || k === nx);
     return `<li class="sq ${beat ? 'beat' : ''} ${isNext ? 'next' : ''}">
-      <div class="sq-txt"><b>${esc(t.name)}</b>${beat ? ' <span class="sq-tag">beaten</span>' : isNext ? ' <span class="sq-tag next">tonight</span>' : ''}
-        ${t.blurb ? `<span class="sq-blurb">${esc(t.blurb)}</span>` : ''}${t.tell ? `<span class="b-tell">${esc(t.tell)}</span>` : ''}
+      <div class="sq-txt"><span class="sq-name"><b>${esc(t.name)}</b>${beat ? ' <span class="sq-tag">beaten</span>' : isNext ? ' <span class="sq-tag next">tonight</span>' : ''}</span>
+        ${t.blurb ? `<span class="sq-blurb" title="${esc(t.blurb)}">${esc(t.blurb)}</span>` : ''}
         ${t.leader && GE.CAST_BY_ID[t.leader] ? (() => { const L = GE.CAST_BY_ID[t.leader]; const n = (career.rivalry || {})[k] || 0; const mine = career.stable.some((u) => u.castId === L.id);
           return `<span class="sq-rival">${mine ? `${esc(L.name)} fights for you now.` : `Led by <b>${esc(L.name)}</b> · ${'●'.repeat(Math.min(n, RIVALRY_NEED))}${'○'.repeat(Math.max(0, RIVALRY_NEED - n))}${n >= RIVALRY_NEED ? ' · watching you' : ''}`}</span>`; })() : ''}
         ${t.doctrine ? `<span class="sq-doc">${esc((GE.DOCTRINES.find((d) => d.id === t.doctrine) || {}).name || '')}</span>` : ''}
@@ -3038,7 +3061,7 @@ function lineupHTML() {
   return `<div class="block lineup-block"><div class="sq-head"><h2>Lineup</h2>
       <span class="sq-pts num ${over ? 'over' : ''}" id="sq-pts">${cost.total}<span class="cap"> / ${a.cap} pts</span></span>
       <span class="sq-badge ${f.id}" title="${esc(f.detail)}">${esc(f.name)}</span></div>
-    <p class="sq-hint">${lifted ? `Tap a tile to place ${esc(lifted.name)}. <button class="linkish" data-act="focus" data-uid="${lifted.uid}">Open ${esc(lifted.name)}</button> · <button class="linkish" data-act="sq-drop">Cancel</button>` : 'Tap a fighter, then a tile. Drag a fighter off the sand to bench them.'}</p>
+    <p class="sq-hint">${lifted ? `Tap a tile to place ${esc(lifted.name)}. <button class="linkish" data-act="focus" data-uid="${lifted.uid}">Open ${esc(lifted.name)}</button> · <button class="linkish" data-act="sq-drop">Cancel</button>` : ''}</p>
     ${doctrineHTML()}
     ${squadBoardHTML()}
     ${bench.length ? `<div class="sq-label">Not fighting here</div><div class="sq-bench" id="sq-bench">${bench.map(benchCardHTML).join('')}</div>` : ''}
