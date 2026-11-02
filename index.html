@@ -770,6 +770,38 @@ table.stats tr.explain .rule { color: var(--ink); opacity: .75; }
 .fx .shot-trail { fill: none; stroke-width: .45; stroke-dasharray: .6 1.1; opacity: .7; } .fx .shot-trail.s0 { stroke: var(--bronze); } .fx .shot-trail.s1 { stroke: var(--pompeii); }
 .turn-hint { display: none; }
 @media (orientation: portrait) and (max-width: 600px) { .turn-hint { display: block; margin: 0; font-size: 13px; color: var(--muted); text-align: center; } }
+/* Phone held upright: the sand turns (6 wide, 10 tall, your school at the bottom), the crowd is a parapet along its top edge,
+   and the two team cards fold into a bar underneath; tap one to see its fighters. */
+@media (orientation: portrait) and (max-width: 600px) {
+  .battle.portrait { --sand-h: min(calc((100vw - 16px) * 10 / 6), calc(100svh - 196px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))); }
+  .arena.portrait { aspect-ratio: 6 / 10; width: auto; min-width: 0; height: var(--sand-h); margin: 0 auto; }
+  .battle.portrait .b-head { position: absolute; top: calc(6px + env(safe-area-inset-top, 0px)); right: max(8px, env(safe-area-inset-right, 0px)); z-index: 4; }
+  .battle.portrait .b-head .b-title { display: none; }
+  .battle.portrait .battle-inner { padding-top: 4px; }
+  .battle.portrait .b-controls .wide-only, .battle.portrait .b-controls .seg-ctl [data-v="0.5"] { display: none; }
+  .arena.portrait .bt { width: calc(100% / 6); height: 10%; }
+  .arena.portrait .grid { background-size: calc(100% / 6) 10%; }
+  .arena.portrait .midline { top: calc(50% - 1px); bottom: auto; left: 0; right: 0; width: auto; height: 2px; }
+  .arena.portrait.has-floor { background-size: auto 108% !important; }
+  .arena.portrait .hitfx { width: 15%; } .arena.portrait .hitfx.top { width: 22% !important; } .arena.portrait .hitfx.fx-crit { width: 20%; }
+  .battle.portrait .b-stage { gap: 0; }
+  .battle.portrait .crowd, .battle.portrait .crowd:has(.stands-front) { height: 58px; aspect-ratio: auto; width: calc(var(--sand-h) * 0.6); margin: 0 auto -14px; overflow: hidden; border-radius: 10px 10px 0 0; z-index: 2; }
+  .battle.portrait .crowd .stands-front { height: 46%; object-fit: cover; object-position: center bottom; }
+  .battle.portrait .fan.painted { height: 64%; bottom: 30%; } .battle.portrait .fan.painted.back { height: 54%; bottom: 44%; }
+  .battle.portrait .fan { max-width: 18px; }
+  .battle.portrait .crowd .shout, .battle.portrait .crowd:has(.stands-front) .shout { bottom: 18%; font-size: 12px; }
+  .battle.portrait .score { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .battle.portrait .score-tip { display: none; }
+  .battle.portrait .steam { padding: 8px 10px; }
+  .battle.portrait .steam .shead { flex-wrap: wrap; gap: 2px 6px; font-size: 13px; cursor: pointer; }
+  .battle.portrait .steam .shead .muted { flex-basis: 100%; order: 3; font-size: 12px; }
+  .battle.portrait .steam .shead .sst { margin-left: auto; font-size: 12px; }
+  .battle.portrait .steam .tbar { margin: 4px 0 0; }
+  .battle.portrait .steam .scols, .battle.portrait .steam .srows, .battle.portrait .steam .stot { display: none; }
+  .battle.portrait .steam.open { grid-column: 1 / -1; }
+  .battle.portrait .steam.open .scols { display: grid; } .battle.portrait .steam.open .srows { display: flex; } .battle.portrait .steam.open .stot { display: block; }
+  .battle.portrait .steam.open .tbar { margin-bottom: 8px; }
+}
 /* Phone held sideways: the arena takes the full height; title, play-by-play and controls sit in a narrow rail. */
 @media (orientation: landscape) and (max-height: 500px) {
   .battle { overflow: hidden; padding: calc(6px + env(safe-area-inset-top, 0px)) max(8px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)); }
@@ -2191,7 +2223,7 @@ function renderHomeView() {
   document.getElementById('view-home').innerHTML = `
     <div class="home-scene">${purseHTML()}${yardHTML()}</div>
     <div class="home-side">${magnusHTML(note)}${boutsHTML()}${recentHTML()}
-      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-showcase">Imperial fight</button> · <button class="linkish" data-act="home-lategame">Late game</button> · <button class="linkish" data-act="home-midgame">Mid game</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Nov 1, 7:24 PM</span></p>` : ''}
+      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-showcase">Imperial fight</button> · <button class="linkish" data-act="home-lategame">Late game</button> · <button class="linkish" data-act="home-midgame">Mid game</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Nov 1, 7:37 PM</span></p>` : ''}
       ${career.started ? `<p class="sub credit-line">Icons by Lorc, Delapouite and contributors at <a href="https://game-icons.net" target="_blank" rel="noopener">game-icons.net</a>, CC BY 3.0.</p>` : ''}
     </div>`;
   startHomeClock();
@@ -3906,13 +3938,15 @@ function startBattle(key) {
     const t = UNITS[s.template];
     return `<button class="bt s${s.side === me ? 0 : 1}" id="bt-${s.uid}" data-act="b-focus" data-uid="${s.uid}" title="${esc(dname(t, s.name))}: tap for details">${battleFigure(t, battle.builds[s.uid])}<span class="gs num">${battle.gs[s.uid]}</span><span class="hpbar"><i></i></span></button>`;
   }).join('');
+  battle.portrait = !!(window.matchMedia && window.matchMedia(PORTRAIT_MQ).matches);
+  el.classList.toggle('portrait', battle.portrait);
   el.innerHTML = `<div class="battle-inner">
     <div class="b-head"><div class="b-title"></div>
       <button class="close-x" data-act="close-battle" aria-label="Leave the arena">×</button></div>
     <div class="b-main"><div class="b-stage">
     <div class="crowd" id="crowd" aria-hidden="true">${crowdHTML(battle.seed, crowdTier(state.arenaId))}</div>
-    <div class="arena-wrap"><div class="arena ${ARENA_FLOOR(state.arenaId) ? 'has-floor' : ''}" id="arena" ${ARENA_FLOOR(state.arenaId) ? `style="background-image:url(${ARENA_FLOOR(state.arenaId)})"` : ''}><div class="grid"></div><div class="midline"></div>${tokens}
-      <svg class="fx" id="fx" viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true"></svg></div></div>
+    <div class="arena-wrap"><div class="arena ${ARENA_FLOOR(state.arenaId) ? 'has-floor' : ''} ${battle.portrait ? 'portrait' : ''}" id="arena" ${ARENA_FLOOR(state.arenaId) ? `style="background-image:url(${ARENA_FLOOR(state.arenaId)})"` : ''}><div class="grid"></div><div class="midline"></div>${tokens}
+      <svg class="fx" id="fx" viewBox="0 0 ${battle.portrait ? '60 100' : '100 60'}" preserveAspectRatio="none" aria-hidden="true"></svg></div></div>
     <div class="caption" id="caption" aria-live="polite"></div>
     <div id="b-result"></div>
     </div><aside class="score" id="score" aria-label="Live scoreboard"></aside>
@@ -3965,7 +3999,16 @@ function projectileKind(aid, len) {
   return 'arrow';
 }
 const res0 = () => battle.res;
-function center(s) { const me = battle.mySide; const x = me === 0 ? s.x : GRID_W - 1 - s.x; return { x: (x + 0.5) * 10, y: (s.y + 0.5) * 10 }; }
+// Where a grid cell lands on the screen. Your side is always on the left; on a phone held upright the
+// sand turns so the lines face each other top to bottom, with your school at the bottom.
+const PORTRAIT_MQ = '(orientation: portrait) and (max-width: 600px)';
+function cellOf(s) {
+  const xx = battle.mySide === 0 ? s.x : GRID_W - 1 - s.x;
+  return battle.portrait ? { c: s.y, r: GRID_W - 1 - xx, cols: GRID_H, rows: GRID_W } : { c: xx, r: s.y, cols: GRID_W, rows: GRID_H };
+}
+const cellL = (s, d = 0) => { const k = cellOf(s); return pct(k.c + d, k.cols); };
+const cellT = (s, d = 0) => { const k = cellOf(s); return pct(k.r + d, k.rows); };
+function center(s) { const k = cellOf(s); return { x: (k.c + 0.5) * 10, y: (k.r + 0.5) * 10 }; }
 function showFrame(idx, animate = true) {
   const res = battle.res, f = battle.frames[idx];
   const prevSnap = idx > 0 ? battle.frames[idx - 1].snap : f.snap;
@@ -3978,8 +4021,8 @@ function showFrame(idx, animate = true) {
   const focus = f.actor !== null || f.movers.length > 0;
   f.snap.forEach((s, uid) => {
     const el = document.getElementById('bt-' + uid); if (!el) return;
-    el.style.left = pct(X(s.x), GRID_W) + '%';
-    el.style.top = pct(s.y, GRID_H) + '%';
+    el.style.left = cellL(s) + '%';
+    el.style.top = cellT(s) + '%';
     el.classList.toggle('dead', !s.alive && !(prevSnap[uid].alive && animate));
     el.classList.remove('hit', 'acting', 'target', 'lunge', 'special');
     el.classList.toggle('idle', focus && !involved.has(uid) && s.alive);
@@ -4042,8 +4085,9 @@ function showFrame(idx, animate = true) {
       const d = Math.max(Math.abs(a.x - t.x), Math.abs(a.y - t.y));
       if (d <= 2) {
         const el = document.getElementById('bt-' + f.actor);
-        el.style.setProperty('--lx', ((X(t.x) - X(a.x)) * 32) + '%');
-        el.style.setProperty('--ly', ((t.y - a.y) * 32) + '%');
+        const ka = cellOf(a), kt = cellOf(t);
+        el.style.setProperty('--lx', ((kt.c - ka.c) * 32) + '%');
+        el.style.setProperty('--ly', ((kt.r - ka.r) * 32) + '%');
         void el.offsetWidth; el.classList.add('lunge');
       }
     }
@@ -4061,7 +4105,7 @@ function showFrame(idx, animate = true) {
       const s = f.snap[e.tid];
       const fl = document.createElement('span');
       fl.className = 'floater ' + cls; fl.textContent = txt;
-      fl.style.left = pct(X(s.x) + 0.5, GRID_W) + '%'; fl.style.top = (pct(s.y, GRID_H) - 2) + '%';
+      fl.style.left = cellL(s, 0.5) + '%'; fl.style.top = (cellT(s) - 2) + '%';
       const flDelay = (projDelay[e.tid] || 0.18) + k * 0.12;
       // Impact effect by damage type
       const fxKind = e.kind === 'heal' ? 'heal' : e.kind === 'attack' && e.outcome !== 'miss' ? (e.outcome === 'crit' ? 'crit' : e.outcome === 'block' ? 'block' : e.dmgType === 'slash' ? 'slash' : e.dmgType === 'pierce' ? 'pierce' : 'blunt') : null;
@@ -4069,8 +4113,8 @@ function showFrame(idx, animate = true) {
       const fxSrc = (topFx && ART.fx[topFx]) || (fxKind && ART.fx && ART.fx[fxKind]);
       if (fxSrc) {
         const im = document.createElement('img'); im.className = 'hitfx fx-' + fxKind + (topFx ? ' top' : ''); im.src = fxSrc; im.alt = '';
-        im.style.left = pct(X(s.x) + 0.5, GRID_W) + '%'; im.style.top = pct(s.y + 0.35, GRID_H) + '%';
-        if (res.start[e.aid] && res.start[e.aid].side !== battle.mySide && fxKind !== 'heal') im.style.setProperty('--flip', '-1');
+        im.style.left = cellL(s, 0.5) + '%'; im.style.top = cellT(s, 0.35) + '%';
+        if (!battle.portrait && res.start[e.aid] && res.start[e.aid].side !== battle.mySide && fxKind !== 'heal') im.style.setProperty('--flip', '-1');
         im.style.animationDelay = Math.max(0, flDelay - 0.08) + 's';
         arenaEl.appendChild(im); setTimeout(() => im.remove(), (flDelay + 0.9) * 1000);
       }
@@ -4081,7 +4125,7 @@ function showFrame(idx, animate = true) {
     // Pizzazz: shake on crits and knockouts, a burst and a topple for the fallen, a name card when a special fires.
     const shake = (kind, at) => setTimeout(() => { arenaEl.classList.remove('shake-s', 'shake-l'); void arenaEl.offsetWidth; arenaEl.classList.add(kind); setTimeout(() => arenaEl.classList.remove(kind), 450); }, at);
     const burst = (uid, cls, at) => { const s = f.snap[uid]; if (!s) return; const b = document.createElement('span'); b.className = 'burst ' + cls;
-      b.style.left = pct(X(s.x) + 0.5, GRID_W) + '%'; b.style.top = pct(s.y + 0.5, GRID_H) + '%'; b.style.animationDelay = at + 's'; arenaEl.appendChild(b); setTimeout(() => b.remove(), (at + 0.8) * 1000); };
+      b.style.left = cellL(s, 0.5) + '%'; b.style.top = cellT(s, 0.5) + '%'; b.style.animationDelay = at + 's'; arenaEl.appendChild(b); setTimeout(() => b.remove(), (at + 0.8) * 1000); };
     const critHit = f.ev.find((e) => e.kind === 'attack' && e.outcome === 'crit');
     if (critHit) { throwToSand(arenaEl, 4, ((projDelay[critHit.tid] || 0.18)) * 1000); shake('shake-s', ((projDelay[critHit.tid] || 0.18)) * 1000); burst(critHit.tid, 'crit', projDelay[critHit.tid] || 0.18); crowdReact('crit', (projDelay[critHit.tid] || 0.18) * 1000, res.start[critHit.aid].side === battle.mySide); }
     const close = f.ev.find((e) => e.kind === 'attack' && e.tid !== undefined && f.snap[e.tid] && f.snap[e.tid].alive && f.snap[e.tid].hp > 0 && f.snap[e.tid].hp <= res.start[e.tid].hp * 0.12);
@@ -4092,7 +4136,7 @@ function showFrame(idx, animate = true) {
     for (const e of f.ev) if (e.kind === 'active' && e.aid !== undefined) {
       const s = f.snap[e.aid]; if (!s) continue; const c = document.createElement('span');
       c.className = 'actcard s' + (res.start[e.aid].side === battle.mySide ? 0 : 1); c.textContent = e.label;
-      c.style.left = pct(X(s.x) + 0.5, GRID_W) + '%'; c.style.top = pct(s.y, GRID_H) + '%'; arenaEl.appendChild(c); setTimeout(() => c.remove(), 1300);
+      c.style.left = cellL(s, 0.5) + '%'; c.style.top = cellT(s) + '%'; arenaEl.appendChild(c); setTimeout(() => c.remove(), 1300);
     }
     // Fade out the fallen after their hit lands
     f.snap.forEach((s, uid) => { if (!s.alive && prevSnap[uid].alive) {
@@ -4184,8 +4228,8 @@ function renderScore(f, targets) {
         <span class="sstate">${s.alive ? (s.healed ? `<span class="plus num">+${s.healed}</span>` : '') : s.fled ? 'fled' : 'down'}</span>
       </li>`;
     }).join('');
-    return `<section class="steam s${mine ? 0 : 1}">
-      <div class="shead"><b>${mine ? 'You' : 'Them'}</b><span class="muted">${esc(res.teams[side])}</span><span class="num sst">${standing}/${ids.length} standing</span></div>
+    return `<section class="steam s${mine ? 0 : 1} ${battle.scoreOpen && battle.scoreOpen[side] ? 'open' : ''}">
+      <div class="shead" data-act="sc-toggle" data-side="${side}"><b>${mine ? 'You' : 'Them'}</b><span class="muted">${esc(res.teams[side])}</span><span class="num sst">${standing}/${ids.length} standing</span></div>
       <div class="tbar"><i style="width:${max ? (hp / max) * 100 : 0}%"></i></div>
       <div class="scols"><span></span><span>Fighter</span><span>Dmg</span><span>KO</span><span></span></div>
       <ol class="srows">${rows}</ol>
@@ -4209,7 +4253,7 @@ function throwToSand(arenaEl, n, at) {
 }
 function signature(arenaEl, e, s, X) {
   if (!s) return;
-  const st = battle.res.start[e.aid]; const ox = pct(X(s.x) + 0.5, GRID_W), oy = pct(s.y + 0.5, GRID_H);
+  const st = battle.res.start[e.aid]; const ox = cellL(s, 0.5), oy = cellT(s, 0.5);
   arenaEl.style.transformOrigin = `${ox}% ${oy}%`; arenaEl.classList.remove('sig'); void arenaEl.offsetWidth; arenaEl.classList.add('sig');
   setTimeout(() => arenaEl.classList.remove('sig'), 1100);
   const b = document.createElement('div'); b.className = 'sig-banner ' + (st.side === battle.mySide ? 's0' : 's1');
@@ -4223,8 +4267,8 @@ function placeAuras(f, X) {
     let ring = document.getElementById('aura-' + uid); const s = f.snap[uid];
     if (!s || !s.alive) { if (ring) ring.remove(); continue; }
     if (!ring) { ring = document.createElement('span'); ring.id = 'aura-' + uid; ring.className = 'aura-ring s' + (battle.res.start[uid].side === battle.mySide ? 0 : 1); arenaEl.appendChild(ring); }
-    ring.style.left = pct(X(s.x) + 0.5, GRID_W) + '%'; ring.style.top = pct(s.y + 0.5, GRID_H) + '%';
-    ring.style.width = pct(rad * 2 + 1, GRID_W) + '%'; ring.style.height = pct(rad * 2 + 1, GRID_H) + '%';
+    const k = cellOf(s); ring.style.left = cellL(s, 0.5) + '%'; ring.style.top = cellT(s, 0.5) + '%';
+    ring.style.width = pct(rad * 2 + 1, k.cols) + '%'; ring.style.height = pct(rad * 2 + 1, k.rows) + '%';
   }
 }
 // The walk-out: at the Grand Colosseum and the Games, the herald calls the named fighters onto the sand.
@@ -4798,6 +4842,7 @@ document.addEventListener('click', (e) => {
     case 'b-play': if (battle.playing) stop(); else play(); return;
     case 'b-prev': stop(); showFrame(Math.max(0, battle.idx - 1), false); return;
     case 'b-begin': play(); return;
+    case 'sc-toggle': { if (!battle.portrait) return; battle.scoreOpen = battle.scoreOpen || {}; battle.scoreOpen[btn.dataset.side] = !battle.scoreOpen[btn.dataset.side]; renderScore(battle.frames[battle.idx], battle.lastTargets || []); return; }
     case 'b-next': dismissBegin(); stop(); showFrame(Math.min(battle.frames.length - 1, battle.idx + 1)); return;
     case 'b-speed': battle.speed = +btn.dataset.v; document.querySelectorAll('[data-act="b-speed"]').forEach((x) => x.setAttribute('aria-pressed', String(x === btn))); if (battle.playing) play(); return;
     case 'b-log': { const w = document.getElementById('b-logwrap'); w.hidden = !w.hidden; if (!w.hidden) document.getElementById('b-report').hidden = true; const lb = document.getElementById('b-logbtn'); if (lb) lb.setAttribute('aria-pressed', String(!w.hidden)); renderLog(); return; }
