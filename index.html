@@ -1664,7 +1664,14 @@ const LEDGERS = [
 const ledgerAt = (n) => n < LEDGERS.length ? LEDGERS[n] : { owed: LEDGERS[LEDGERS.length - 1].owed * 12 ** (n - LEDGERS.length + 1), letter: `"Ah. There is another page." Vettius's grandson reads it aloud. Even he laughs.`, unlock: null };
 const debtStep = () => Math.max(DEBT_STEP, Math.round(ledgerAt(career.debtTier || 0).owed / 6 / 5) * 5);
 const hasSpot = (k) => (career.spots || []).includes(k);
-function loadCareer() { try { const c = JSON.parse(localStorage.getItem(CAREER_KEY) || 'null'); if (c && typeof c.rung === 'number') return { ...newCareer(), ...c }; } catch (e) { /* storage unavailable */ } return newCareer(); }
+function loadCareer() { try { const c = JSON.parse(localStorage.getItem(CAREER_KEY) || 'null'); if (c && typeof c.rung === 'number') return repairCareer({ ...newCareer(), ...c }); } catch (e) { /* storage unavailable */ } return newCareer(); }
+// Old saves can hold a drill or a training level on a stat that doesn't exist (a battle tap once started a drill with no stat).
+function repairCareer(c) {
+  c.drills = (c.drills || []).filter((d) => d.stat && d.stat !== 'undefined');
+  for (const u of c.stable || []) { const tr = UNITS[u.template] && UNITS[u.template].trainable; if (!u.training || !tr) continue;
+    for (const k of Object.keys(u.training)) if (!tr[k]) delete u.training[k]; }
+  return c;
+}
 const career = loadCareer();
 // Tactics aren't a player toggle in a career (positioning does that job); clear any old choice.
 for (const u of career.stable || []) delete u.tactic;
@@ -1719,6 +1726,7 @@ const drillFor = (b) => career.drills.find((d) => d.name === b.name && d.templat
 function startDrill(i, stat) {
   const b = typeof i === 'object' ? i : state.team.units[i]; if (!b || drillFor(b)) return 'Already training.';
   if (career.drills.length >= drillSlots()) return `All ${drillSlots()} training slot${drillSlots() > 1 ? 's are' : ' is'} busy.`;
+  if (!stat || !(UNITS[b.template].trainable || {})[stat]) return 'Pick a stat to drill.';
   const q = drillQuote(b, stat);
   if (((b.training || {})[stat] || 0) >= GE.maxPerStat(b.stars)) return `A ${b.stars || 3}★ fighter can't train ${STAT_LABEL[stat]} past level ${GE.maxPerStat(b.stars)}.`;
   if (career.coin < q.coin) return `A drill costs ${q.coin} coin; the strongbox has ${career.coin}.`;
@@ -2175,7 +2183,7 @@ function renderHomeView() {
   document.getElementById('view-home').innerHTML = `
     <div class="home-scene">${purseHTML()}${yardHTML()}</div>
     <div class="home-side">${magnusHTML(note)}${boutsHTML()}${recentHTML()}
-      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-showcase">Imperial fight</button> · <button class="linkish" data-act="home-lategame">Late game</button> · <button class="linkish" data-act="home-midgame">Mid game</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Nov 1, 6:52 PM</span></p>` : ''}
+      ${career.started ? `<p class="sub speed-row">Test speed: <button class="linkish ${SPEED() === 1 ? 'on' : ''}" data-act="speed" data-v="1">normal</button> · <button class="linkish ${SPEED() !== 1 ? 'on' : ''}" data-act="speed" data-v="20">20×</button> · <button class="linkish" data-act="home-showcase">Imperial fight</button> · <button class="linkish" data-act="home-lategame">Late game</button> · <button class="linkish" data-act="home-midgame">Mid game</button> · <button class="linkish" data-act="home-reset">Start over</button> · <span class="muted">build Nov 1, 7:07 PM</span></p>` : ''}
     </div>`;
   startHomeClock();
 }
@@ -3887,7 +3895,7 @@ function startBattle(key) {
   const res = battle.res, me = battle.mySide;
   const tokens = res.start.map((s) => {
     const t = UNITS[s.template];
-    return `<button class="bt s${s.side === me ? 0 : 1}" id="bt-${s.uid}" data-act="drill" data-uid="${s.uid}" title="${esc(dname(t, s.name))}: tap for details">${battleFigure(t, battle.builds[s.uid])}<span class="gs num">${battle.gs[s.uid]}</span><span class="hpbar"><i></i></span></button>`;
+    return `<button class="bt s${s.side === me ? 0 : 1}" id="bt-${s.uid}" data-act="b-focus" data-uid="${s.uid}" title="${esc(dname(t, s.name))}: tap for details">${battleFigure(t, battle.builds[s.uid])}<span class="gs num">${battle.gs[s.uid]}</span><span class="hpbar"><i></i></span></button>`;
   }).join('');
   el.innerHTML = `<div class="battle-inner">
     <div class="b-head"><div class="b-title"></div>
@@ -4150,7 +4158,7 @@ function renderScore(f, targets) {
     const rows = ids.map((uid) => {
       const s = f.snap[uid], st = res.start[uid], t = UNITS[st.template];
       const cls = [s.alive ? '' : 'down', uid === f.actor || f.movers.includes(uid) ? 'acting' : '', targets.includes(uid) ? 'hit' : ''].join(' ');
-      return `<li class="srow ${cls}" data-act="drill" data-uid="${uid}" tabindex="0">
+      return `<li class="srow ${cls}" data-act="b-focus" data-uid="${uid}" tabindex="0">
         <span class="m cat-${category(t)} s${mine ? 0 : 1}">${unitIcon(t, battle.builds[uid]?.stars, battle.builds[uid]?.castId)}</span>
         <span class="sname"><span class="sn">${esc(st.name)}</span><span class="sc">${battle.builds[uid].stars || 3}★ ${esc(t.name)}, GS ${battle.gs[uid]}</span>
           <span class="shp"><i style="width:${s.alive ? Math.max(0, (s.hp / st.maxHp) * 100) : 0}%"></i></span></span>
@@ -4761,7 +4769,7 @@ document.addEventListener('click', (e) => {
       if (!sk[k]) delete sk[k];
       b.skills = sk; break;
     }
-    case 'drill': battle.drill = +btn.dataset.uid; showSide(); return;
+    case 'b-focus': battle.drill = +btn.dataset.uid; showSide(); return;
     case 'undrill': battle.drill = null; showSide(); return;
     case 'remove': if (career.started && !state.sandbox) { const m = toggleLineup(b.uid); if (m) toast(m); state.picker = null; break; } removeUnit(i); state.picker = null; if (!state.team.units.length) state.view = 'squad'; break;
     case 'sim': runSim(); return;
