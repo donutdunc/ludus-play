@@ -432,6 +432,22 @@ svg.stand.icon { height: auto !important; aspect-ratio: 80 / 156; filter: none !
 /* While a piece is open, the board shrinks to sit whole above the panel. */
 body.drilling .spot, body.drilling .transport, body.drilling #spoils { display: none !important; }
 [data-look="lino"] body.fighting.drilling .board, body.fighting.drilling .board { width: min(100%, calc((54dvh - 44px) * 0.6667)); margin-top: 12px; }
+
+/* Muster, tightened */
+button.arena-h { flex-direction: row; justify-content: space-between; align-items: baseline; gap: 10px; margin: 0; padding: 4px 2px; min-height: 0; background: none; border: 0; text-align: left; width: 100%; }
+button.arena-h b { font: 22px/1.1 var(--f-display); font-weight: 400; color: var(--ink); } button.arena-h span { font: 600 13px var(--f-ui); color: var(--ink-3); white-space: nowrap; } button.arena-h em { font-style: normal; color: var(--gold); font-size: 16px; }
+.docbox { display: flex; flex-direction: column; gap: 6px; background: var(--stone-2); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; }
+.docsel { position: relative; display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; align-items: center; min-height: 44px; }
+.docsel svg { width: 34px; height: 34px; } .docsel b { display: block; font: 600 17px/1.1 var(--f-ui); color: var(--ink); } .docsel small { font: 600 10px var(--f-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
+.docsel i { font-style: normal; font-size: 18px; color: var(--gold); padding: 0 6px; }
+.docsel select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 16px; }
+.docbox .twist { margin: 0; font-size: 13px; line-height: 1.3; }
+.meter .info:empty { display: none; }
+#fighterList .ph svg.stand.icon, .frow .ph svg.stand.icon { width: 38px; }
+#fighterList .piece, .piece.frow { padding: 6px 8px; } .frow .ph, #fighterList .ph { gap: 10px; }
+.piece .pk.kit { color: var(--ink-3); font-size: 12.5px; }
+.piece .ph .bc small { display: block; font: 600 10px/1.2 var(--f-ui); letter-spacing: .04em; color: var(--ink-3); white-space: nowrap; margin-top: 2px; }
+.pick svg.stand.icon { width: 30px; } .meter { gap: 6px; }
 </style>
 
 <div class="wrap">
@@ -484,7 +500,7 @@ body.drilling .spot, body.drilling .transport, body.drilling #spoils { display: 
     <div class="twist free-only" id="myTwist"></div>
 
     <div id="arenaTop" class="camp-only" style="display:flex;flex-direction:column;gap:6px"></div>
-    <div class="camp-only" style="display:flex;flex-direction:column;gap:6px"><h2 class="sec">Doctore <span>each keeps his own squad</span></h2><div class="docs" id="docRow"></div><div class="twist" id="docTwist"></div></div>
+    <div class="camp-only docbox"><div id="docRow"></div><div class="twist" id="docTwist"></div></div>
     <h2 class="sec free-only">The rival <span id="rivalName"></span></h2>
     <div class="seg free-only" id="ladder"></div>
     <div class="hint free-only" id="rivalBlurb"></div>
@@ -804,7 +820,7 @@ function renderMeter() {
   const neutrals = S.mine.units.filter((u) => E.fieldable(S.myDoc, u.template) === 'neutral').length;
   const probs = problems();
   $('meter').innerHTML = `
-    <div class="top"><div class="big ${over ? 'over' : ''}">${sp}<i> / ${S.bill}</i></div><div class="info">${n} fighter${n === 1 ? '' : 's'} · ${S.bill - sp >= 0 ? `${S.bill - sp} left` : 'over'}${neutrals ? `<br>${neutrals} neutral (max ${Math.min(3, Math.max(1, E.neutralRoom(Math.max(n, 2))))})` : ''}</div></div>
+    <div class="top"><div class="big ${over ? 'over' : ''}">${sp}<i> / ${S.bill}</i></div><div class="info">${S.bill - sp >= 0 ? '' : `${sp - S.bill} over the bill`}${neutrals ? `<br>${neutrals} neutral (max ${Math.min(3, Math.max(1, E.neutralRoom(Math.max(n, 2))))})` : ''}</div></div>
     <div class="bar"><i class="${over ? 'over' : ''}" style="width:${Math.min(100, sp / S.bill * 100)}%"></i></div>
     <div class="tray">${n ? S.mine.units.map((u, i) => `<span class="pickwrap"><button class="pick" data-m="${i}" aria-label="Edit ${u.name}">${tokenSvg(lookOf(u), { side: 0 })}<b>${cost(u)}</b></button><button class="drop" data-drop="${i}" aria-label="Remove ${u.name}">×</button></span>`).join('') : '<span class="empty">Tap + on a piece below to add it. Tap a piece here to change its weapon, armor and skill.</span>'}</div>
     ${probs.length ? `<div class="warn">${probs.join(' ')}</div>` : ''}
@@ -1643,7 +1659,9 @@ renderFormation = ((orig) => function () {
 renderMuster = ((orig) => function (full) {
   orig(full);
   if (hideRival()) renderDocRow();
-  if (hideRival()) { const a = arenaNow(); $('arenaTop').innerHTML = `<div class="arena-h"><b>${a.name}</b><span>${a.line}</span></div><p class="hint" style="margin:0">Bill <b style="color:var(--gold)">${a.bill}</b> · purse <b style="color:var(--gold)">${E.reward(a.id, true, (G.arenaWins[a.id] ?? 0) > 0).denarii}</b>. You will not know who you face until the gates open.</p>`; }
+  if (hideRival()) { const a = arenaNow(), purse = E.reward(a.id, true, (G.arenaWins[a.id] ?? 0) > 0).denarii;
+    $('arenaTop').innerHTML = `<button class="arena-h" id="arenaInfo"><b>${a.name}</b><span>Purse <em>${purse}</em> · ⓘ</span></button>`;
+    $('arenaInfo').onclick = () => explain('Arena', a.name, `${a.line} The bill here is ${a.bill}: that is the most your squad may cost. A win pays ${purse} denarii${(G.arenaWins[a.id] ?? 0) > 0 ? ' (less than your first win here did)' : ''}. You will not know who you face until the gates open.`); }
 })(renderMuster);
 $('stepSchool').onclick = () => show('school');
 function newSchool() {
@@ -1725,9 +1743,10 @@ function putInCharge(id) {
 save = ((orig) => function () { orig(); if (!FREE && G) { stashSquad(); saveG(); } })(save);
 const squadOf = (id) => ((G.squads ?? {})[id] ?? []).map((m) => fighterById(m.fid)).filter(Boolean);
 function renderDocRow() {
-  $('docRow').innerHTML = G.doctores.map((id) => { const x = E.DOCTORE_BY_ID[id]; return `<button class="dchip" data-doc-pick="${id}" aria-pressed="${id === G.doctore}">${docSigil(x)}<span>${x.name}<small>${E.FACTIONS[x.faction].name}</small></span></button>`; }).join('');
-  $('docRow').querySelectorAll('[data-doc-pick]').forEach((el) => el.onclick = () => { putInCharge(el.dataset.docPick); renderMuster(); });
-  const d = E.DOCTORE_BY_ID[G.doctore];
+  const d = E.DOCTORE_BY_ID[G.doctore], many = G.doctores.length > 1;
+  $('docRow').innerHTML = `<label class="docsel">${docSigil(d)}<span><b>${d.name}</b><small>${E.FACTIONS[d.faction].name}${many ? ' · his own squad' : ''}</small></span>${many ? '<i>▾</i>' : ''}
+    <select aria-label="Doctore" ${many ? '' : 'disabled'}>${G.doctores.map((id) => { const x = E.DOCTORE_BY_ID[id]; return `<option value="${id}" ${id === G.doctore ? 'selected' : ''}>${x.name} · ${E.FACTIONS[x.faction].name}</option>`; }).join('')}</select></label>`;
+  $('docRow').querySelector('select').onchange = (e) => { putInCharge(e.target.value); renderMuster(); };
   $('docTwist').innerHTML = `<b>${d.twist.name}</b> · ${d.twist.line}`;
 }
 function renderRosterScreen() {
@@ -1739,13 +1758,17 @@ function renderRosterScreen() {
   $('fighterNote').textContent = `${G.fighters.length}`;
   const order = (f) => `${M(f).faction}|${M(f).stars}|${M(f).title}|${M(f).lean}|${f.name}`;
   $('fighterList').innerHTML = [...G.fighters].sort((a, b) => order(a).localeCompare(order(b))).map((f) => { const t = E.UNITS[f.template], u = unitOf(f), r = E.resolveUnit(u);
-    return `<div class="piece"><div class="ph" style="grid-template-columns:58px minmax(0,1fr) auto">${tokenSvg(lookOf(u), { side: 0, bare: true })}
-      <button class="info" data-f="${f.id}"><span class="pn">${f.name}<i style="color:var(--ink-3)">Lv ${E.levelOf(f.xp)}</i>${f.points ? '<i style="color:var(--gold)">can train</i>' : ''}</span><span class="pk">${fighterLine(f)} · ${E.FACTIONS[t.faction]?.name ?? ''}</span>${statLine(r)}</button><span class="bc">${cost(u)}</span></div></div>`; }).join('');
+    return `<div class="piece"><div class="ph" style="grid-template-columns:40px minmax(0,1fr) auto">${tokenSvg(lookOf(u), { side: 0, bare: true })}
+      <button class="info" data-f="${f.id}"><span class="pn">${f.name}<i style="color:var(--ink-3)">Lv ${E.levelOf(f.xp)}</i>${f.points ? '<i style="color:var(--gold)">can train</i>' : ''}</span><span class="pk">${fighterLine(f)} · ${E.FACTIONS[t.faction]?.name ?? ''}</span>${statLine(r)}</button><span class="bc">${cost(u)}${costSplit(u)}</span></div></div>`; }).join('');
   $('fighterList').querySelectorAll('[data-f]').forEach((el) => el.onclick = () => openFighter(el.dataset.f));
 }
 nameTeam = ((orig) => function (team) { orig(team); if (!FREE && G?.fighters) for (const u of team.units) if (u.fid && fighterById(u.fid)) u.name = fighterById(u.fid).name; })(nameTeam);
 const statLine = (r) => `<span class="bs"><span><b>${Math.round(r.stats.hp)}</b> HP</span><span><b>${Math.round(r.stats.atk + r.weapon.damage)}</b> DMG</span><span><b>${Math.round(E.armorCut(r.stats.def) * 100)}%</b> ARM</span>${r.weapon.range > 1 ? `<span><b>${r.weapon.range}</b> REACH</span>` : ''}</span>`;
-const fighterLine = (f) => `${M(f).title} ${'★'.repeat(M(f).stars)} · ${E.LEANS[M(f).lean].name}`;
+const GRADE = { light: 'light armor', medium: 'medium armor', heavy: 'heavy armor' };
+/** What he is, then what he carries: "Peasant ★ · Base" / "Club, light armor". */
+const fighterLine = (f) => { const u = E.fighterUnit(f), r = E.resolveUnit(u); return `${E.UNITS[u.template].name} ${'★'.repeat(M(f).stars)} · ${E.LEANS[M(f).lean].name}</span><span class="pk kit">${r.weapon.name}${u.equip?.off ? ` and ${E.ITEMS?.[u.equip.off]?.name ?? 'shield'}` : ''}, ${GRADE[u.grade ?? 'medium']}`; };
+/** The bill split: the body alone (unarmed, light), and what his kit adds. */
+const costSplit = (u) => { const total = cost(u), body = Math.min(total, E.billOf({ template: u.template, grade: 'light' }).total); return `<small>${body} + ${total - body} kit</small>`; };
 
 renderRoster = ((orig) => function () {
   if (FREE) return orig();
@@ -1758,9 +1781,9 @@ renderRoster = ((orig) => function () {
     const u = unitOf(f), c = cost(u), r = E.resolveUnit(u, E.doctoreEffectsFor(S.mine, E.UNITS[f.template]));
     const inSquad = S.mine.units.some((x) => x.fid === f.id);
     const cant = !inSquad && (c > left || (E.fieldable(S.myDoc, f.template) === 'neutral' && neutralsIn >= 3));
-    return `<div class="piece frow ${inSquad ? 'in' : ''}"><div class="ph" style="grid-template-columns:58px minmax(0,1fr) 30px 44px">${tokenSvg(lookOf(u), { side: 0, bare: true })}
+    return `<div class="piece frow ${inSquad ? 'in' : ''}"><div class="ph" style="grid-template-columns:40px minmax(0,1fr) 44px 44px">${tokenSvg(lookOf(u), { side: 0, bare: true })}
       <button class="info" data-f="${f.id}"><span class="pn">${f.name}<i style="color:var(--ink-3)">Lv ${E.levelOf(f.xp)}</i>${f.points ? '<i style="color:var(--gold)">can train</i>' : ''}</span><span class="pk">${fighterLine(f)}</span>${statLine(r)}</button>
-      <span class="bc" style="${cant ? 'opacity:.5' : ''}">${c}</span>
+      <span class="bc" style="${cant ? 'opacity:.5' : ''}">${c}${costSplit(u)}</span>
       <button class="add" data-toggle="${f.id}" ${cant ? 'disabled' : ''} aria-pressed="${inSquad}" aria-label="${inSquad ? 'Take' : 'Put'} ${f.name} ${inSquad ? 'out of' : 'in'} the squad">${inSquad ? '✓' : '+'}</button></div></div>`;
   }).join('') + (out.length ? `<p class="hint" style="margin:0">Sitting out under ${E.DOCTORE_BY_ID[G.doctore].name}: ${out.map((f) => f.name).join(', ')}.</p>` : '');
   $('roster').querySelectorAll('[data-toggle]').forEach((el) => el.onclick = () => { toggleSquad(el.dataset.toggle); renderMuster(false); });
