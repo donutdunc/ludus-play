@@ -519,6 +519,16 @@ body.fighting .ranklab, body.fighting .midlab { display: none; }
 .kit.locked { opacity: .6; } .kit.locked em { font-size: 18px; } .kit.locked em::before { display: none; }
 
 .chip.lent { border-color: var(--gold); border-style: dashed; }
+
+/* Short screens (a phone browser with its bars showing): a slimmer close-up, so the board keeps its width in a fight. */
+@media (max-height: 760px) {
+  [data-look="lino"] body.fighting .spot { min-height: 58px; margin: 8px 11px 12px; padding: 2px 8px 3px; grid-template-columns: 44px minmax(0, 1fr) 44px; }
+  [data-look="lino"] body.fighting .spot .fig, [data-look="lino"] body.fighting .spot .fig svg { width: 44px; height: 56px !important; }
+  [data-look="lino"] body.fighting .spot .fig.port { height: 54px; }
+  [data-look="lino"] body.fighting .spot .act { font-size: 18px; }
+  [data-look="lino"] body.fighting .spot .sm { font-size: 11.5px; }
+  [data-look="lino"] body.fighting .board { width: min(100%, calc((100dvh - 168px) * 0.5952)); }
+}
 </style>
 
 <div class="wrap">
@@ -1487,7 +1497,7 @@ function tokenCracked(u) {
 const SET_MAT = { legion: 'bone', riffraff: 'wood', warren: 'stone' };
 const SET_GRAD = { bone: ['#b9a67c', '#f4ead0', '#dccb9f', '#9c8a62'], wood: ['#7c5226', '#d6a86a', '#b07d42', '#6a4520'], stone: ['#3f5030', '#8fa66a', '#62784a', '#36462a'], iron: ['#3a3d42', '#9aa0a8', '#6a6f78', '#2c2f34'], dead: ['#3c3835', '#8a847b', '#67615a', '#2f2c29'], m3: ['#7a3216', '#e08a55', '#b5532a', '#6a2a12'], m4: ['#7d838c', '#ffffff', '#c9ccd1', '#6c727a'], m5: ['#9a6a12', '#fff0a8', '#e6b93c', '#8a5c0c'] };
 // Four tones of each family material, so two fighters of one kind are not the same block of wood.
-const SET_TONES = { wood: [['#7c5226', '#d6a86a', '#b07d42', '#6a4520'], ['#6b4a2a', '#c09a6c', '#98724a', '#553a20'], ['#8a5a22', '#e2b872', '#c08c48', '#754a1c'], ['#70482a', '#c8956a', '#a66f4a', '#5c3820']], bone: [['#b9a67c', '#f4ead0', '#dccb9f', '#9c8a62'], ['#a99a7c', '#e8e0cc', '#cfc3a4', '#8c7e62'], ['#c2a870', '#f8e8c0', '#e4cc94', '#a48c58'], ['#b0a088', '#efe6d6', '#d6c8ae', '#948468']], stone: [['#3f5030', '#8fa66a', '#62784a', '#36462a'], ['#35503a', '#84a67a', '#58785a', '#2c4632'], ['#4a5230', '#9ea666', '#6f7846', '#40462a'], ['#3a4a3a', '#86987a', '#5c6e58', '#303e32']] };
+const SET_TONES = { wood: [['#a27a48', '#f2dcae', '#dcbe88', '#8a6a3e'], ['#957556', '#e8d4b4', '#cdb490', '#7d634a'], ['#ac7c40', '#f6e0a8', '#e2c27e', '#946a36'], ['#9a7258', '#ecd0b2', '#d2b08e', '#82604a']], bone: [['#b9a67c', '#f4ead0', '#dccb9f', '#9c8a62'], ['#a99a7c', '#e8e0cc', '#cfc3a4', '#8c7e62'], ['#c2a870', '#f8e8c0', '#e4cc94', '#a48c58'], ['#b0a088', '#efe6d6', '#d6c8ae', '#948468']], stone: [['#6f8458', '#dbe8c2', '#b2c696', '#5f7450'], ['#62846a', '#d2e6c8', '#a6c4a2', '#547460'], ['#7a8456', '#e4e8bc', '#bcc48e', '#6a724c'], ['#687a6a', '#d6e0cc', '#aebcaa', '#5a6a5c']] };
 for (const [m, ts] of Object.entries(SET_TONES)) ts.forEach((g, k) => { SET_GRAD[`${m}${k}`] = g; });
 const seedOf = (str) => { let h = 2166136261; for (const ch of String(str ?? '')) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return () => { h = Math.imul(h ^ (h >>> 15), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); return ((h ^= h >>> 16) >>> 0) / 4294967296; }; };
 document.body.insertAdjacentHTML('afterbegin', `<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>${Object.entries(SET_GRAD).map(([k, g]) => `<linearGradient id="g-${k}" x1="0" x2="1"><stop offset="0" stop-color="${g[0]}"/><stop offset=".28" stop-color="${g[1]}"/><stop offset=".62" stop-color="${g[2]}"/><stop offset="1" stop-color="${g[3]}"/></linearGradient>`).join('')}</defs></svg>`);
@@ -1510,13 +1520,45 @@ const PAINT = ['#9c3a2c', '#35597f', '#c1952a', '#4b7a55', '#d8d0ba', '#6e4a78',
 const paintIdx = (tid, tone) => (Math.floor(seedOf(tid)() * 7) + tone * 2) % 7;
 const paintOf = (f) => PAINT[paintIdx(M(f).icon, M(f).tone)];
 // How each family's set is proportioned: the Legion's stands tall and narrow, the Warren's squats.
-const SET_PROP = { legion: [.9, 1.1], warren: [1.14, .87] };
-function setPiece(u, deadMat, side = 0) {
+const SET_PROP = { riffraff: [1.12, 1], warren: [1.18, .9] };
+// ---------- The Legion's set is sawn: flat faces, right angles, a lit top and a shadowed side; marks cut in and inked. Issued, so identical. ----------
+// Drawn on a 46-unit tile grid (feet at 23,41) and scaled into the piece's space, so the board cut keeps whole pixels.
+const LEG_MAT = [{ l: '#fffaec', m: '#eee2c4', d: '#b7a47c', rim: '#ffffff', ink: '#2a1c10', acc: '#a8372b' }, { l: '#b8452f', m: '#8a281c', d: '#47100b', rim: '#eab49c', ink: '#f6e2d0', acc: '#f1e6cc' }];
+const LEG_DEAD = { l: '#a39d93', m: '#7d776e', d: '#4a4641', rim: '#c4beb4', ink: '#2a2622', acc: '#5a5550' };
+function legionPiece(u, deadMat, side) {
+  const M = deadMat ? LEG_DEAD : LEG_MAT[side === 1 ? 1 : 0], OUT = '#1c120a', lean = LEAN_OF(u), stars = Math.min(5, u.stars || 1), v = u.tone ?? 0, id = `lg${++clipN}`;
+  const paint = u.who != null && u.tone != null && !deadMat ? PAINT[paintIdx(u.tid, u.tone)] : null;
+  const box = (x, y, w, h, dx = 3.5, dy = 2.5) => [[`M${x},${y} l${dx},${-dy} h${w} l${-dx},${dy} Z`, M.l], [`M${x + w},${y} l${dx},${-dy} v${h} l${-dx},${dy} Z`, M.d], [`M${x},${y} h${w} v${h} h${-w} Z`, M.m]];
+  const boss = (x, y, r) => `<circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="${M.ink}" stroke-width="${Math.max(1, r * .34).toFixed(2)}"/><circle cx="${x}" cy="${y}" r="${(r * .36).toFixed(2)}" fill="${M.ink}"/>`;
+  const ink = (d, w = 1.1) => `<path d="${d}" fill="none" stroke="${M.ink}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  let parts, over = '', face;   // face: the front face [x, y, w, h], for the paint and the chip
+  if (lean === 'tank') { face = [6, 20, 29, 20.5]; parts = box(...face); over = ink('M20.5,21 V40') + boss(13.2, 30.4, 3.2) + boss(27.8, 30.4, 3.2); }
+  else if (lean === 'shooter') { face = [17, 3, 8.5, 37]; parts = [['M27,40 l3.5,-2.5 L28.6,.8 L25.5,3 Z', M.d], ['M25.5,3 L28.6,.8 L22,-5 Z', M.d], ['M17,40 H27 L25.5,3 H18.5 Z', M.m], ['M18.5,3 H25.5 L22,-5 Z', M.l]]; over = ink('M22,13 V31 M19.2,16.6 L22,12.2 L24.8,16.6', 1.2); }
+  else if (lean === 'specialist') { face = [18.5, 9, 8, 31.5]; parts = [...box(18.5, 9, 8, 31.5, 3, 2.2), ...box(11, 3.5, 23, 6, 3, 2.2)]; over = [17.4, 25.4, 33.4].map((y) => boss(22.5, y, 2.5)).join(''); }
+  else { face = [13.5, 12, 17, 28.5]; parts = box(...face); over = boss(22, 26.4, 3.9); }
+  // Rank by the crest: the officers (4★ and up) wear a fan of horsehair on top of the block.
+  if (stars >= 4 && (lean === 'base' || lean === 'tank')) { const cx = face[0] + face[2] / 2 + 1.75, top = face[1] - 1.2, r = Math.min(13, face[2] / 2 + 4);
+    parts.push([`M${cx - r},${top} A${r},${r * .95} 0 0 1 ${cx + r},${top} Z`, M.acc]);
+    over += ink(`M${cx},${top} V${top - r * .85} M${cx},${top} L${cx - r * .62},${top - r * .64} M${cx},${top} L${cx + r * .62},${top - r * .64} M${cx},${top} L${cx - r * .9},${top - r * .28} M${cx},${top} L${cx + r * .9},${top - r * .28}`, .9) + `<path d="M${cx - r},${top} H${cx + r}" stroke="${OUT}" stroke-width="1.1"/>`; }
+  // The fighter's own colour, painted along the foot of the face.
+  if (paint) over += `<rect x="${face[0]}" y="${41 - 4.2}" width="${face[2]}" height="3" fill="${paint}"/><path d="M${face[0]},${41 - 4.2} h${face[2]}" stroke="${OUT}" stroke-width=".7"/>`;
+  // Issued alike, then knocked about: a chipped corner, a crack, or a stamp cut a second time.
+  const cuts = v === 1 ? [[face[0] - .3, face[1] - .8, 4.4]] : [];
+  if (v === 2) over += ink(`M${face[0] + face[2] - 3},${face[1] + .5} l-1.6,4.2 l1.2,4`, .8);
+  if (v === 3) over += `<g opacity=".45" transform="translate(1.2 -.9)">${over.match(/<circle[^>]*\/>/g)?.slice(0, 2).join('') ?? ''}</g>`;
+  const all = parts.map(([d]) => `<path d="${d}"/>`).join('');
+  let body = `<g fill="${OUT}" stroke="${OUT}" stroke-width="2.4" stroke-linejoin="round">${all}</g><g fill="${M.rim}">${all}</g><clipPath id="${id}">${all}</clipPath><g clip-path="url(#${id})"><g transform="translate(.9 1)">${parts.map(([d, c]) => `<path d="${d}" fill="${c}"/>`).join('')}${over}</g></g>`;
+  if (cuts.length) body = `<mask id="${id}m" maskUnits="userSpaceOnUse" x="-30" y="-40" width="110" height="110"><rect x="-30" y="-40" width="110" height="110" fill="#fff"/>${cuts.map((c) => `<circle cx="${c[0]}" cy="${c[1]}" r="${c[2]}" fill="#000"/>`).join('')}</mask><g mask="url(#${id}m)">${body}</g><g clip-path="url(#${id})" fill="none" stroke="${OUT}" stroke-width="1.3">${cuts.map((c) => `<circle cx="${c[0]}" cy="${c[1]}" r="${c[2] + .2}"/>`).join('')}</g>`;
+  const fame = u.fame && !deadMat ? `<path d="M6,24 q-4,6 0,12 M40,24 q4,6 0,12" fill="none" stroke="#e6b93c" stroke-width="1.4" stroke-linecap="round"/>` : '';
+  return `<g transform="translate(50 130) scale(2.39) translate(-23 -41)">${body}${fame}</g>`;
+}
+function setPiece(u, deadMat, side = 0, board = false) {
+  if (u.faction === 'legion' && !u.court) return legionPiece(u, deadMat, side);
   const rnd = seedOf(u.who ?? u.tid ?? ''), named = u.who != null, fam = u.faction, mat0 = SET_MAT[fam] ?? 'iron', dark = side === 1 && !deadMat, v = u.tone ?? Math.floor(rnd() * 4);
   const mat = deadMat ?? (SET_TONES[mat0] ? `${mat0}${dark ? 'd' : ''}${named ? v : 0}` : mat0);
   const take = u.court ? (u.take ?? 'real') : 'real';
   const lean = LEAN_OF(u), stars = Math.min(5, u.stars || 1), tank = lean === 'tank', rough = fam === 'warren', worn = fam === 'riffraff' && !deadMat;
-  const A = `fill="url(#g-${mat})" stroke="#24140a" stroke-width="1.7" stroke-linejoin="round"`, AM = (m) => A.replace(`g-${mat}`, `g-${m}`);
+  const A = `fill="url(#g-${mat})" stroke="#24140a" stroke-width="${board ? 3.2 : 2}" stroke-linejoin="round"`, AM = (m) => A.replace(`g-${mat}`, `g-${m}`);
   const prof = (pts) => `<polygon ${A} points="${pts.map(([y, w], i) => `${50 + w + (rough ? setJit(i, 1) : 0)},${y}`).join(' ')} ${pts.slice().reverse().map(([y, w], i) => `${50 - w - (rough ? setJit(i, 2) : 0)},${y}`).join(' ')}"/>`;
   const pa = (d, m) => `<path ${m ? AM(m) : A} d="${d}"/>`, el = (cx, cy, rx, ry, m) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" ${m ? AM(m) : A}/>`, rc = (x, y, w, h, m, r = 1.5) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" ${m ? AM(m) : A}/>`;
   const cutCol = dark || deadMat ? 'rgba(255,232,196,.34)' : 'rgba(30,16,6,.5)';
@@ -1528,7 +1570,7 @@ function setPiece(u, deadMat, side = 0) {
   // Riff-Raff: the specialists' proper pieces were lost long ago. A cork, a thimble and a thread spool stand in for them.
   if (worn && lean === 'specialist' && stars === 1 && ['skirmisher', 'controller', 'support'].includes(u.job)) {
     standIn = true; stem = ''; const dk = dark ? 'd' : '';
-    if (u.job === 'skirmisher') { head = pa('M34,130 L30,84 Q50,78 70,84 L66,130 Q50,135 34,130Z', `cork${dk}`) + el(50, 84, 20, 6, `cork${dk}`) + cut('M38,100 l5,3 M56,112 l6,-2 M44,120 l4,2 M58,96 l3,4', 1.3) + `<rect x="48.6" y="56" width="2.8" height="28" fill="#8e9298" stroke="#150c06" stroke-width="1"/>` + el(50, 54, 5.5, 5.5, paint ? null : 'tin').replace(/fill="url\(#g-[^"]+\)"/, paint ? `fill="${paint}"` : '$&'); }
+    if (u.job === 'skirmisher') { head = pa('M34,130 L30,84 Q50,78 70,84 L66,130 Q50,135 34,130Z', `cork${dk}`) + el(50, 84, 20, 6, `cork${dk}`) + cut('M38,100 l5,3 M56,112 l6,-2 M44,120 l4,2 M58,96 l3,4', 1.3) + `<rect x="47" y="58" width="6" height="26" fill="#8e9298" stroke="#150c06" stroke-width="1.6"/>` + el(50, 54, 8, 8, paint ? null : 'tin').replace(/fill="url\(#g-[^"]+\)"/, paint ? `fill="${paint}"` : '$&'); }
     else if (u.job === 'controller') { head = pa('M30,130 L33,96 Q34,72 50,72 Q66,72 67,96 L70,130Z', `tin${dk}`) + rc(27, 122, 46, 8, `tin${dk}`, 3) + cut([0, 1, 2].map((r) => [-9, -3, 3, 9].map((x) => `M${50 + x + (r % 2) * 3},${88 + r * 9} l.1,.1`).join(' ')).join(' '), 3) + (paint ? `<rect x="31.5" y="112" width="37" height="5" fill="${paint}" stroke="#150c06" stroke-width="1"/>` : ''); }
     else { head = rc(28, 122, 44, 8, null, 2) + rc(37, 84, 26, 40, null, 1) + `<rect x="36" y="88" width="28" height="32" rx="3" fill="${paint ?? '#cfc3a4'}" stroke="#150c06" stroke-width="1.4"/>` + cut([92, 97, 102, 107, 112, 116].map((y) => `M37,${y} L63,${y + 2}`).join(' '), 1, 'rgba(20,10,4,.35)') + rc(28, 78, 44, 8, null, 2) + el(50, 78, 6, 2.2, null); }
   } else {
@@ -1632,40 +1674,46 @@ function setPiece(u, deadMat, side = 0) {
   // His paint: round the ball of a Riff-Raff pawn, under the collar on everything else. Chipped on wood, clean on the Legion, daubed on stone.
   let ring = '';
   if (paint && !standIn && (u.adorn || !u.court)) {
-    const onBall = fam === 'riffraff' && lean === 'base', y = onBall ? 59 : 89, hw = onBall ? 14.6 : S + (fam === 'riffraff' ? 1 : 0);
+    const onBall = false, y = onBall ? 59 : 89, hw = onBall ? 14.6 : S + (fam === 'riffraff' ? 1 : 0);
     ring = `<path d="M${50 - hw},${y} Q50,${y + (onBall ? 5 : 3)} ${50 + hw},${y}" fill="none" stroke="#150c06" stroke-width="7" stroke-linecap="butt"/><path d="M${50 - hw},${y} Q50,${y + (onBall ? 5 : 3)} ${50 + hw},${y}" fill="none" stroke="${paint}" stroke-width="5" ${fam === 'riffraff' ? `stroke-dasharray="${[6, 2, 9, 1.5, 4, 2.5].map((n, k) => n + ((v + k) % 3)).join(' ')}"` : rough ? 'stroke-dasharray="5 1 8 1.2"' : ''}/>`;
   }
   // Riff-Raff wear that survives at board size: a piece broken out of the outline (a different place on each fellow), a twine mend, and scuffs for the close look.
-  let wear = '', mask = '';
+  let wear = '', wearHead = '', mask = '';
   if (worn && !standIn) {
     const fl = (x0, sgn) => [`${x0 - 4 * sgn},133 ${x0 - 4 * sgn},119 ${x0 + 7 * sgn},122 ${x0 + 4 * sgn},133`, `M${x0 - 1 * sgn},121 L${x0 + 7 * sgn},122 L${x0 + 4.5 * sgn},130`];
     const cl = (x0, sgn) => [`${x0 - 4 * sgn},72 ${x0 + 6 * sgn},75 ${x0 + 4 * sgn},81 ${x0 + 8 * sgn},88 ${x0 - 4 * sgn},89`, `M${x0 + 4 * sgn},76 L${x0 + 4 * sgn},81 L${x0 + 7 * sgn},86`];
     const hd = lean === 'base' ? ['57,38 73,42 70,57 63,52 59,46', 'M59,43.5 L59,46 L63,52 L67.5,55.5'] : cl(50 + C, -1);
     const bite = [fl(50 - F, 1), hd, cl(50 - C, 1), fl(50 + F, -1)][v % 4], id = `bm${++clipN}`;
     mask = `<mask id="${id}" maskUnits="userSpaceOnUse" x="-20" y="-20" width="140" height="180"><rect x="-20" y="-20" width="140" height="180" fill="#fff"/><polygon points="${bite[0]}" fill="#000"/></mask>`;
-    wear += `<path d="${bite[1]}" fill="none" stroke="#150c06" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+    const biteLine = `<path d="${bite[1]}" fill="none" stroke="#150c06" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+    if (bite === hd && lean === 'base') wearHead = biteLine; else wear += biteLine;
     if (take === 'real' && (u.adorn || !u.court) && (v % 2 === 0 || rnd() < .35)) { const y = 99 + Math.floor(rnd() * 9), hw = S + 4; wear += `<rect x="${50 - hw}" y="${y}" width="${hw * 2}" height="6.5" rx="2" fill="${dark ? '#b9a27c' : '#3b2a18'}" stroke="#150c06" stroke-width="1.4"/>` + cut(Array.from({ length: Math.round(hw / 2) }, (_, k) => `M${50 - hw + 2 + k * 4},${y + 5.5} l2.4,-4.5`).join(' '), 1, dark ? 'rgba(30,16,6,.5)' : 'rgba(255,232,196,.4)'); }
     for (let k = 0, n = take === 'real' ? 2 + Math.floor(rnd() * 3) : 0; k < n; k++) { const x = 50 + (rnd() * 2 - 1) * (S - 2), y = 108 + rnd() * 14, a = rnd() * 2.4 - 1.2, l = 4 + rnd() * 5; wear += `<path d="M${x.toFixed(1)},${y.toFixed(1)} l${(Math.sin(a) * l).toFixed(1)},${(Math.cos(a) * l).toFixed(1)}" stroke="rgba(255,240,205,.5)" stroke-width="1.1" stroke-linecap="round"/>`; }
-    mask = take === 'crude' ? '' : [mask, id]; if (take === 'crude') wear = '';
+    mask = take === 'crude' ? '' : [mask, id]; if (take === 'crude') wear = wearHead = '';
   }
   const fame = u.fame && !deadMat ? `<path d="M${50 - C - 6},70 q-5,8 0,16 M${50 + C + 6},70 q5,8 0,16" fill="none" stroke="#e6b93c" stroke-width="3" stroke-linecap="round"/>` : '';
-  const [px, py] = SET_PROP[fam] ?? [1, 1], inner = stem + marks + head + fin + ring + ad;
-  return `<g transform="translate(50 130) scale(${px} ${py}) translate(-50 -130)">${mask ? `${mask[0]}<g mask="url(#${mask[1]})">${inner}</g>` : inner}${wear}${fame}</g>`;
+  const [px, py] = SET_PROP[fam] ?? [1, 1], mk = (g) => (mask ? `<g mask="url(#${mask[1]})">${g}</g>` : g);
+  // The board cut: the stem a quarter shorter, the top a fifth bigger. Stand-ins and notables are already one mass, and keep their drawing.
+  const squat = !standIn && !u.court, SQ = .74, Y70 = 130 - 60 * SQ;
+  const stemT = squat ? `translate(0 130) scale(1 ${SQ}) translate(0 -130)` : '', headT = squat ? `translate(50 ${Y70}) scale(1.2) translate(-50 -70)` : '';
+  const lower = mk(stem + marks + ring + ad) + wear + fame, upper = mk(head + fin) + wearHead;
+  return `<g transform="translate(50 130) scale(${px} ${py}) translate(-50 -130)">${mask ? mask[0] : ''}<g transform="${stemT}">${lower}</g><g transform="${headT}">${upper}</g></g>`;
 }
 function tokenStand(u, opts) {
-  const stars = Math.min(5, u.stars || 1), edge = SIDE_EDGE(opts), id = `st${++clipN}`, rx = 34, cy = 131, ry = 10.2;
+  const stars = Math.min(5, u.stars || 1), edge = opts.side === 1 ? '#2a221c' : '#d6cab0', id = `st${++clipN}`, rx = 34, cy = 131, ry = 10.2;
   const hp = Math.max(0, Math.min(1, opts.hp ?? 1)), max = u.maxHp || 30, seg = max > 120 ? 25 : 10, n = Math.max(1, Math.round(max / seg));
   const band = `M${50 - rx} ${cy}a${rx} ${ry} 0 0 0 ${rx * 2} 0v10a${rx} ${ry} 0 0 1 ${-rx * 2} 0Z`;
   let ticks = '';
   for (let k = 1; k < n; k++) ticks += `<rect x="${(50 - rx + 2 * rx * k / n - .6).toFixed(2)}" y="${cy}" width="1.2" height="24"/>`;
-  const icon = !opts.stand, k = (icon ? 1 : .8) * (1 + (stars - 1) * .05);
+  // Three sizes you can see, not five you cannot: rabble (1-2★), veteran (3★), notable (4-5★).
+  const icon = !opts.stand, k = icon ? 1 : .8 * (stars >= 4 ? 1.2 : stars === 3 ? 1.1 : 1);
   return `<svg class="stand${icon ? ' icon' : ''}" viewBox="${icon ? '10 -2 80 156' : '8 72 84 84'}" ${icon ? '' : 'preserveAspectRatio="xMidYMax meet"'} aria-hidden="true">
     <defs><clipPath id="${id}"><path d="${band}"/></clipPath></defs>
     <ellipse cx="62" cy="${cy + 9}" rx="${rx + 10}" ry="${ry + 1}" fill="rgba(30,14,2,.3)"/>
     <path d="${band}" fill="#14110e" stroke="#14110e" stroke-width="2.6" stroke-linejoin="round"/>
     <g clip-path="url(#${id})">${opts.bare ? `<rect x="${50 - rx}" y="${cy}" width="${2 * rx}" height="24" fill="${opts.side === 1 ? '#3a322b' : '#b9ab8c'}"/>` : `<rect x="${50 - rx}" y="${cy}" width="${(2 * rx * hp).toFixed(1)}" height="24" fill="${opts.side === 1 ? '#e0573f' : '#8fd36a'}"/><g fill="#14110e">${ticks}</g>`}</g>
     <ellipse cx="50" cy="${cy}" rx="${rx}" ry="${ry}" fill="${edge}" stroke="#14110e" stroke-width="2"/>${u.adorn || stars < 2 ? '' : `<ellipse cx="50" cy="${cy}" rx="${rx - 2.6}" ry="${ry - 1.5}" fill="none" stroke="${[0, 0, '#6b5a45', '#b5532a', '#aeb4bb', '#e2b53e'][stars]}" stroke-width="${stars >= 3 ? 3.4 : 2}"/>${stars >= 5 ? `<ellipse cx="50" cy="${cy}" rx="${rx - 7.4}" ry="${ry - 3.4}" fill="none" stroke="#e2b53e" stroke-width="1.6"/>` : ''}`}
-    <g transform="translate(50 130) scale(${(k * (stars >= 4 ? 1.04 : 1)).toFixed(3)} ${k.toFixed(3)}) translate(-50 -130)">${icon ? `<g filter="url(#${u.faction === 'riffraff' ? 'carved' : 'hewn'})">${setPiece(u, opts.dead ? 'dead' : undefined, opts.side)}</g>` : setPiece(u, opts.dead ? 'dead' : undefined, opts.side)}</g></svg>`;
+    <g transform="translate(50 130) scale(${k.toFixed(3)}) translate(-50 -130)">${icon ? `<g filter="url(#${u.faction === 'riffraff' ? 'carved' : 'hewn'})">${setPiece(u, opts.dead ? 'dead' : undefined, opts.side)}</g>` : setPiece(u, opts.dead ? 'dead' : undefined, opts.side, true)}</g></svg>`;
 }
 /** A fallen piece: knocked over in the sand, on a stain. */
 function tokenFallen(u) {
