@@ -1514,6 +1514,7 @@ const SET_PROP = { legion: [.9, 1.1], warren: [1.14, .87] };
 function setPiece(u, deadMat, side = 0) {
   const rnd = seedOf(u.who ?? u.tid ?? ''), named = u.who != null, fam = u.faction, mat0 = SET_MAT[fam] ?? 'iron', dark = side === 1 && !deadMat, v = u.tone ?? Math.floor(rnd() * 4);
   const mat = deadMat ?? (SET_TONES[mat0] ? `${mat0}${dark ? 'd' : ''}${named ? v : 0}` : mat0);
+  const take = u.court ? (u.take ?? 'real') : 'real';
   const lean = LEAN_OF(u), stars = Math.min(5, u.stars || 1), tank = lean === 'tank', rough = fam === 'warren', worn = fam === 'riffraff' && !deadMat;
   const A = `fill="url(#g-${mat})" stroke="#24140a" stroke-width="1.7" stroke-linejoin="round"`, AM = (m) => A.replace(`g-${mat}`, `g-${m}`);
   const prof = (pts) => `<polygon ${A} points="${pts.map(([y, w], i) => `${50 + w + (rough ? setJit(i, 1) : 0)},${y}`).join(' ')} ${pts.slice().reverse().map(([y, w], i) => `${50 - w - (rough ? setJit(i, 2) : 0)},${y}`).join(' ')}"/>`;
@@ -1559,6 +1560,43 @@ function setPiece(u, deadMat, side = 0) {
     const tn = `tin${dark ? 'd' : ''}`, rope = dark ? '#8f7c58' : '#cdb588', hw2 = `wood${dark ? 'd' : ''}${(v + 1) % 4}`, ST = 'stroke="#2a180c" stroke-width="1.4" stroke-linejoin="round"';
     const ropeLine = (d, w = 2.2) => `<path d="${d}" fill="none" stroke="#2a180c" stroke-width="${w + 1.8}" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${rope}" stroke-width="${w}" stroke-linecap="round" stroke-dasharray="2.6 1.3"/>`;
     tip = null;
+    const jp = (pts) => `<polygon ${A} points="${pts.map(([x, y]) => `${(x + (rnd() * 2 - 1) * 1.3).toFixed(1)},${(y + (rnd() * 2 - 1) * 1.3).toFixed(1)}`).join(' ')}"/>`;
+    const midWood = dark ? '#573823' : '#b07d42', stick = (x, y, a, len) => `<g transform="rotate(${a} ${x} ${y})">${rc(x - 1.9, y - len, 3.8, len)}</g>`;
+    if (take === 'abstract') {
+      // A touch more abstract: one material, no fittings, the idea of the thing and nothing else.
+      marks = '';
+      const n = u.var ?? 0, tnA = `tin${dark ? 'd' : ''}`, ring = (cx, cy, rx, ry, w) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="#24140a" stroke-width="${w + 3.2}"/><ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="${midWood}" stroke-width="${w}"/>`;
+      if (u.court === 'nails') head = n === 1 ? el(50, 58, 15, 13) + `<g transform="rotate(14 60 52)">${rc(56.5, 28, 7, 24)}${rc(53, 17, 14, 13.5, null, 4)}</g>`                 // a fist raised
+        : n === 2 ? rc(36.5, 58, 27, 13, null, 1.5) + cut('M36.5,64 h27 M45,58 v13 M55,58 v13', 1.2) + el(50, 46.5, 12.5, 11.5)                                                          // up on a crate
+        : n === 3 ? el(33.5, 63, 8.6, 8) + el(66.5, 63, 8.6, 8) + el(50, 54, 14.2, 12.6)                                                                                              // his pack at his shoulders
+        : pa('M37,51 L37,37 L43.5,43 L50,32 L56.5,43 L63,37 L63,51 Z') + el(50, 58, 15, 13);                                                                                           // a notched crown
+      else if (u.court === 'knives') head = pa('M57,40 L73,27 L62,49Z') + pa('M43,53 L27,63 L39,44Z') + pa('M50,10 Q64,46 50,76 Q36,46 50,10Z');
+      else if (u.court === 'block') head = n === 1 ? `<polygon ${A} points="27,67 27,43 43,43 50,58 57,43 73,43 73,67 69,71 31,71"/>`                                                // the cleft, no cleaver
+        : n === 2 ? rc(44, 54, 12, 18) + rc(27, 18, 46, 40, null, 4) + `<circle cx="65" cy="26" r="3" fill="#24140a"/>`                                                              // the cleaver is the piece
+        : prof([[71, S - 1], [67, S + 3], [43, S + 3]]) + pa('M45,43 L50,15 L67,21 L61,43 Z', n === 3 ? tnA : undefined);                                                             // block and wedge (3: an iron wedge)
+      else if (u.court === 'gallows') head = rc(46, 11, 8, 61) + rc(46, 11, 29, 7.5) + rc(68.4, 18, 3.2, 9) + ring(70, 35, 5.4, 7.6, 3.4);
+      else if (u.court === 'crossbow') head = rc(46.6, 20, 6.8, 52) + pa('M21,41 Q50,11 79,41 L74,44 Q50,22 26,44 Z') + pa('M50,3 L56.5,22 L43.5,22Z');
+      else if (u.court === 'banner') head = n === 1 ? rc(48.3, -14, 3.4, 86) + pa('M51.7,-14 L86,-9 L75,1.5 L86,12 L51.7,17 Z') + el(50, 62, 8.6, 8.6)                                // the banner is the piece
+        : n === 2 ? pa('M40,71 L45,45 L55,45 L60,71Z') + ring(50, 35, 13.2, 13.2, 2.8) + el(50, 36, 8.6, 9.2) + rc(48.6, 46, 2.8, 24) + rc(44, 52, 12, 2.8)                            // a halo and a sword
+        : n === 3 ? `<rect x="60.4" y="-12" width="3.2" height="76" ${A}/><path d="M60.4,-11 L33,-6.5 L39,-1 L32,5 L60.4,9 Z" fill="${dark ? '#b3a88f' : '#efe7d2'}" stroke="#24140a" stroke-width="1.4" stroke-linejoin="round"/><path d="M49,-5 v10 M44.6,-1 h8.8" stroke="${dark ? '#7a2a22' : '#a8372b'}" stroke-width="2.1" fill="none" opacity=".85"/>` + pa('M40,71 L45,45 L55,45 L60,71Z') + el(50, 36, 8.6, 9.2)   // cloth on the plain figure
+        : rc(60.4, -10, 3.4, 74) + pa('M60.4,-10 L35,-5 L60.4,11 Z') + pa('M40,71 L45,45 L55,45 L60,71Z') + el(50, 36, 8.6, 9.2);
+      else { const body = pa('M38,71 L35,49 L65,49 L62,71Z') + el(50, 39, 9.6, 10);
+        head = n === 1 ? stick(27, 128, -9, 90) + body + pa('M29,19 L71,19 Q68,31 50,32 Q32,31 29,19 Z')                                                                              // the bowl held up, empty
+          : n === 2 ? stick(27, 128, -9, 90) + body + pa('M37,33 L36,16 L42,24 L47,13 L51,25 L55,22 L58,28 L62,27 L63,33 Z')                                                           // a crown with half its points gone
+          : n === 3 ? stick(31, 128, -3, 86) + `<g transform="rotate(-12 50 72)">${body}${pa('M43,30 L44,23 L47,27.5 L50,22 L53,27.5 L56,23 L57,30 Z')}</g>`                              // bent over his crutch
+          : stick(27, 128, -9, 90) + body + pa('M33,35 Q33,16 50,16 Q67,16 67,35 Z'); }
+    } else if (take === 'crude') {
+      // Crude: what a man with a knife and an evening would make. Lumps and flats, nothing turned.
+      stem = jp([[50 - F, 130], [50 - F + 2, 122], [50 - S - 5, 112], [50 - S - 1, 85], [50 - C, 83], [50 - C + 1, 76], [50 - S, 73], [50 - S + 1, 70], [50 + S - 1, 70], [50 + S, 74], [50 + C - 1, 77], [50 + C, 83], [50 + S + 2, 86], [50 + S + 6, 111], [50 + F - 3, 121], [50 + F, 130]]);
+      marks = cut(`M${50 - S + 2},90 l3,20 M${50 + S - 4},92 l-2,16 M${50 - 3},88 l2,26 M${50 - F + 5},124 l${F - 2},-3`, 1.3);
+      head = (u.court === 'nails' ? jp([[36, 60], [38, 47], [35, 34], [43, 43], [49, 29], [56, 43], [64, 33], [62, 47], [65, 60], [57, 71], [43, 71]]) + cut('M43,50 l6,8 M57,49 l-4,10 M40,62 l18,2')
+        : u.court === 'knives' ? jp([[46, 74], [40, 55], [45, 50], [36, 44], [45, 39], [47, 22], [52, 9], [56, 26], [57, 37], [66, 42], [58, 48], [61, 58], [55, 74]]) + cut('M50,20 l-2,30 M48,52 l4,18')
+        : u.court === 'block' ? jp([[50 - S - 4, 71], [50 - S - 5, 49], [50 - S + 2, 43], [46, 44], [49, 21], [63, 17], [65, 41], [50 + S + 4, 45], [50 + S + 5, 70]]) + cut(`M${50 - S},52 l6,14 M${50 + S - 4},50 l-5,16 M52,24 l6,16`)
+        : u.court === 'gallows' ? jp([[45, 72], [44, 14], [47, 8], [75, 11], [77, 19], [74, 35], [67, 36], [66, 22], [55, 22], [56, 72]]) + cut('M49,26 l1,40 M56,14 l14,2')
+        : u.court === 'crossbow' ? jp([[46, 72], [45, 45], [25, 47], [22, 38], [44, 32], [46, 12], [50, 4], [55, 13], [56, 31], [78, 36], [76, 46], [56, 44], [55, 72]]) + cut('M50,14 l0,54 M30,41 l12,-3 M60,38 l12,3')
+        : u.court === 'banner' ? jp([[40, 72], [42, 50], [41, 36], [46, 27], [55, 27], [59, 35], [58, 44], [61, 41], [60, 4], [63, -6], [66, 4], [83, 9], [67, 22], [66, 50], [60, 72]]) + cut('M45,38 l9,1 M47,54 l8,12 M66,8 l11,3')
+        : jp([[20, 128], [27, 41], [32, 40], [26, 129]]) + jp([[38, 72], [36, 51], [40, 45], [31, 37], [34, 24], [46, 16], [58, 17], [68, 26], [69, 37], [60, 45], [64, 51], [62, 72]]) + cut('M36,36 l28,1 M46,48 l8,0 M44,56 l4,12'));
+    } else
     if (u.court === 'nails') {            // The Ringleader: a pawn crowned with hammered nails
       head = [-56, -28, 0, 28, 56].map((a, k) => `<g transform="rotate(${a} 50 57)"><rect x="49" y="${29 + (k % 2) * 3}" width="2.2" height="17" fill="url(#g-${tn})" ${ST}/><rect x="47" y="${27.5 + (k % 2) * 3}" width="6.2" height="2.6" rx="1" fill="url(#g-${tn})" ${ST}/></g>`).join('') + el(50, 57, 15.5, 13.5) + cut('M38,51 q12,5 24,0', 1.3);
     } else if (u.court === 'knives') {    // The Knife-Thrower: a target post with his knives left in it
@@ -1582,17 +1620,18 @@ function setPiece(u, deadMat, side = 0) {
     }
   }
   const band = (y, h, hw, m) => rc(50 - hw, y, hw * 2, h, m, 2);
+  // Rank no longer rides on the piece as metal bands (they fought the carving). It sits on the base; pass u.adorn to see the old bands.
   let ad = '';
-  if (!standIn) {
+  if (!standIn && u.adorn) {
     if (stars === 2) ad += band(93, 6, S + 5, null);
     if (metal) ad += band(76, 9, C + 3, metal);
     if (stars >= 4 && tank && metal) ad += band(fam === 'legion' ? 46 : 55, 6, S + (fam === 'legion' ? 8 : 6), metal);
     if (stars >= 5 && metal) ad += band(122, 7, F + 1.5, metal);
   }
-  const fin = tip && !standIn && ((lean === 'specialist' && fam !== 'legion') || stars >= 4) ? el(tip[0], tip[1], tip[2], tip[3], stars >= 4 ? metal : null) : '';
+  const fin = tip && !standIn && ((lean === 'specialist' && fam !== 'legion') || (u.adorn && stars >= 4)) ? el(tip[0], tip[1], tip[2], tip[3], u.adorn && stars >= 4 ? metal : null) : '';
   // His paint: round the ball of a Riff-Raff pawn, under the collar on everything else. Chipped on wood, clean on the Legion, daubed on stone.
   let ring = '';
-  if (paint && !standIn) {
+  if (paint && !standIn && (u.adorn || !u.court)) {
     const onBall = fam === 'riffraff' && lean === 'base', y = onBall ? 59 : 89, hw = onBall ? 14.6 : S + (fam === 'riffraff' ? 1 : 0);
     ring = `<path d="M${50 - hw},${y} Q50,${y + (onBall ? 5 : 3)} ${50 + hw},${y}" fill="none" stroke="#150c06" stroke-width="7" stroke-linecap="butt"/><path d="M${50 - hw},${y} Q50,${y + (onBall ? 5 : 3)} ${50 + hw},${y}" fill="none" stroke="${paint}" stroke-width="5" ${fam === 'riffraff' ? `stroke-dasharray="${[6, 2, 9, 1.5, 4, 2.5].map((n, k) => n + ((v + k) % 3)).join(' ')}"` : rough ? 'stroke-dasharray="5 1 8 1.2"' : ''}/>`;
   }
@@ -1605,9 +1644,9 @@ function setPiece(u, deadMat, side = 0) {
     const bite = [fl(50 - F, 1), hd, cl(50 - C, 1), fl(50 + F, -1)][v % 4], id = `bm${++clipN}`;
     mask = `<mask id="${id}" maskUnits="userSpaceOnUse" x="-20" y="-20" width="140" height="180"><rect x="-20" y="-20" width="140" height="180" fill="#fff"/><polygon points="${bite[0]}" fill="#000"/></mask>`;
     wear += `<path d="${bite[1]}" fill="none" stroke="#150c06" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
-    if (v % 2 === 0 || rnd() < .35) { const y = 99 + Math.floor(rnd() * 9), hw = S + 4; wear += `<rect x="${50 - hw}" y="${y}" width="${hw * 2}" height="6.5" rx="2" fill="${dark ? '#b9a27c' : '#3b2a18'}" stroke="#150c06" stroke-width="1.4"/>` + cut(Array.from({ length: Math.round(hw / 2) }, (_, k) => `M${50 - hw + 2 + k * 4},${y + 5.5} l2.4,-4.5`).join(' '), 1, dark ? 'rgba(30,16,6,.5)' : 'rgba(255,232,196,.4)'); }
-    for (let k = 0, n = 2 + Math.floor(rnd() * 3); k < n; k++) { const x = 50 + (rnd() * 2 - 1) * (S - 2), y = 108 + rnd() * 14, a = rnd() * 2.4 - 1.2, l = 4 + rnd() * 5; wear += `<path d="M${x.toFixed(1)},${y.toFixed(1)} l${(Math.sin(a) * l).toFixed(1)},${(Math.cos(a) * l).toFixed(1)}" stroke="rgba(255,240,205,.5)" stroke-width="1.1" stroke-linecap="round"/>`; }
-    mask = [mask, id];
+    if (take === 'real' && (u.adorn || !u.court) && (v % 2 === 0 || rnd() < .35)) { const y = 99 + Math.floor(rnd() * 9), hw = S + 4; wear += `<rect x="${50 - hw}" y="${y}" width="${hw * 2}" height="6.5" rx="2" fill="${dark ? '#b9a27c' : '#3b2a18'}" stroke="#150c06" stroke-width="1.4"/>` + cut(Array.from({ length: Math.round(hw / 2) }, (_, k) => `M${50 - hw + 2 + k * 4},${y + 5.5} l2.4,-4.5`).join(' '), 1, dark ? 'rgba(30,16,6,.5)' : 'rgba(255,232,196,.4)'); }
+    for (let k = 0, n = take === 'real' ? 2 + Math.floor(rnd() * 3) : 0; k < n; k++) { const x = 50 + (rnd() * 2 - 1) * (S - 2), y = 108 + rnd() * 14, a = rnd() * 2.4 - 1.2, l = 4 + rnd() * 5; wear += `<path d="M${x.toFixed(1)},${y.toFixed(1)} l${(Math.sin(a) * l).toFixed(1)},${(Math.cos(a) * l).toFixed(1)}" stroke="rgba(255,240,205,.5)" stroke-width="1.1" stroke-linecap="round"/>`; }
+    mask = take === 'crude' ? '' : [mask, id]; if (take === 'crude') wear = '';
   }
   const fame = u.fame && !deadMat ? `<path d="M${50 - C - 6},70 q-5,8 0,16 M${50 + C + 6},70 q5,8 0,16" fill="none" stroke="#e6b93c" stroke-width="3" stroke-linecap="round"/>` : '';
   const [px, py] = SET_PROP[fam] ?? [1, 1], inner = stem + marks + head + fin + ring + ad;
@@ -1625,7 +1664,7 @@ function tokenStand(u, opts) {
     <ellipse cx="62" cy="${cy + 9}" rx="${rx + 10}" ry="${ry + 1}" fill="rgba(30,14,2,.3)"/>
     <path d="${band}" fill="#14110e" stroke="#14110e" stroke-width="2.6" stroke-linejoin="round"/>
     <g clip-path="url(#${id})">${opts.bare ? `<rect x="${50 - rx}" y="${cy}" width="${2 * rx}" height="24" fill="${opts.side === 1 ? '#3a322b' : '#b9ab8c'}"/>` : `<rect x="${50 - rx}" y="${cy}" width="${(2 * rx * hp).toFixed(1)}" height="24" fill="${opts.side === 1 ? '#e0573f' : '#8fd36a'}"/><g fill="#14110e">${ticks}</g>`}</g>
-    <ellipse cx="50" cy="${cy}" rx="${rx}" ry="${ry}" fill="${edge}" stroke="#14110e" stroke-width="2"/>
+    <ellipse cx="50" cy="${cy}" rx="${rx}" ry="${ry}" fill="${edge}" stroke="#14110e" stroke-width="2"/>${u.adorn || stars < 2 ? '' : `<ellipse cx="50" cy="${cy}" rx="${rx - 2.6}" ry="${ry - 1.5}" fill="none" stroke="${[0, 0, '#6b5a45', '#b5532a', '#aeb4bb', '#e2b53e'][stars]}" stroke-width="${stars >= 3 ? 3.4 : 2}"/>${stars >= 5 ? `<ellipse cx="50" cy="${cy}" rx="${rx - 7.4}" ry="${ry - 3.4}" fill="none" stroke="#e2b53e" stroke-width="1.6"/>` : ''}`}
     <g transform="translate(50 130) scale(${(k * (stars >= 4 ? 1.04 : 1)).toFixed(3)} ${k.toFixed(3)}) translate(-50 -130)">${icon ? `<g filter="url(#${u.faction === 'riffraff' ? 'carved' : 'hewn'})">${setPiece(u, opts.dead ? 'dead' : undefined, opts.side)}</g>` : setPiece(u, opts.dead ? 'dead' : undefined, opts.side)}</g></svg>`;
 }
 /** A fallen piece: knocked over in the sand, on a stain. */
