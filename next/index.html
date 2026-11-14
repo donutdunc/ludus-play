@@ -315,15 +315,42 @@ div.dcard { background: var(--stone-2); border: 1px solid var(--line); border-ra
 .opt.c4 button { align-items: center; text-align: center; min-height: 52px; padding: 6px 2px; }
 #fLoadout { width: 100%; min-height: 48px; font-size: 16px; }
 
+/* ---------- The spotlight ---------- */
+.spot { display: none; }
+body.fighting .spot { display: grid; grid-template-columns: 58px minmax(0, 1fr) 58px; gap: 8px; align-items: center; order: -1; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 6; height: 70px; box-sizing: border-box; padding: 6px 8px; background: var(--stone-2); border: 1px solid var(--line); border-radius: 10px; }
+body.fighting .caption { display: none; }
+body.fighting .board { width: min(100%, calc((100dvh - 196px) * 0.6667)); }
+.face { position: relative; width: 56px; height: 56px; border-radius: 50%; background: #2a221a; box-shadow: 0 0 0 2px #f6f1e4; overflow: visible; }
+.face.theirs { box-shadow: 0 0 0 2px #14110e, 0 0 0 3px #8a7d6a; }
+.face img, .face svg { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; display: block; }
+.face svg { border-radius: 0; transform: scale(1.12) translateY(3px); }
+.face.down img, .face.down svg { filter: grayscale(1) brightness(.6); }
+.face i { position: absolute; left: 3px; right: 3px; bottom: -5px; height: 6px; background: #14110e; border-radius: 2px; overflow: hidden; }
+.face i b { display: block; height: 100%; background: #e0573f; } .face.mine i b { background: #8fd36a; }
+.spot .mid { min-width: 0; text-align: center; display: flex; flex-direction: column; gap: 0; }
+.spot .who { font: 600 13px/1.2 var(--f-ui); color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.spot .who span { margin: 0 6px; color: var(--ink-3); }
+.spot .act { font: 24px/1.05 var(--f-display); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.spot .act.hit { color: #fff; } .spot .act.crit { color: var(--gold); } .spot .act.dim { color: var(--ink-3); font-size: 18px; } .spot .act.trick { color: #9fd3e6; font-size: 20px; } .spot .act.heal { color: #9be07a; }
+.spot .sm { font: 500 12px/1.2 var(--f-ui); color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 14px; }
+
 /* ---------- Three looks for the board and pieces ---------- */
 /* Linocut: flat colour, heavy keyline, hard shadow, hatched sand. */
-[data-look="lino"] .board { background-color: #d9b56c; background-image: repeating-linear-gradient(118deg, rgba(64,40,16,.09) 0 2px, transparent 2px 8px), repeating-linear-gradient(28deg, rgba(64,40,16,.05) 0 1px, transparent 1px 13px); box-shadow: 0 0 0 4px #14110e, 6px 6px 0 4px rgba(0,0,0,.55); border-radius: 2px; }
-[data-look="lino"] .tile { border-color: rgba(20,17,14,.22); }
-[data-look="lino"] .tile.rankline { border-top: 3px solid #14110e; }
-[data-look="lino"] .tile.zone-me { background: rgba(255,244,214,.26); }
-[data-look="lino"] .tile.zone-them { background: rgba(140,32,24,.2); }
-[data-look="lino"] .tok svg { filter: drop-shadow(2px 2.5px 0 rgba(20,17,14,.85)); }
-[data-look="lino"] .midlab { color: rgba(20,17,14,.4); font-size: 15px; }
+[data-look="lino"] .board { background-color: #d2ad66; background-size: 150% auto; background-position: center; background-blend-mode: luminosity; border-radius: 3px; box-shadow: 0 0 0 3px #14110e, 0 0 0 9px var(--rim, #5a3a1c), 0 0 0 11px #14110e, 0 14px 26px rgba(0,0,0,.55); }
+[data-look="lino"] .board::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 60%, rgba(40,22,6,.28)); }
+[data-look="lino"] .board[data-arena="dregs"] { --rim: #5a3a1c; background-color: #c9a362; }
+[data-look="lino"] .board[data-arena="cellar"] { --rim: #3d362d; background-color: #b99a63; }
+[data-look="lino"] .board[data-arena="proving"] { --rim: #a67c3a; background-color: #dcb96f; }
+[data-look="lino"] .board[data-arena="provincial"] { --rim: #d9d2c2; background-color: #e2c98d; }
+[data-look="lino"] .tile { border-color: rgba(40,24,8,.13); }
+[data-look="lino"] .tile.rankline { border-top: 3px solid rgba(40,24,8,.7); box-shadow: inset 0 1px 0 rgba(255,238,196,.45); }
+[data-look="lino"] .tile.zone-me { background: rgba(255,244,214,.16); }
+[data-look="lino"] .tile.zone-them { background: rgba(60,20,10,.14); }
+[data-look="lino"] .tok svg { filter: drop-shadow(1.5px 2.5px 0 rgba(20,12,4,.8)); }
+[data-look="lino"] .tok { transition: left .22s cubic-bezier(.3,.9,.4,1), top .22s cubic-bezier(.3,.9,.4,1), opacity .3s; }
+[data-look="lino"] .tokens { z-index: 1; } [data-look="lino"] .fx { z-index: 2; }
+[data-look="lino"] .midlab { color: rgba(40,24,8,.3); font-size: 14px; }
+[data-look="lino"] .ranklab { color: rgba(40,24,8,.6); }
 /* Mosaic: a Roman floor. Tesserae sand, a banded border, round medallion pieces. */
 [data-look="mosaic"] .board { background-color: #d9ccb0; background-image: linear-gradient(rgba(120,100,70,.38) 1px, transparent 1px), linear-gradient(90deg, rgba(120,100,70,.38) 1px, transparent 1px); background-size: 5.5px 5.5px; box-shadow: 0 0 0 3px #1b1815, 0 0 0 7px #a23d28, 0 0 0 9px #e9dcc0, 0 0 0 12px #1b1815, 0 14px 30px rgba(0,0,0,.5); border-radius: 0; }
 [data-look="mosaic"] .tile { border-color: transparent; }
@@ -443,6 +470,7 @@ div.dcard { background: var(--stone-2); border: 1px solid var(--line); border-ra
       <button id="stepFwd" aria-label="Forward one turn">▶</button>
       <button id="speedCycle" aria-label="Playback speed">1×</button>
     </div>
+    <div class="spot" id="spot"></div>
     <div class="caption" id="caption"></div>
     <div id="banner" hidden></div>
     <div id="spoils" hidden></div>
@@ -1240,7 +1268,7 @@ function renderLegend() {
 }
 
 // ================= The app layer: a school, a ladder, a hiring hall, three looks, feedback =================
-const LOOKS = [['lino', 'Linocut', 'Flat colour, hard edges'], ['mosaic', 'Mosaic', 'A Roman floor'], ['painted', 'Painted', 'Busts on arena art']];
+const LOOKS = [['lino', 'Counters', 'Carved pieces on sand'], ['mosaic', 'Mosaic', 'A Roman floor'], ['painted', 'Painted', 'Busts on arena art']];
 let G = null, lookNow = 'lino', FREE = false;
 const winsOf = () => G?.wins ?? 0;
 const arenaNow = () => E.LADDER_ARENAS.find((a) => a.id === S.arena) ?? E.LADDER_ARENAS[0];
@@ -1275,7 +1303,7 @@ function emblem(u, ink, box) {
   const k = box[2] / 26;
   return `<g fill="${ink}" stroke="${ink}" stroke-linejoin="round" transform="translate(${box[0] + box[2] / 2} ${box[1] + box[2] / 2}) scale(${k.toFixed(2)}) translate(-20 -20.5)">${GLYPHS[u.job] ?? GLYPHS.bruiser}</g>`;
 }
-const SIDE_EDGE = (opts) => (opts.side === 1 ? '#b3261e' : '#14110e');
+const SIDE_EDGE = (opts) => (opts.side === 1 ? '#14110e' : '#f6f1e4');
 function tokenLino(u, opts) {
   const lk = LOOK(u.faction), stars = u.stars || 1, shape = SHAPES[lk.shape], glyph = GLYPHS[u.job] ?? GLYPHS.bruiser;
   const pips = stars >= 2 ? Array.from({ length: stars }, (_, k) => `<circle cx="${20 - (stars - 1) * 2.6 + k * 5.2}" cy="1.2" r="1.7" fill="${RIM[Math.min(5, stars)]}" stroke="#14110e" stroke-width=".7"/>`).join('') : '';
@@ -1297,13 +1325,23 @@ function tokenPainted(u, opts) {
     : `<circle cx="20" cy="19.5" r="13.6" fill="#241d16" stroke="#0e0b08" stroke-width="1"/>${emblem(u, '#f0dcae', [10, 9.5, 20])}`;
   return `<svg viewBox="-4 -4 48 52" aria-hidden="true"><g fill="${SIDE_EDGE(opts)}" stroke="${SIDE_EDGE(opts)}" stroke-width="4.4" stroke-linejoin="round" transform="translate(20 19.5) scale(1.06) translate(-20 -20)">${shape}</g><g fill="${lk.fill}" stroke="${RIM[Math.min(5, stars)]}" stroke-width="${stars >= 4 ? 2.8 : 2.2}" stroke-linejoin="round" transform="translate(20 19.5) scale(1.06) translate(-20 -20)">${shape}</g>${face}${plate(u, opts)}</svg>`;
 }
+/** A fallen counter: cracked in two on a stain. */
+function tokenCracked(u) {
+  const lk = LOOK(u.faction), shape = SHAPES[lk.shape], id = `ck${++clipN}`;
+  const half = (clip, tr) => `<g clip-path="url(#${id}${clip})" transform="${tr}"><g fill="#14110e" stroke="#14110e" stroke-width="4" stroke-linejoin="round">${shape}</g><g fill="${lk.edge}" stroke="#6b5a45" stroke-width="1.6" stroke-linejoin="round" opacity=".92">${shape}</g></g>`;
+  return `<svg viewBox="-4 -4 48 52" aria-hidden="true"><defs><clipPath id="${id}a"><polygon points="-6,-6 24,-6 17,14 23,24 15,46 -6,46"/></clipPath><clipPath id="${id}b"><polygon points="24,-6 46,-6 46,46 15,46 23,24 17,14"/></clipPath></defs>
+    <ellipse cx="20" cy="24" rx="19" ry="12" fill="#5e120e" opacity=".7"/><ellipse cx="9" cy="33" rx="5" ry="2.6" fill="#5e120e" opacity=".55"/><ellipse cx="33" cy="15" rx="3" ry="1.8" fill="#5e120e" opacity=".5"/>
+    <g transform="translate(20 21) scale(.8) translate(-20 -20)">${half('a', 'translate(-2.5 1) rotate(-7 20 20)')}${half('b', 'translate(3 -1) rotate(8 20 20)')}</g></svg>`;
+}
 function tokenSvg(u, opts = {}) {
-  if (opts.dead) return tokenBase(u, opts);
+  if (opts.dead) return lookNow === 'lino' ? tokenCracked(u) : tokenBase(u, opts);
   return lookNow === 'mosaic' ? tokenMosaic(u, opts) : lookNow === 'painted' ? tokenPainted(u, opts) : tokenLino(u, opts);
 }
 function paintFloor() {
-  const id = FREE ? rivalNow()?.arena : arenaNow().id;
-  $('board').style.backgroundImage = lookNow === 'painted' && id && ART.floors[id] ? `url(${ART.floors[id]})` : '';
+  const id = FREE ? rivalNow()?.arena : arenaNow().id, b = $('board');
+  b.dataset.arena = id ?? '';
+  // Counters: the arena painting, pulled into one sand tone so the pieces sit cleanly on it. Painted: the painting as it is.
+  b.style.backgroundImage = id && ART.floors[id] && lookNow !== 'mosaic' ? `url(${ART.floors[id]})` : '';
 }
 function setLook(id) {
   lookNow = id; document.documentElement.dataset.look = id; saveG(); paintFloor(); renderHud();
@@ -1339,7 +1377,44 @@ go = ((orig) => function (step) {
   $('steps').hidden = false; paintFloor(); orig(step); renderHud();
 })(go);
 setFightUi = ((orig) => function () { orig(); $('spoils').hidden = !(S.step === 'fight' && S.mode === 'done'); })(setFightUi);
-finish = ((orig) => function () { orig(); fightDone(P.res); })(finish);
+finish = ((orig) => function () { orig(); fightDone(P.res); spotEnd(); })(finish);
+
+// ---------- The spotlight: who is acting on whom, with their faces. It replaces the text log during a fight. ----------
+function face(uid, hpShown) {
+  const st = P.state.get(uid); if (!st) return '';
+  const art = ART.portraits[st.look.tid] ?? ART.portraits[ART.alias[st.look.tid]];
+  const hp = Math.max(0, Math.min(1, st.hp / st.maxHp));
+  return `<div class="face ${st.side === 0 ? 'mine' : 'theirs'} ${st.alive ? '' : 'down'}">${art ? `<img src="${art}" alt="">` : tokenSvg(st.look, { side: st.side, bare: true })}
+    ${hpShown ? `<i><b style="width:${(hp * 100).toFixed(0)}%"></b></i>` : ''}</div>`;
+}
+const spotName = (uid) => { const st = P.state.get(uid); return st ? st.name : ''; };
+let spotNow = { a: null, t: null };
+function spot(a, t, big, small, tone) {
+  spotNow = { a, t };
+  $('spot').innerHTML = `${a != null ? face(a, false) : '<span></span>'}
+    <div class="mid"><div class="who"><b>${a != null ? spotName(a) : ''}</b>${t != null && t !== a ? `<span>▸</span><b>${spotName(t)}</b>` : ''}</div>
+      <div class="act ${tone ?? ''}">${big ?? ''}</div><div class="sm">${small ?? ''}</div></div>
+    ${t != null && t !== a ? face(t, true) : '<span></span>'}`;
+}
+function spotEvent(e) {
+  switch (e.kind) {
+    case 'intent': return spot(e.aid, e.tid, 'goes for', '', 'dim');
+    case 'attack': return spot(e.aid, e.tid, e.outcome === 'miss' ? 'Miss' : `${e.amount}${e.outcome === 'crit' ? ' crit' : ''}`, `${e.label}${typeof e.chance === 'number' ? ` · ${e.chance}% to hit` : ''}${e.outcome === 'block' ? ' · blocked' : ''}`, e.outcome === 'miss' ? 'dim' : e.outcome === 'crit' ? 'crit' : 'hit');
+    case 'active': return spot(e.aid, spotNow.a === e.aid ? spotNow.t : null, e.label, e.summary ?? '', 'trick');
+    case 'death': return spot(e.aid ?? spotNow.a, e.tid, 'Down', `${spotName(e.tid)} falls`, 'crit');
+    case 'heal': return spot(e.aid ?? e.tid, e.tid, `+${e.amount}`, 'patched up', 'heal');
+    case 'stunned': return spot(e.tid, null, 'Stunned', 'loses the turn', 'dim');
+    case 'move': if (e.note && e.note !== 'falls back') return spot(e.aid, spotNow.a === e.aid ? spotNow.t : null, e.note, '', 'dim'); return;
+    default: return;
+  }
+}
+function spotEnd() {
+  const res = P.res, alive = (side) => res.combatants.filter((c) => c.side === side && c.alive).length;
+  $('spot').innerHTML = `<span></span><div class="mid"><div class="who"><b>${FREE ? '' : S.opponent?.name ?? ''}</b></div><div class="act ${res.winner === 0 ? 'heal' : 'crit'}">${res.winner === 0 ? 'Victory' : res.winner === null ? 'A draw' : 'Defeat'}</div><div class="sm">${alive(0)} of yours standing, ${alive(1)} of theirs</div></div><span></span>`;
+}
+apply = ((orig) => function (e, anim) { const d = orig(e, anim); if (anim) spotEvent(e); return d; })(apply);
+stepBack = ((orig) => function () { orig(); const next = P.res.events[P.cursor]; if (next?.kind === 'turn') spot(next.aid, null, 'about to act', 'rewound', 'dim'); })(stepBack);
+$('stepBack').onclick = () => stepBack();
 fight = ((orig) => function () {
   if (hideRival()) {
     // The gates open: only now is the opponent drawn.
@@ -1349,7 +1424,11 @@ fight = ((orig) => function () {
     S.theirs = o.team; S.theirDoc = o.team.doctore; S.opponent = { name: o.name, rivalId: o.rivalId };
   }
   orig();
-  if (hideRival()) { const d = E.DOCTORE_BY_ID[S.theirDoc]; say(`Out of the far gate: <b>${S.opponent.name}</b> · ${E.FACTIONS[d.faction].name}, ${d.twist.name}`); }
+  if (hideRival()) { const d = E.DOCTORE_BY_ID[S.theirDoc]; say(`Out of the far gate: <b>${S.opponent.name}</b> · ${E.FACTIONS[d.faction].name}, ${d.twist.name}`);
+    $('spot').innerHTML = `<span></span><div class="mid"><div class="who"><b>Out of the far gate</b></div><div class="act trick">${S.opponent.name}</div><div class="sm">${E.FACTIONS[d.faction].name} · ${d.twist.name}</div></div><span></span>`; }
+  else $('spot').innerHTML = '';
+  // Let the announcement land before the first move.
+  if (hideRival()) { pause(); const tok = P.token; setTimeout(() => { if (P.token === tok && S.step === 'fight') playLoop(false); }, 1500); }
 })(fight);
 renderFormation = ((orig) => function () {
   orig();
