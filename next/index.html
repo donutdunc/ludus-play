@@ -372,6 +372,28 @@ body.fighting .board { width: min(100%, calc((100dvh - 196px) * 0.6667)); }
 [data-look="painted"] .midlab { display: none; }
 [data-look="painted"] .tok svg { filter: drop-shadow(0 3px 3px rgba(0,0,0,.7)); }
 [data-look="painted"] .tokens { z-index: 1; } [data-look="painted"] .fx { z-index: 2; }
+
+/* Standing pieces and the close-up strip (Counters look) */
+[data-look="lino"] .board { overflow: visible; }
+[data-look="lino"] .tok svg.stand { filter: none; transform-origin: 50% 72%; transition: transform .14s; }
+[data-look="lino"] .tok.sel svg.stand { filter: drop-shadow(0 0 3px var(--gold)) drop-shadow(0 0 1px var(--gold)); }
+[data-look="lino"] .tok.acting svg.stand { transform: translateY(-8%) scale(1.08); }
+[data-look="lino"] .tok .tags { top: -34%; }
+[data-look="lino"] body.fighting .spot { grid-template-columns: 62px minmax(0, 1fr) 62px; align-items: end; height: 86px; padding: 2px 10px 4px; border: 0; border-radius: 3px; margin: 11px 11px 14px; background-color: #d2ad66; background-size: 150% auto; background-position: center 22%; background-blend-mode: luminosity; box-shadow: 0 0 0 3px #14110e, 0 0 0 9px var(--rim, #5a3a1c), 0 0 0 11px #14110e; }
+[data-look="lino"] .spot[data-arena="dregs"] { --rim: #5a3a1c; background-color: #c9a362; }
+[data-look="lino"] .spot[data-arena="cellar"] { --rim: #3d362d; background-color: #b99a63; }
+[data-look="lino"] .spot[data-arena="proving"] { --rim: #a67c3a; background-color: #dcb96f; }
+[data-look="lino"] .spot[data-arena="provincial"] { --rim: #d9d2c2; background-color: #e2c98d; }
+[data-look="lino"] body.fighting .board { width: min(100%, calc((100dvh - 236px) * 0.6667)); }
+.fig { width: 62px; height: 80px; } .fig svg { width: 62px; height: 80px; display: block; overflow: visible; }
+.fig:first-child { transform: rotate(3deg); transform-origin: 50% 90%; } .fig:last-child { transform: rotate(-3deg); transform-origin: 50% 90%; }
+.fig.down svg { filter: grayscale(1) brightness(.55); transform: rotate(-12deg); transform-origin: 50% 90%; }
+[data-look="lino"] .spot .mid { align-self: center; }
+[data-look="lino"] .spot .who { color: #3a2710; } [data-look="lino"] .spot .who span { color: rgba(40,24,8,.55); }
+[data-look="lino"] .spot .act, [data-look="lino"] .spot .act.hit { color: #14110e; }
+[data-look="lino"] .spot .act.crit { color: #8a1a12; } [data-look="lino"] .spot .act.dim { color: rgba(40,24,8,.6); }
+[data-look="lino"] .spot .act.trick { color: #1c4a60; } [data-look="lino"] .spot .act.heal { color: #2c5a1c; }
+[data-look="lino"] .spot .sm { color: rgba(40,24,8,.72); }
 </style>
 
 <div class="wrap">
@@ -910,7 +932,7 @@ function renderFormation() {
       el.className = 'tok'; el.type = 'button';
       if (S.sel && S.sel.side === side && S.sel.i === i) el.classList.add('sel');
       el.setAttribute('aria-label', `${b.name}, ${side === 0 ? 'yours' : 'theirs'}`);
-      el.innerHTML = tokenSvg(lookOf(b), { side });
+      el.innerHTML = tokenSvg(lookOf(b), { side, stand: true });
       const { row, col } = toTile(side, b.pos);
       place(el, row, col);
       el.onclick = (ev) => { ev.stopPropagation(); tokenTap(side, i); };
@@ -1007,7 +1029,7 @@ const nameOf = (uid) => { const st = P.state.get(uid); return st.side === 0 ? st
 function redraw(uid) {
   const st = P.state.get(uid), el = P.els.get(uid);
   const tags = st.alive ? [...st.statuses].slice(0, 2).map((id) => `<span class="${ST[id]?.[1] ? 'good' : 'bad'}">${ST[id]?.[0] ?? id}</span>`).join('') + (st.statuses.size > 2 ? `<span class="bad">+${st.statuses.size - 2}</span>` : '') : '';
-  el.innerHTML = tokenSvg(st.look, { side: st.side, hp: Math.max(0, st.hp) / st.maxHp, dead: !st.alive }) + (tags ? `<span class="tags">${tags}</span>` : '');
+  el.innerHTML = tokenSvg(st.look, { side: st.side, hp: Math.max(0, st.hp) / st.maxHp, dead: !st.alive, stand: true }) + (tags ? `<span class="tags">${tags}</span>` : '');
   el.classList.toggle('dead', !st.alive);
   const p = tileOf(st.x, st.y); place(el, p.row, p.col);
 }
@@ -1333,7 +1355,46 @@ function tokenCracked(u) {
     <ellipse cx="20" cy="24" rx="19" ry="12" fill="#5e120e" opacity=".7"/><ellipse cx="9" cy="33" rx="5" ry="2.6" fill="#5e120e" opacity=".55"/><ellipse cx="33" cy="15" rx="3" ry="1.8" fill="#5e120e" opacity=".5"/>
     <g transform="translate(20 21) scale(.8) translate(-20 -20)">${half('a', 'translate(-2.5 1) rotate(-7 20 20)')}${half('b', 'translate(3 -1) rotate(8 20 20)')}</g></svg>`;
 }
+// ---------- Standing pieces (Counters look, on the board): a base in the sand and an upright slab. ----------
+// The slab's outline is the family, its height is the star tier, the base top is the side, the base's front edge is the health.
+const BASE_Y = 33;
+function slab(faction, h) {
+  const B = BASE_Y, t = B - h;
+  if (faction === 'legion') return `M5 ${B}V${t + 3}q0 -3 3 -3H32q3 0 3 3V${B}Z`;
+  if (faction === 'warren') return `M5 ${B}L6.5 ${t + 11}L12 ${t + 5}L17 ${t + 9}L23.5 ${t}L28.5 ${t + 8}L33.5 ${t + 6}L35 ${B}Z`;
+  return `M5.5 ${B}V${t + 14.5}a14.5 14.5 0 0 1 29 0V${B}Z`;
+}
+function tokenStand(u, opts) {
+  const B = BASE_Y, lk = LOOK(u.faction), stars = Math.min(5, u.stars || 1), h = 32 + 2 * stars, t = B - h, d = slab(u.faction, h);
+  const edge = SIDE_EDGE(opts), rim = RIM[stars], id = `st${++clipN}`;
+  const hp = Math.max(0, Math.min(1, opts.hp ?? 1)), max = u.maxHp || 30, seg = max > 120 ? 25 : 10, n = Math.max(1, Math.round(max / seg));
+  const band = `M2 ${B}a18 6.5 0 0 0 36 0v6a18 6.5 0 0 1 -36 0Z`;
+  let ticks = '';
+  for (let k = 1; k < n; k++) ticks += `<rect x="${(2 + 36 * k / n - .35).toFixed(2)}" y="${B}" width=".7" height="14"/>`;
+  const art = opts.big ? (ART.portraits[u.tid] ?? ART.portraits[ART.alias[u.tid]]) : null;
+  const drop = u.faction === 'warren' ? 10 : u.faction === 'legion' ? 4.5 : 6;
+  const front = art
+    ? `<image href="${art}" x="4" y="${t}" width="32" height="${h}" clip-path="url(#${id}s)" preserveAspectRatio="xMidYMin slice"/>`
+    : emblem(u, lk.glyph, [8, t + drop, 24]);
+  const pips = stars >= 2 ? Array.from({ length: stars }, (_, k) => `<circle cx="${20 - (stars - 1) * 2.2 + k * 4.4}" cy="${B - 3.2}" r="1.5" fill="${rim}" stroke="#14110e" stroke-width=".6"/>`).join('') : '';
+  return `<svg class="stand" viewBox="${opts.big ? '-4 -13 48 62' : '-4 -4 48 52'}" aria-hidden="true">
+    <defs><clipPath id="${id}"><path d="${band}"/></clipPath><clipPath id="${id}s"><path d="${d}"/></clipPath></defs>
+    <g opacity=".36" fill="#140c04"><ellipse cx="22.5" cy="${B + 5}" rx="19" ry="7"/><path d="${d}" transform="translate(21 ${B + 2}) skewX(-40) scale(1 .4) translate(-20 ${-B})"/></g>
+    <path d="${band}" fill="#14110e" stroke="#14110e" stroke-width="1.6" stroke-linejoin="round"/>
+    <g clip-path="url(#${id})"><rect x="2" y="${B}" width="${(36 * hp).toFixed(1)}" height="14" fill="${opts.side === 1 ? '#e0573f' : '#8fd36a'}"/><g fill="#14110e">${ticks}</g></g>
+    <ellipse cx="20" cy="${B}" rx="18" ry="6.5" fill="${edge}" stroke="#14110e" stroke-width="1.2"/>
+    <path d="${d}" fill="${edge}" stroke="${edge}" stroke-width="4.4" stroke-linejoin="round" transform="translate(0 -1.4)"/>
+    <path d="${d}" fill="${lk.fill}" stroke="#14110e" stroke-width="3.2" stroke-linejoin="round"/>
+    ${front}<path d="${d}" fill="none" stroke="${rim}" stroke-width="1.8" stroke-linejoin="round"/>${pips}</svg>`;
+}
+/** A fallen piece: the slab toppled flat in the sand, on a stain. */
+function tokenFallen(u) {
+  const B = BASE_Y, lk = LOOK(u.faction), d = slab(u.faction, 32 + 2 * Math.min(5, u.stars || 1));
+  return `<svg class="stand" viewBox="-4 -4 48 52" aria-hidden="true"><ellipse cx="22" cy="${B}" rx="20" ry="10" fill="#5e120e" opacity=".65"/><ellipse cx="8" cy="${B + 8}" rx="5" ry="2.4" fill="#5e120e" opacity=".5"/>
+    <g transform="translate(9 ${B + 1}) scale(.82 .4) rotate(82) translate(-20 ${-B})"><path d="${d}" fill="#14110e" stroke="#14110e" stroke-width="4.5" stroke-linejoin="round"/><path d="${d}" fill="${lk.edge}" stroke="#6b5a45" stroke-width="1.6" stroke-linejoin="round" opacity=".92"/></g></svg>`;
+}
 function tokenSvg(u, opts = {}) {
+  if (opts.stand && lookNow === 'lino') return opts.dead ? tokenFallen(u) : tokenStand(u, opts);
   if (opts.dead) return lookNow === 'lino' ? tokenCracked(u) : tokenBase(u, opts);
   return lookNow === 'mosaic' ? tokenMosaic(u, opts) : lookNow === 'painted' ? tokenPainted(u, opts) : tokenLino(u, opts);
 }
@@ -1342,6 +1403,7 @@ function paintFloor() {
   b.dataset.arena = id ?? '';
   // Counters: the arena painting, pulled into one sand tone so the pieces sit cleanly on it. Painted: the painting as it is.
   b.style.backgroundImage = id && ART.floors[id] && lookNow !== 'mosaic' ? `url(${ART.floors[id]})` : '';
+  const sp = $('spot'); if (sp) { sp.dataset.arena = b.dataset.arena; sp.style.backgroundImage = lookNow === 'lino' ? b.style.backgroundImage : ''; }
 }
 function setLook(id) {
   lookNow = id; document.documentElement.dataset.look = id; saveG(); paintFloor(); renderHud();
@@ -1382,6 +1444,8 @@ finish = ((orig) => function () { orig(); fightDone(P.res); spotEnd(); })(finish
 // ---------- The spotlight: who is acting on whom, with their faces. It replaces the text log during a fight. ----------
 function face(uid, hpShown) {
   const st = P.state.get(uid); if (!st) return '';
+  // Counters: the close-up is the same piece on the same sand, with its painted face where it has one.
+  if (lookNow === 'lino') return `<div class="fig ${st.alive ? '' : 'down'}">${tokenStand(st.look, { side: st.side, hp: st.hp / st.maxHp, big: true })}</div>`;
   const art = ART.portraits[st.look.tid] ?? ART.portraits[ART.alias[st.look.tid]];
   const hp = Math.max(0, Math.min(1, st.hp / st.maxHp));
   return `<div class="face ${st.side === 0 ? 'mine' : 'theirs'} ${st.alive ? '' : 'down'}">${art ? `<img src="${art}" alt="">` : tokenSvg(st.look, { side: st.side, bare: true })}
@@ -1412,6 +1476,8 @@ function spotEnd() {
   const res = P.res, alive = (side) => res.combatants.filter((c) => c.side === side && c.alive).length;
   $('spot').innerHTML = `<span></span><div class="mid"><div class="who"><b>${FREE ? '' : S.opponent?.name ?? ''}</b></div><div class="act ${res.winner === 0 ? 'heal' : 'crit'}">${res.winner === 0 ? 'Victory' : res.winner === null ? 'A draw' : 'Defeat'}</div><div class="sm">${alive(0)} of yours standing, ${alive(1)} of theirs</div></div><span></span>`;
 }
+// Nearer rows draw over farther ones; the fallen lie under everyone.
+place = ((orig) => function (el, row, col) { orig(el, row, col); el.style.zIndex = el.classList.contains('dead') ? 0 : row + 1; })(place);
 apply = ((orig) => function (e, anim) { const d = orig(e, anim); if (anim) spotEvent(e); return d; })(apply);
 stepBack = ((orig) => function () { orig(); const next = P.res.events[P.cursor]; if (next?.kind === 'turn') spot(next.aid, null, 'about to act', 'rewound', 'dim'); })(stepBack);
 $('stepBack').onclick = () => stepBack();
