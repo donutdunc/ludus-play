@@ -448,6 +448,8 @@ button.arena-h b { font: 22px/1.1 var(--f-display); font-weight: 400; color: var
 .piece .pk.kit { color: var(--ink-3); font-size: 12.5px; }
 .piece .ph .bc small { display: block; font: 600 10px/1.2 var(--f-ui); letter-spacing: .04em; color: var(--ink-3); white-space: nowrap; margin-top: 2px; }
 .pick svg.stand.icon { width: 30px; } .meter { gap: 6px; }
+
+.pdot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; box-shadow: 0 0 0 1.5px #14110e, 0 0 0 2.5px rgba(239,230,214,.5); margin-right: 2px; align-self: center; }
 </style>
 
 <div class="wrap">
@@ -1422,53 +1424,91 @@ const seedOf = (str) => { let h = 2166136261; for (const ch of String(str ?? '')
 document.body.insertAdjacentHTML('afterbegin', `<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>${Object.entries(SET_GRAD).map(([k, g]) => `<linearGradient id="g-${k}" x1="0" x2="1"><stop offset="0" stop-color="${g[0]}"/><stop offset=".28" stop-color="${g[1]}"/><stop offset=".62" stop-color="${g[2]}"/><stop offset="1" stop-color="${g[3]}"/></linearGradient>`).join('')}</defs></svg>`);
 const LEAN_OF = (u) => u.lean ?? (u.job === 'tank' ? 'tank' : u.job === 'shooter' ? 'shooter' : u.job === 'controller' || u.job === 'support' || u.job === 'skirmisher' ? 'specialist' : 'base');
 const setJit = (i, k) => (((i * 37 + k * 53) % 7) - 3) * .75;
-function setPiece(u, deadMat) {
-  const rnd = seedOf(u.who ?? u.tid ?? ''), named = u.who != null, fam = u.faction, mat0 = SET_MAT[fam] ?? 'iron', mat = deadMat ?? (named && SET_TONES[mat0] ? `${mat0}${u.tone ?? Math.floor(rnd() * 4)}` : mat0), lean = LEAN_OF(u), stars = Math.min(5, u.stars || 1), tank = lean === 'tank', rough = fam === 'warren';
-  const A = `fill="url(#g-${mat})" stroke="#1d120a" stroke-width="2.2" stroke-linejoin="round"`;
+// Dark halves of each family's set (theirs), the way a chess set comes in two woods: walnut, red porphyry, black-green stone.
+const SET_DARK = { wood: [['#2e1c10', '#7d5636', '#573823', '#24150b'], ['#33221a', '#74584a', '#523a30', '#261812'], ['#3a2210', '#8a5c30', '#62401f', '#2c190a'], ['#2a1e16', '#6c5644', '#4c3a2c', '#201610']], bone: [['#4a1512', '#ac4c3e', '#7e2c23', '#3a0f0d'], ['#421a1c', '#9a4a4c', '#70302f', '#321214'], ['#52180e', '#b8553a', '#883420', '#40110a'], ['#3e1616', '#8e4444', '#662c2a', '#2e1010']], stone: [['#141c16', '#4c5e4e', '#2e3c32', '#0e1410'], ['#12201c', '#46605a', '#2a3e38', '#0c1614'], ['#1a1e14', '#565e48', '#363c2c', '#12140c'], ['#161a1a', '#4a5656', '#2e3838', '#0e1212']] };
+const SET_EXTRA = { cork: ['#9a7446', '#e2c08a', '#c49c62', '#84603a'], corkd: ['#3a2a1c', '#80664a', '#5c4630', '#2c1e12'], tin: ['#6e7378', '#e2e6ea', '#a4aab0', '#5a5e64'], tind: ['#26282c', '#6c7178', '#474b52', '#1a1c20'] };
+{ const add = Object.entries(SET_EXTRA).map(([k, g]) => [k, g]).concat(Object.entries(SET_DARK).flatMap(([m, ts]) => ts.map((g, k) => [`${m}d${k}`, g])));
+  document.querySelector('body > svg defs').insertAdjacentHTML('beforeend', add.map(([k, g]) => `<linearGradient id="g-${k}" x1="0" x2="1"><stop offset="0" stop-color="${g[0]}"/><stop offset=".28" stop-color="${g[1]}"/><stop offset=".62" stop-color="${g[2]}"/><stop offset="1" stop-color="${g[3]}"/></linearGradient>`).join('')); }
+// A named fighter's own colour: a ring of paint on his piece, and the dot beside his name.
+const PAINT = ['#b23a2e', '#2f5f9a', '#d9a520', '#3f8a5a', '#e8e2d0', '#7a3f8e', '#d9692a'];
+const paintIdx = (tid, tone) => (Math.floor(seedOf(tid)() * 7) + tone * 2) % 7;
+const paintOf = (f) => PAINT[paintIdx(M(f).icon, M(f).tone)];
+// How each family's set is proportioned: the Legion's stands tall and narrow, the Warren's squats.
+const SET_PROP = { legion: [.9, 1.1], warren: [1.14, .87] };
+function setPiece(u, deadMat, side = 0) {
+  const rnd = seedOf(u.who ?? u.tid ?? ''), named = u.who != null, fam = u.faction, mat0 = SET_MAT[fam] ?? 'iron', dark = side === 1 && !deadMat, v = u.tone ?? Math.floor(rnd() * 4);
+  const mat = deadMat ?? (SET_TONES[mat0] ? `${mat0}${dark ? 'd' : ''}${named ? v : 0}` : mat0);
+  const lean = LEAN_OF(u), stars = Math.min(5, u.stars || 1), tank = lean === 'tank', rough = fam === 'warren', worn = fam === 'riffraff' && !deadMat;
+  const A = `fill="url(#g-${mat})" stroke="#150c06" stroke-width="2.2" stroke-linejoin="round"`, AM = (m) => A.replace(`g-${mat}`, `g-${m}`);
   const prof = (pts) => `<polygon ${A} points="${pts.map(([y, w], i) => `${50 + w + (rough ? setJit(i, 1) : 0)},${y}`).join(' ')} ${pts.slice().reverse().map(([y, w], i) => `${50 - w - (rough ? setJit(i, 2) : 0)},${y}`).join(' ')}"/>`;
-  const pa = (d) => `<path ${A} d="${d}"/>`, el = (cx, cy, rx, ry, m) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" ${m ? A.replace(`g-${mat}`, `g-${m}`) : A}/>`;
-  const cut = (d, w = 1.5) => `<path d="${d}" fill="none" stroke="rgba(30,16,6,.5)" stroke-width="${w}" stroke-linecap="round"/>`;
+  const pa = (d, m) => `<path ${m ? AM(m) : A} d="${d}"/>`, el = (cx, cy, rx, ry, m) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" ${m ? AM(m) : A}/>`, rc = (x, y, w, h, m, r = 1.5) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" ${m ? AM(m) : A}/>`;
+  const cutCol = dark || deadMat ? 'rgba(255,232,196,.34)' : 'rgba(30,16,6,.5)';
+  const cut = (d, w = 1.5, c = cutCol) => `<path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`;
   const F = tank ? 31 : 26, S = tank ? 20 : lean === 'shooter' ? 8.5 : 11, C = S + 7;
-  let stem, marks, head, tip = null;
-  if (fam === 'legion') { stem = prof([[130, F], [123, F], [123, F - 5], [118, F - 5], [118, S + 1], [85, S], [85, C], [77, C], [77, S - 1], [70, S - 1]]); marks = cut([-.55, 0, .55].map((k) => `M${50 + k * S},90 V114`).join(' ')); }
-  else if (rough) { stem = prof([[130, F], [124, F - 1], [120, F - 7], [110, S + 4], [97, S + 1], [86, S - 1], [83, C], [77, C - 2], [74, S - 2], [70, S - 2]]); marks = cut(`M${50 - S * .5},92 l4,7 M${50 + S * .3},100 l-3,8 M${50 - S * .2},110 l5,4`); }
-  else { stem = prof([[130, F], [125, F], [121, F - 6], [114, S + 5], [104, S + 6], [93, S + 1], [85, S - 2], [83, C], [77, C], [75, S - 2], [70, S - 2]]); marks = fam === 'riffraff' ? cut(Array.from({ length: Math.round(C / 2.2) }, (_, k) => `M${50 - C + 3 + k * 4.4},82 l3,-4.5`).join(' '), 1.2) : ''; }
-  if (lean === 'base') {
-    if (fam === 'legion') { head = `<rect x="46" y="36" width="8" height="9" rx="2" ${A}/>` + el(50, 56, 14, 14); tip = [50, 37, 4.6, 4.6]; }
-    else if (rough) { head = `<polygon ${A} points="35,58 40,44 52,39 63,47 65,60 55,71 42,70"/>` + cut('M40,44 L50,54 L63,47 M50,54 L52,70', 1.2); tip = [52, 38, 4.6, 4.6]; }
-    else { head = el(50, 57, 15.5, 13.5); tip = [50, 42, 4.6, 4.6]; }
-  } else if (lean === 'shooter') {
-    head = pa(fam === 'legion' ? 'M50,4 L57.5,62 Q50,76 42.5,62Z' : rough ? 'M57,6 L64,56 L50,76 L38,56Z' : 'M50,12 Q66,48 50,76 Q34,48 50,12Z'); tip = [rough ? 56.5 : 50, fam === 'legion' ? 9 : rough ? 11 : 16, 3.6, 5.4];
-  } else if (tank) {
-    if (fam === 'legion') head = prof([[70, S], [55, S], [51, S + 6], [38, S + 6]]) + `<path d="M36,37 h7 v9 h-7Z M46.5,37 h7 v9 h-7Z M57,37 h7 v9 h-7Z" fill="#1d120a"/>`;
-    else if (rough) head = `<polygon ${A} points="${50 - S - 3},70 ${50 - S - 6},44 35,34 41,45 47,32 53,45 60,33 65,46 ${50 + S + 7},38 ${50 + S + 3},70"/>` + cut('M36,58 l6,5 M58,54 l5,8');
-    else head = prof([[70, S - 2], [62, S + 3], [50, S + 4], [42, S + 1], [38, S - 1]]) + cut('M36,44 V66 M43,40 V68 M50,39 V69 M57,40 V68 M64,44 V66', 1.2) + cut(`M${50 - S - 3},48 Q50,52 ${50 + S + 3},48 M${50 - S - 3},62 Q50,66 ${50 + S + 3},62`, 1.8);
+  const paint = named && u.tone != null && !deadMat ? PAINT[paintIdx(u.tid, u.tone)] : null;
+  const metal = stars >= 3 && !deadMat ? `m${stars}` : null;
+  let stem, marks = '', head, tip = null, extra = '', standIn = false;
+  // Riff-Raff: the specialists' proper pieces were lost long ago. A cork, a thimble and a thread spool stand in for them.
+  if (worn && lean === 'specialist' && stars === 1 && ['skirmisher', 'controller', 'support'].includes(u.job)) {
+    standIn = true; stem = ''; const dk = dark ? 'd' : '';
+    if (u.job === 'skirmisher') { head = pa('M34,130 L30,84 Q50,78 70,84 L66,130 Q50,135 34,130Z', `cork${dk}`) + el(50, 84, 20, 6, `cork${dk}`) + cut('M38,100 l5,3 M56,112 l6,-2 M44,120 l4,2 M58,96 l3,4', 1.3) + `<rect x="48.6" y="56" width="2.8" height="28" fill="#8e9298" stroke="#150c06" stroke-width="1"/>` + el(50, 54, 5.5, 5.5, paint ? null : 'tin').replace(/fill="url\(#g-[^"]+\)"/, paint ? `fill="${paint}"` : '$&'); }
+    else if (u.job === 'controller') { head = pa('M30,130 L33,96 Q34,72 50,72 Q66,72 67,96 L70,130Z', `tin${dk}`) + rc(27, 122, 46, 8, `tin${dk}`, 3) + cut([0, 1, 2].map((r) => [-9, -3, 3, 9].map((x) => `M${50 + x + (r % 2) * 3},${88 + r * 9} l.1,.1`).join(' ')).join(' '), 3) + (paint ? `<rect x="31.5" y="112" width="37" height="5" fill="${paint}" stroke="#150c06" stroke-width="1"/>` : ''); }
+    else { head = rc(28, 122, 44, 8, null, 2) + rc(37, 84, 26, 40, null, 1) + `<rect x="36" y="88" width="28" height="32" rx="3" fill="${paint ?? '#cfc3a4'}" stroke="#150c06" stroke-width="1.4"/>` + cut([92, 97, 102, 107, 112, 116].map((y) => `M37,${y} L63,${y + 2}`).join(' '), 1, 'rgba(20,10,4,.35)') + rc(28, 78, 44, 8, null, 2) + el(50, 78, 6, 2.2, null); }
   } else {
-    if (fam === 'legion') { head = el(50, 52, 12.5, 19) + cut('M56,40 L45,56', 2.4); tip = [50, 29, 5, 5]; }
-    else if (rough) { head = pa('M41,58 Q20,42 29,14 Q36,36 47,49Z') + pa('M59,58 Q80,42 71,14 Q64,36 53,49Z') + el(50, 59, 12, 12); tip = [50, 44, 4.6, 4.6]; }
-    else { head = el(50, 55, 14.5, 16) + cut('M38,55 Q50,60 62,55', 2); tip = [50, 35, 6, 5]; }
+    if (fam === 'legion') { stem = prof([[130, F], [123, F], [123, F - 5], [118, F - 5], [118, S + 1], [85, S], [85, C], [77, C], [77, S - 1], [70, S - 1]]); marks = cut([-.55, 0, .55].map((k) => `M${50 + k * S},90 V114`).join(' ')); }
+    else if (rough) { stem = prof([[130, F], [124, F - 1], [120, F - 7], [110, S + 4], [97, S + 1], [86, S - 1], [83, C], [77, C - 2], [74, S - 2], [70, S - 2]]);
+      // Knapped and stacked, tied at the neck with sinew.
+      marks = cut(`M${50 - S - 3},112 l${S + 2},3 l${S + 2},-4 M${50 - S},99 l${S},-3 l${S},3`, 1.4) + cut(`M${50 - S * .5},92 l4,5 M${50 + S * .3},103 l-3,6`)
+        + `<path d="${[-1, 0, 1].map((k) => `M${50 + k * (C - 5) - 2.5},75 l5,7 M${50 + k * (C - 5) + 2.5},75 l-5,7`).join(' ')}" fill="none" stroke="${dark ? '#9a8f76' : '#d9cfae'}" stroke-width="1.3" stroke-linecap="round" opacity=".85"/>`; }
+    else { stem = prof([[130, F], [125, F], [121, F - 6], [114, S + 5], [104, S + 6], [93, S + 1], [85, S - 2], [83, C], [77, C], [75, S - 2], [70, S - 2]]); marks = fam === 'riffraff' ? cut(Array.from({ length: Math.round(C / 2.2) }, (_, k) => `M${50 - C + 3 + k * 4.4},82 l3,-4.5`).join(' '), 1.2) : ''; }
+    if (lean === 'base') {
+      if (fam === 'legion') { head = pa('M41,45 Q50,22 59,45 Q50,37 41,45Z') + pa('M36,71 V56 Q36,40 50,40 Q64,40 64,56 V71Z') + cut('M36,60 H64', 1.4); tip = [50, 30, 4, 4]; }
+      else if (rough) { head = `<polygon ${A} points="35,58 40,44 52,39 63,47 65,60 55,71 42,70"/>` + cut('M40,44 L50,54 L63,47 M50,54 L52,70', 1.2); tip = [52, 38, 4.6, 4.6]; }
+      else { head = el(50, 57, 15.5, 13.5); tip = [50, 42, 4.6, 4.6]; }
+    } else if (lean === 'shooter') {
+      if (fam === 'legion') { head = rc(47.6, 26, 4.8, 46) + rc(44.5, 52, 11, 10) + pa('M50,2 L55.5,19 L50,29 L44.5,19Z'); tip = [50, 12, 3, 5]; }
+      else { head = pa(rough ? 'M57,6 L64,56 L50,76 L38,56Z' : 'M50,12 Q66,48 50,76 Q34,48 50,12Z'); tip = [rough ? 56.5 : 50, rough ? 11 : 16, 3.6, 5.4]; }
+    } else if (tank) {
+      if (fam === 'legion') head = prof([[70, S], [55, S], [51, S + 6], [38, S + 6]]) + `<path d="M36,37 h7 v9 h-7Z M46.5,37 h7 v9 h-7Z M57,37 h7 v9 h-7Z" fill="#150c06"/>`;
+      else if (rough) head = `<polygon ${A} points="${50 - S - 3},70 ${50 - S - 6},44 35,34 41,45 47,32 53,45 60,33 65,46 ${50 + S + 7},38 ${50 + S + 3},70"/>` + cut('M36,58 l6,5 M58,54 l5,8');
+      else head = prof([[70, S - 2], [62, S + 3], [50, S + 4], [42, S + 1], [38, S - 1]]) + cut('M36,44 V66 M43,40 V68 M50,39 V69 M57,40 V68 M64,44 V66', 1.2) + cut(`M${50 - S - 3},48 Q50,52 ${50 + S + 3},48 M${50 - S - 3},62 Q50,66 ${50 + S + 3},62`, 1.8);
+    } else {
+      if (fam === 'legion') { head = rc(47.6, 34, 4.8, 38) + rc(35, 42, 30, 5.5) + pa('M43,30 L28,19 L40,38Z') + pa('M57,30 L72,19 L60,38Z') + el(50, 29, 8.5, 8.5); tip = [50, 29, 4.5, 4.5]; }
+      else if (rough) { head = pa('M41,58 Q20,42 29,14 Q36,36 47,49Z') + pa('M59,58 Q80,42 71,14 Q64,36 53,49Z') + el(50, 59, 12, 12); tip = [50, 44, 4.6, 4.6]; }
+      else { head = el(50, 55, 14.5, 16) + cut('M38,55 Q50,60 62,55', 2); tip = [50, 35, 6, 5]; }
+    }
   }
-  const metal = stars >= 3 && !deadMat ? `m${stars}` : null, band = (y, h, hw, m) => `<rect x="${50 - hw}" y="${y}" width="${hw * 2}" height="${h}" rx="2" ${m ? A.replace(`g-${mat}`, `g-${m}`) : A}/>`;
+  const band = (y, h, hw, m) => rc(50 - hw, y, hw * 2, h, m, 2);
   let ad = '';
-  if (stars === 2) ad += band(93, 6, S + 5, null);
-  if (metal) ad += band(76, 9, C + 3, metal);
-  if (stars >= 4 && tank && metal) ad += band(fam === 'legion' ? 46 : 55, 6, S + (fam === 'legion' ? 8 : 6), metal);
-  if (stars >= 5 && metal) ad += band(122, 7, F + 1.5, metal);
-  const fin = tip && (lean === 'specialist' || stars >= 4) ? el(tip[0], tip[1], tip[2], tip[3], stars >= 4 ? metal : null) : '';
-  const fame = u.fame && !deadMat ? `<path d="M${50 - C - 6},70 q-5,8 0,16 M${50 + C + 6},70 q5,8 0,16" fill="none" stroke="#e6b93c" stroke-width="3" stroke-linecap="round"/>` : '';
-  // Riff-Raff pieces have been through it: chips of raw wood off the edges, scuffs, dents, sometimes a split.
-  let wear = '';
-  if (fam === 'riffraff' && !deadMat) {
-    const chip = (x, y, w, h, flip) => `<polygon points="${x},${y} ${x + w * flip},${y - h * .4} ${x + w * .7 * flip},${y + h * .7} ${x + w * .1 * flip},${y + h}" fill="#ecd6a6" stroke="#1d120a" stroke-width="1.1" stroke-linejoin="round"/>`;
-    const side = () => (rnd() < .5 ? -1 : 1);
-    { const f = side(); wear += chip(50 + f * (F - 1), 124 + rnd() * 2, 7 + rnd() * 3, 5, -f); }
-    { const f = side(); wear += chip(50 + f * (C + 1), 78, 5 + rnd() * 3, 4.5, -f); }
-    if (rnd() < .7 && !tank && lean !== 'shooter') { const f = side(); wear += chip(50 + f * 14, 52 + rnd() * 8, 5 + rnd() * 2, 5, -f); }
-    for (let k = 0, n = 3 + Math.floor(rnd() * 3); k < n; k++) { const x = 50 + (rnd() * 2 - 1) * (S - 2), y = 90 + rnd() * 26, a = rnd() * 2.4 - 1.2, l = 4 + rnd() * 6; wear += `<path d="M${x.toFixed(1)},${y.toFixed(1)} l${(Math.sin(a) * l).toFixed(1)},${(Math.cos(a) * l).toFixed(1)}" stroke="rgba(255,240,205,.6)" stroke-width="1.2" stroke-linecap="round"/>`; }
-    for (let k = 0; k < 2; k++) wear += `<ellipse cx="${(50 + (rnd() * 2 - 1) * (S - 3)).toFixed(1)}" cy="${(88 + rnd() * 30).toFixed(1)}" rx="${(1.6 + rnd() * 1.6).toFixed(1)}" ry="${(1 + rnd()).toFixed(1)}" fill="rgba(40,20,5,.4)"/>`;
-    if (rnd() < .45) { const x = 50 + (rnd() * 2 - 1) * (S - 4); wear += cut(`M${x},128 l${rnd() * 3 - 1.5},-9 l${rnd() * 4 - 2},-7 l${rnd() * 3 - 1.5},-8`, 1.1); }
+  if (!standIn) {
+    if (stars === 2) ad += band(93, 6, S + 5, null);
+    if (metal) ad += band(76, 9, C + 3, metal);
+    if (stars >= 4 && tank && metal) ad += band(fam === 'legion' ? 46 : 55, 6, S + (fam === 'legion' ? 8 : 6), metal);
+    if (stars >= 5 && metal) ad += band(122, 7, F + 1.5, metal);
   }
-  return stem + marks + head + fin + wear + ad + fame;
+  const fin = tip && !standIn && ((lean === 'specialist' && fam !== 'legion') || stars >= 4) ? el(tip[0], tip[1], tip[2], tip[3], stars >= 4 ? metal : null) : '';
+  // His paint: round the ball of a Riff-Raff pawn, under the collar on everything else. Chipped on wood, clean on the Legion, daubed on stone.
+  let ring = '';
+  if (paint && !standIn) {
+    const onBall = fam === 'riffraff' && lean === 'base', y = onBall ? 59 : 89, hw = onBall ? 14.6 : S + (fam === 'riffraff' ? 1 : 0);
+    ring = `<path d="M${50 - hw},${y} Q50,${y + (onBall ? 5 : 3)} ${50 + hw},${y}" fill="none" stroke="#150c06" stroke-width="7" stroke-linecap="butt"/><path d="M${50 - hw},${y} Q50,${y + (onBall ? 5 : 3)} ${50 + hw},${y}" fill="none" stroke="${paint}" stroke-width="5" ${fam === 'riffraff' ? `stroke-dasharray="${[6, 2, 9, 1.5, 4, 2.5].map((n, k) => n + ((v + k) % 3)).join(' ')}"` : rough ? 'stroke-dasharray="5 1 8 1.2"' : ''}/>`;
+  }
+  // Riff-Raff wear that survives at board size: a piece broken out of the outline (a different place on each fellow), a twine mend, and scuffs for the close look.
+  let wear = '', mask = '';
+  if (worn && !standIn) {
+    const fl = (x0, sgn) => [`${x0 - 4 * sgn},133 ${x0 - 4 * sgn},119 ${x0 + 7 * sgn},122 ${x0 + 4 * sgn},133`, `M${x0 - 1 * sgn},121 L${x0 + 7 * sgn},122 L${x0 + 4.5 * sgn},130`];
+    const cl = (x0, sgn) => [`${x0 - 4 * sgn},72 ${x0 + 6 * sgn},75 ${x0 + 4 * sgn},81 ${x0 + 8 * sgn},88 ${x0 - 4 * sgn},89`, `M${x0 + 4 * sgn},76 L${x0 + 4 * sgn},81 L${x0 + 7 * sgn},86`];
+    const hd = lean === 'base' ? ['57,38 73,42 70,57 63,52 59,46', 'M59,43.5 L59,46 L63,52 L67.5,55.5'] : cl(50 + C, -1);
+    const bite = [fl(50 - F, 1), hd, cl(50 - C, 1), fl(50 + F, -1)][v % 4], id = `bm${++clipN}`;
+    mask = `<mask id="${id}" maskUnits="userSpaceOnUse" x="-20" y="-20" width="140" height="180"><rect x="-20" y="-20" width="140" height="180" fill="#fff"/><polygon points="${bite[0]}" fill="#000"/></mask>`;
+    wear += `<path d="${bite[1]}" fill="none" stroke="#150c06" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+    if (v % 2 === 0 || rnd() < .35) { const y = 99 + Math.floor(rnd() * 9), hw = S + 4; wear += `<rect x="${50 - hw}" y="${y}" width="${hw * 2}" height="6.5" rx="2" fill="${dark ? '#b9a27c' : '#3b2a18'}" stroke="#150c06" stroke-width="1.4"/>` + cut(Array.from({ length: Math.round(hw / 2) }, (_, k) => `M${50 - hw + 2 + k * 4},${y + 5.5} l2.4,-4.5`).join(' '), 1, dark ? 'rgba(30,16,6,.5)' : 'rgba(255,232,196,.4)'); }
+    for (let k = 0, n = 2 + Math.floor(rnd() * 3); k < n; k++) { const x = 50 + (rnd() * 2 - 1) * (S - 2), y = 108 + rnd() * 14, a = rnd() * 2.4 - 1.2, l = 4 + rnd() * 5; wear += `<path d="M${x.toFixed(1)},${y.toFixed(1)} l${(Math.sin(a) * l).toFixed(1)},${(Math.cos(a) * l).toFixed(1)}" stroke="rgba(255,240,205,.5)" stroke-width="1.1" stroke-linecap="round"/>`; }
+    mask = [mask, id];
+  }
+  const fame = u.fame && !deadMat ? `<path d="M${50 - C - 6},70 q-5,8 0,16 M${50 + C + 6},70 q5,8 0,16" fill="none" stroke="#e6b93c" stroke-width="3" stroke-linecap="round"/>` : '';
+  const [px, py] = SET_PROP[fam] ?? [1, 1], inner = stem + marks + head + fin + ring + ad;
+  return `<g transform="translate(50 130) scale(${px} ${py}) translate(-50 -130)">${mask ? `${mask[0]}<g mask="url(#${mask[1]})">${inner}</g>` : inner}${wear}${fame}</g>`;
 }
 function tokenStand(u, opts) {
   const stars = Math.min(5, u.stars || 1), edge = SIDE_EDGE(opts), id = `st${++clipN}`, rx = 34, cy = 131, ry = 10.2;
@@ -1483,7 +1523,7 @@ function tokenStand(u, opts) {
     <path d="${band}" fill="#14110e" stroke="#14110e" stroke-width="2.6" stroke-linejoin="round"/>
     <g clip-path="url(#${id})">${opts.bare ? `<rect x="${50 - rx}" y="${cy}" width="${2 * rx}" height="24" fill="${opts.side === 1 ? '#3a322b' : '#b9ab8c'}"/>` : `<rect x="${50 - rx}" y="${cy}" width="${(2 * rx * hp).toFixed(1)}" height="24" fill="${opts.side === 1 ? '#e0573f' : '#8fd36a'}"/><g fill="#14110e">${ticks}</g>`}</g>
     <ellipse cx="50" cy="${cy}" rx="${rx}" ry="${ry}" fill="${edge}" stroke="#14110e" stroke-width="2"/>
-    <g transform="translate(50 130) scale(${(k * (stars >= 4 ? 1.04 : 1)).toFixed(3)} ${k.toFixed(3)}) translate(-50 -130)">${setPiece(u, opts.dead ? 'dead' : undefined)}</g></svg>`;
+    <g transform="translate(50 130) scale(${(k * (stars >= 4 ? 1.04 : 1)).toFixed(3)} ${k.toFixed(3)}) translate(-50 -130)">${setPiece(u, opts.dead ? 'dead' : undefined, opts.side)}</g></svg>`;
 }
 /** A fallen piece: knocked over in the sand, on a stain. */
 function tokenFallen(u) {
@@ -1775,7 +1815,7 @@ function renderRosterScreen() {
   const order = (f) => `${M(f).faction}|${M(f).stars}|${M(f).title}|${M(f).lean}|${f.name}`;
   $('fighterList').innerHTML = [...G.fighters].sort((a, b) => order(a).localeCompare(order(b))).map((f) => { const t = E.UNITS[f.template], u = unitOf(f), r = E.resolveUnit(u);
     return `<div class="piece"><div class="ph" style="grid-template-columns:40px minmax(0,1fr) auto">${tokenSvg(lookOf(u), { side: 0, bare: true })}
-      <button class="info" data-f="${f.id}"><span class="pn">${f.name}<i style="color:var(--ink-3)">Lv ${E.levelOf(f.xp)}</i>${f.points ? '<i style="color:var(--gold)">can train</i>' : ''}</span><span class="pk">${fighterLine(f)} · ${E.FACTIONS[t.faction]?.name ?? ''}</span>${statLine(r)}</button><span class="bc">${cost(u)}${costSplit(u)}</span></div></div>`; }).join('');
+      <button class="info" data-f="${f.id}"><span class="pn"><em class="pdot" style="background:${paintOf(f)}"></em>${f.name}<i style="color:var(--ink-3)">Lv ${E.levelOf(f.xp)}</i>${f.points ? '<i style="color:var(--gold)">can train</i>' : ''}</span><span class="pk">${fighterLine(f)} · ${E.FACTIONS[t.faction]?.name ?? ''}</span>${statLine(r)}</button><span class="bc">${cost(u)}${costSplit(u)}</span></div></div>`; }).join('');
   $('fighterList').querySelectorAll('[data-f]').forEach((el) => el.onclick = () => openFighter(el.dataset.f));
 }
 nameTeam = ((orig) => function (team) { orig(team); if (!FREE && G?.fighters) for (const u of team.units) if (u.fid && fighterById(u.fid)) u.name = fighterById(u.fid).name; })(nameTeam);
@@ -1798,7 +1838,7 @@ renderRoster = ((orig) => function () {
     const inSquad = S.mine.units.some((x) => x.fid === f.id);
     const cant = !inSquad && (c > left || (E.fieldable(S.myDoc, f.template) === 'neutral' && neutralsIn >= 3));
     return `<div class="piece frow ${inSquad ? 'in' : ''}"><div class="ph" style="grid-template-columns:40px minmax(0,1fr) 44px 44px">${tokenSvg(lookOf(u), { side: 0, bare: true })}
-      <button class="info" data-f="${f.id}"><span class="pn">${f.name}<i style="color:var(--ink-3)">Lv ${E.levelOf(f.xp)}</i>${f.points ? '<i style="color:var(--gold)">can train</i>' : ''}</span><span class="pk">${fighterLine(f)}</span>${statLine(r)}</button>
+      <button class="info" data-f="${f.id}"><span class="pn"><em class="pdot" style="background:${paintOf(f)}"></em>${f.name}<i style="color:var(--ink-3)">Lv ${E.levelOf(f.xp)}</i>${f.points ? '<i style="color:var(--gold)">can train</i>' : ''}</span><span class="pk">${fighterLine(f)}</span>${statLine(r)}</button>
       <span class="bc" style="${cant ? 'opacity:.5' : ''}">${c}${costSplit(u)}</span>
       <button class="add" data-toggle="${f.id}" ${cant ? 'disabled' : ''} aria-pressed="${inSquad}" aria-label="${inSquad ? 'Take' : 'Put'} ${f.name} ${inSquad ? 'out of' : 'in'} the squad">${inSquad ? '✓' : '+'}</button></div></div>`;
   }).join('') + (out.length ? `<p class="hint" style="margin:0">Sitting out under ${E.DOCTORE_BY_ID[G.doctore].name}: ${out.map((f) => f.name).join(', ')}.</p>` : '');
