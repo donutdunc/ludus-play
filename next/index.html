@@ -505,6 +505,14 @@ body.fighting .ranklab, body.fighting .midlab { display: none; }
 .fstats .stat.kitted { border-color: #3d6a7c; }
 .frow2.chiprow { align-items: start; } .frow2.chiprow .chips { display: flex; flex-wrap: wrap; gap: 6px; } .frow2.chiprow > span { padding-top: 9px; }
 .kitrow > b::before { content: ''; display: inline-block; width: 9px; height: 9px; border-radius: 2px; background: #9fd3e6; margin-right: 7px; vertical-align: 1px; }
+
+.kitrow > b::before { display: none; }
+.kits { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.kit { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1px 10px; align-items: center; text-align: left; min-height: 52px; padding: 8px 12px; }
+.kit b { font: 600 16px/1.2 var(--f-ui); color: var(--ink); } .kit span { grid-column: 1; font: 500 13px/1.25 var(--f-ui); color: var(--ink-3); }
+.kit em { grid-column: 2; grid-row: 1 / 3; font: 24px/1 var(--f-display); font-style: normal; color: var(--gold); white-space: nowrap; }
+.kit em::before { content: ''; display: inline-block; width: .62em; height: .62em; margin-right: .18em; background: currentColor; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='2.5' y='1.5' width='11' height='13' rx='1.5' fill='none' stroke='black' stroke-width='1.6'/%3E%3Cpath d='M5.6 5v6M8 5v6M10.4 5v6M4.4 9.6l7.2-3.2' stroke='black' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='2.5' y='1.5' width='11' height='13' rx='1.5' fill='none' stroke='black' stroke-width='1.6'/%3E%3Cpath d='M5.6 5v6M8 5v6M10.4 5v6M4.4 9.6l7.2-3.2' stroke='black' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat; opacity: .85; }
+.kit[aria-pressed="true"] { border-color: #9fd3e6; box-shadow: inset 0 0 0 1px #9fd3e6; background: var(--stone-3); }
 </style>
 
 <div class="wrap">
@@ -1877,7 +1885,7 @@ nameTeam = ((orig) => function (team) { orig(team); if (!FREE && G?.fighters) fo
 const statLine = (r) => `<span class="bs"><span><b>${Math.round(r.stats.hp)}</b> HP</span><span><b>${Math.round(r.stats.atk + r.weapon.damage)}</b> DMG</span><span><b>${Math.round(E.armorCut(r.stats.def) * 100)}%</b> ARM</span>${r.weapon.range > 1 ? `<span><b>${r.weapon.range}</b> REACH</span>` : ''}</span>`;
 const GRADE = { light: 'light armor', medium: 'medium armor', heavy: 'heavy armor' };
 /** What he is, then what he carries: "Peasant ★ · Base" / "Club, light armor". */
-const fighterLine = (f) => { const u = E.fighterUnit(f), r = E.resolveUnit(u); return `${E.UNITS[u.template].name} ${'★'.repeat(M(f).stars)} · ${E.LEANS[M(f).lean].name}</span><span class="pk kit">${r.weapon.name}${u.equip?.off ? ` and ${E.ITEMS?.[u.equip.off]?.name ?? 'shield'}` : ''}, ${GRADE[u.grade ?? 'medium']}`; };
+const fighterLine = (f) => { const u = E.fighterUnit(f), r = E.resolveUnit(u); return `${E.UNITS[u.template].name} ${'★'.repeat(M(f).stars)}</span><span class="pk kit">${r.weapon.name}${u.equip?.off ? ` and ${E.ITEMS?.[u.equip.off]?.name ?? 'shield'}` : ''}, ${GRADE[u.grade ?? 'medium']}`; };
 /** The bill split: the body alone (unarmed, light), and what his kit adds. */
 const costSplit = (u) => { const total = cost(u), body = Math.min(total, E.billOf({ template: u.template, grade: 'light' }).total); return total > body ? `<small>body ${body}<br>kit ${total - body}</small>` : ''; };
 
@@ -1939,6 +1947,9 @@ function renderFighter() {
   const builds = M(f).loadouts, cur = E.loadoutOf(f);
   const need = E.XP_PER_LEVEL - (f.xp % E.XP_PER_LEVEL), wins = Math.ceil(need / 2), top = lvl >= E.MAX_LEVEL, kitR = E.resolveUnit(E.fighterUnit(f));
   const pips = (n, of) => Array.from({ length: of }, (_, k) => `<i class="${k < n ? 'on' : ''}"></i>`).join('');
+  // Kits he can choose from: whole sets, never taken apart. Only the ones for the man he is, so a kit never turns him into someone else.
+  const kits = builds.filter((b) => b.template === builds[0].template).map((b) => { const ku = E.fighterUnit({ ...f, loadout: b.id }), kr = E.resolveUnit(ku);
+    return { id: b.id, name: b.name, cost: cost(ku), gear: `${kr.weapon.name}${ku.equip?.off ? ` and ${E.ITEMS?.[ku.equip.off]?.name ?? 'shield'}` : ''}, ${GRADE[ku.grade ?? 'medium']}`, skills: Object.entries(ku.skills ?? {}).filter(([, lv]) => lv).map(([id]) => E.SKILLS[id]?.name ?? id).join(', ') }; });
   const art = ART.portraits[M(f).icon] ?? ART.portraits[ART.alias[M(f).icon]];
   // What the kit changes: the same man unarmed in light armor, against him as he stands.
   const fx = E.doctoreEffectsFor(team, t), bareU = { template: u.template, grade: 'light', spread: u.spread }, rB = E.resolveUnit(bareU, fx);
@@ -1960,7 +1971,8 @@ function renderFighter() {
       <div class="fcost"><span class="fstars">${'★'.repeat(M(f).stars)}</span><b>${total}</b><small>${total > bodyCost ? `${bodyCost} + ${total - bodyCost}` : ''}</small></div>
     </div>
     <div class="stats fstats">${tiles}</div>
-    <div class="frow2 kitrow"><span>Kit</span><b>${kitR.weapon.name}${u.equip?.off ? ` and ${E.ITEMS?.[u.equip.off]?.name ?? 'shield'}` : ''}, ${GRADE[u.grade ?? 'medium']}</b>${total > bodyCost ? `<small>Adds ${total - bodyCost} to his cost of ${bodyCost}. The marked numbers above are what it changes.</small>` : ''}</div>
+    <div class="frow2 kitrow"><span>Kit</span><small style="grid-column:2;margin:0">${kits.length > 1 ? 'Pick one. The blue numbers above are what his kit changes.' : 'His only kit. The blue numbers above are what it changes.'}</small>
+      <div class="kits">${kits.map((k) => `<button class="kit" data-kit="${k.id}" aria-pressed="${k.id === cur.id}"><b>${k.name}</b><span>${k.gear}${k.skills ? ` · ${k.skills}` : ''}</span><em>${k.cost}</em></button>`).join('')}</div></div>
     ${groups.map(([name, cs]) => `<div class="frow2 chiprow"><span>${name}</span><div class="chips">${cs.map((c) => `<button class="chip ${c.k}" data-chip="${ci++}">${c.label}</button>`).join('')}</div></div>`).join('')}
     <select id="fLoadout" hidden>${builds.map((b) => `<option value="${b.id}" ${b.id === cur.id ? 'selected' : ''}>${b.name}</option>`).join('')}</select>
     ${f.tokens ? `<div class="frow2"><span>Fame</span><b class="gold">${E.fameOf(f)}</b><small>${f.tokens} token${f.tokens > 1 ? 's' : ''} from answering the call again.</small></div>` : ''}`;
@@ -1969,6 +1981,7 @@ function renderFighter() {
   wireStats(root, r);
   const after = () => { syncSquad(); saveG(); save(); if (S.step === 'muster') renderMuster(false); else if (S.step === 'formation') renderFormation(); else if (S.step === 'hall') renderHall(); else if (S.step === 'rosterScr') renderRosterScreen(); renderFighter(); };
   $('fLoadout').onchange = (e) => { E.wear(f, e.target.value); after(); };
+  root.querySelectorAll('[data-kit]').forEach((el) => el.onclick = () => { if (el.dataset.kit !== E.loadoutOf(f).id) { E.wear(f, el.dataset.kit); after(); } });
   root.querySelectorAll('[data-train]').forEach((el) => el.onclick = () => { if (E.train(f, el.dataset.train)) after(); });
   if ($('fSquad')) $('fSquad').onclick = () => { toggleSquad(f.id); after(); };
   $('edDone').onclick = closeEdit;
