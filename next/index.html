@@ -415,6 +415,23 @@ svg.stand.icon { height: auto !important; aspect-ratio: 80 / 156; filter: none !
 [data-look="lino"] body.fighting .spot { height: auto; min-height: 86px; }
 [data-look="lino"] .spot .sm { white-space: normal; overflow: visible; font-size: 12.5px; line-height: 1.2; text-wrap: balance; }
 [data-look="lino"] body.fighting .board { width: min(100%, calc((100dvh - 252px) * 0.6667)); }
+
+/* Drill-down panel */
+.drill { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; max-height: 46dvh; overflow: auto; background: var(--stone-2); border-top: 2px solid var(--gold); border-radius: 14px 14px 0 0; padding: 12px 14px calc(14px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 8px; box-shadow: 0 -10px 30px rgba(0,0,0,.6); }
+.drill[hidden] { display: none; }
+.drill .dh { display: grid; grid-template-columns: 56px minmax(0, 1fr) 44px; gap: 10px; align-items: center; }
+.drill .dh img { width: 56px; height: 68px; object-fit: cover; border-radius: 4px; box-shadow: 0 0 0 2px #14110e, 0 0 0 3px #c9a24a; } .drill .dh svg { width: 44px; }
+.drill .dn { font: 22px/1.1 var(--f-display); color: var(--ink); } .drill .dn small { font: 500 12px var(--f-ui); color: var(--ink-3); margin-left: 8px; letter-spacing: .04em; }
+.drill .dhp { display: flex; align-items: center; gap: 8px; margin-top: 6px; } .drill .dhp i { flex: 1; height: 9px; background: #000; border-radius: 3px; overflow: hidden; } .drill .dhp i b { display: block; height: 100%; background: #e0573f; } .drill .dhp.mine i b { background: #8fd36a; }
+.drill .dhp span { font: 700 14px var(--f-ui); color: var(--ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
+#drillX { min-height: 44px; width: 44px; padding: 0; }
+.drill .dgo { display: grid; grid-template-columns: 78px minmax(0, 1fr); gap: 8px; align-items: baseline; font: 600 16px/1.25 var(--f-ui); color: var(--ink); } .drill .dgo span { font: 600 11px var(--f-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
+.drill .dst { display: grid; grid-template-columns: auto auto minmax(0, 1fr); gap: 2px 8px; align-items: baseline; padding: 7px 9px; border-radius: 8px; background: #1b1815; border-left: 4px solid #7c1d17; font: 500 13px/1.3 var(--f-ui); color: var(--ink-2); }
+.drill .dst.good { border-left-color: #2f5a7a; } .drill .dst.none { border-left-color: var(--line); display: block; }
+.drill .dst b { font: 700 13px var(--f-ui); color: var(--ink); text-transform: uppercase; letter-spacing: .06em; } .drill .dst i { font-style: normal; font-weight: 700; color: var(--gold); white-space: nowrap; } .drill .dst span { grid-column: 1 / -1; }
+/* While a piece is open, the board shrinks to sit whole above the panel. */
+body.drilling .spot, body.drilling .transport, body.drilling #spoils { display: none !important; }
+[data-look="lino"] body.fighting.drilling .board, body.fighting.drilling .board { width: min(100%, calc((54dvh - 44px) * 0.6667)); margin-top: 12px; }
 </style>
 
 <div class="wrap">
@@ -1521,13 +1538,13 @@ function whyOf(e) {
 }
 function spotEvent(e) {
   switch (e.kind) {
-    case 'intent': return spot(e.aid, e.tid, 'goes for', '', 'dim');
+    case 'intent': spotNow = { a: e.aid, t: e.tid }; return;   // shown when he moves or swings, not as an empty line
     case 'attack': return spot(e.aid, e.tid, e.outcome === 'miss' ? 'Miss' : `${e.amount}${e.outcome === 'crit' ? ' crit' : ''}`, `${e.label}${typeof e.chance === 'number' ? ` · ${e.chance}% to hit` : ''}${e.outcome === 'block' ? ' · blocked' : ''}`, e.outcome === 'miss' ? 'dim' : e.outcome === 'crit' ? 'crit' : 'hit');
     case 'active': { const w = whyOf(e); return spot(e.aid, spotNow.a === e.aid ? spotNow.t : null, e.label, [e.summary, w.lasts && `for ${w.lasts}`].filter(Boolean).join(' '), 'trick', w.why); }
     case 'death': return spot(e.aid ?? spotNow.a, e.tid, 'Down', `${spotName(e.tid)} falls`, 'crit');
     case 'heal': return spot(e.aid ?? e.tid, e.tid, `+${e.amount}`, 'patched up', 'heal');
     case 'stunned': return spot(e.tid, null, 'Stunned', 'loses the turn', 'dim');
-    case 'move': if (e.note && e.note !== 'falls back') return spot(e.aid, spotNow.a === e.aid ? spotNow.t : null, e.note, '', 'dim'); return;
+    case 'move': { const tg = P.state.get(e.aid)?.tgt ?? (spotNow.a === e.aid ? spotNow.t : null); return spot(e.aid, e.note === 'falls back' ? null : tg, e.note || 'approaches', '', 'dim'); }
     default: return;
   }
 }
@@ -1565,7 +1582,42 @@ function dragify() {
 }
 // Nearer rows draw over farther ones; the fallen lie under everyone.
 place = ((orig) => function (el, row, col) { orig(el, row, col); el.style.zIndex = el.classList.contains('dead') ? 0 : row + 1; })(place);
-apply = ((orig) => function (e, anim) { const d = orig(e, anim); if (anim) spotEvent(e); return d; })(apply);
+apply = ((orig) => function (e, anim) { if (e.kind === 'intent') { const st = P.state.get(e.aid); if (st) st.tgt = e.tid; } const d = orig(e, anim); if (anim) spotEvent(e); return d; })(apply);
+resetState = ((orig) => function () { orig(); for (const st of P.state.values()) st.tgt = null; })(resetState);
+
+// ---------- Drill-down: tap a piece in a fight to pause and read it: who it is going for, who is on it, what is on it. ----------
+document.body.insertAdjacentHTML('beforeend', '<section id="drill" class="drill" hidden aria-live="polite"></section>');
+let drillUid = null;
+function closeDrill() { drillUid = null; $('drill').hidden = true; document.body.classList.remove('drilling'); document.querySelectorAll('.aim.drillaim').forEach((x) => x.remove()); document.querySelectorAll('.tok.sel, .tok.aimed').forEach((x) => x.classList.remove('sel', 'aimed')); }
+function openDrill(uid) { if (P.playing) pause(); drillUid = uid; renderDrill(); }
+function renderDrill() {
+  const st = P.state.get(drillUid); if (!st || S.step !== 'fight') return closeDrill();
+  const team = st.side === 0 ? S.mine : S.theirs, b = team.units[st.idx], tg = st.tgt != null ? P.state.get(st.tgt) : null;
+  document.querySelectorAll('.aim').forEach((x) => x.remove()); document.querySelectorAll('.tok.sel, .tok.aimed').forEach((x) => x.classList.remove('sel', 'aimed'));
+  document.body.classList.add('drilling');
+  P.els.get(drillUid)?.classList.add('sel');
+  if (st.alive && tg?.alive) { aimLine(posOf(drillUid), posOf(st.tgt), st.side); document.querySelector('.fx .aim:last-child, .aim:last-of-type')?.classList.add('drillaim'); document.querySelectorAll('.aim').forEach((x) => x.classList.add('drillaim')); P.els.get(st.tgt)?.classList.add('aimed'); }
+  const onIt = [...P.state.values()].filter((o) => o.alive && o.side !== st.side && o.tgt === drillUid).map((o) => o.name);
+  const art = ART.portraits[st.look.tid] ?? ART.portraits[ART.alias[st.look.tid]], hp = Math.max(0, st.hp), cr = b ? chipsFor(b, team) : null;
+  const stats = [...st.statuses].map((id) => `<div class="dst ${ST[id]?.[1] ? 'good' : 'bad'}"><b>${ST[id]?.[0] ?? id}</b><i>${st.left?.[id] > 0 ? `${st.left[id]} turn${st.left[id] > 1 ? 's' : ''} left` : ''}</i><span>${ST[id]?.[2] ?? ''}</span></div>`).join('');
+  $('drill').innerHTML = `<div class="dh">${art ? `<img src="${art}" alt="">` : tokenSvg(st.look, { side: st.side, bare: true })}
+      <div class="dw"><div class="dn">${st.name}<small>${st.side === 0 ? 'yours' : 'theirs'}${b ? ` · ${tpl(b).name}` : ''}</small></div>
+        <div class="dhp ${st.side === 0 ? 'mine' : ''}"><i><b style="width:${(hp / st.maxHp * 100).toFixed(0)}%"></b></i><span>${st.alive ? `${Math.round(hp)} / ${Math.round(st.maxHp)} HP` : 'Down'}</span></div></div>
+      <button id="drillX" aria-label="Close">✕</button></div>
+    ${st.alive ? `<div class="dgo"><span>Going for</span><b>${tg?.alive ? tg.name : tg ? `picks again on his turn (${tg.name} is down)` : 'nobody yet'}</b></div><div class="dgo"><span>On him</span><b>${onIt.length ? onIt.join(', ') : 'nobody'}</b></div>` : ''}
+    ${st.alive ? (stats || '<div class="dst none"><span>No statuses on him right now.</span></div>') : ''}
+    ${cr ? statsHtml(cr.r, st) + chipsHtml(cr.chips) : ''}`;
+  $('drill').hidden = false;
+  $('drillX').onclick = closeDrill;
+  if (cr) { wireStats($('drill'), cr.r); wireChips($('drill'), cr.chips); }
+}
+$('tokens').addEventListener('click', (ev) => {
+  if (S.step !== 'fight' || !P.res) return;
+  const el = ev.target.closest('.tok'); if (!el) return;
+  for (const [uid, x] of P.els) if (x === el) { ev.stopPropagation(); ev.preventDefault(); return drillUid === uid ? closeDrill() : openDrill(uid); }
+}, true);
+setFightUi = ((orig) => function () { orig(); if (drillUid != null) { if (P.playing || S.step !== 'fight') closeDrill(); else renderDrill(); } })(setFightUi);
+
 stepBack = ((orig) => function () { orig(); const next = P.res.events[P.cursor]; if (next?.kind === 'turn') spot(next.aid, null, 'about to act', 'rewound', 'dim'); })(stepBack);
 $('stepBack').onclick = () => stepBack();
 fight = ((orig) => function () {
