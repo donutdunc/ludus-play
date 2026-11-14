@@ -375,10 +375,10 @@ body.fighting .board { width: min(100%, calc((100dvh - 196px) * 0.6667)); }
 
 /* Standing pieces and the close-up strip (Counters look) */
 [data-look="lino"] .board { overflow: visible; }
-[data-look="lino"] .tok svg.stand { filter: none; transform-origin: 50% 72%; transition: transform .14s; }
+[data-look="lino"] .tok svg.stand { filter: none; transform-origin: 50% 80%; transition: transform .14s; width: 96%; height: 96%; }
 [data-look="lino"] .tok.sel svg.stand { filter: drop-shadow(0 0 3px var(--gold)) drop-shadow(0 0 1px var(--gold)); }
 [data-look="lino"] .tok.acting svg.stand { transform: translateY(-8%) scale(1.08); }
-[data-look="lino"] .tok .tags { top: -34%; }
+[data-look="lino"] .tok .tags { top: -46%; }
 [data-look="lino"] body.fighting .spot { grid-template-columns: 62px minmax(0, 1fr) 62px; align-items: end; height: 86px; padding: 2px 10px 4px; border: 0; border-radius: 3px; margin: 11px 11px 14px; background-color: #d2ad66; background-size: 150% auto; background-position: center 22%; background-blend-mode: luminosity; box-shadow: 0 0 0 3px #14110e, 0 0 0 9px var(--rim, #5a3a1c), 0 0 0 11px #14110e; }
 [data-look="lino"] .spot[data-arena="dregs"] { --rim: #5a3a1c; background-color: #c9a362; }
 [data-look="lino"] .spot[data-arena="cellar"] { --rim: #3d362d; background-color: #b99a63; }
@@ -387,7 +387,12 @@ body.fighting .board { width: min(100%, calc((100dvh - 196px) * 0.6667)); }
 [data-look="lino"] body.fighting .board { width: min(100%, calc((100dvh - 236px) * 0.6667)); }
 .fig { width: 62px; height: 80px; } .fig svg { width: 62px; height: 80px; display: block; overflow: visible; }
 .fig:first-child { transform: rotate(3deg); transform-origin: 50% 90%; } .fig:last-child { transform: rotate(-3deg); transform-origin: 50% 90%; }
-.fig.down svg { filter: grayscale(1) brightness(.55); transform: rotate(-12deg); transform-origin: 50% 90%; }
+.fig.down svg, .fig.down img { filter: grayscale(1) brightness(.55); }
+.fig.port { transform: none !important; box-sizing: border-box; height: 78px; margin-bottom: 2px; position: relative; border: 3px solid #f6f1e4; outline: 2px solid #14110e; border-radius: 3px; background: #241d16; }
+.fig.port.theirs { border-color: #14110e; outline-color: #8a7d6a; }
+.fig.port img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.fig.port i { position: absolute; left: 0; right: 0; bottom: 0; height: 7px; background: #14110e; overflow: hidden; }
+.fig.port i b { display: block; height: 100%; background: #e0573f; } .fig.port.mine i b { background: #8fd36a; }
 [data-look="lino"] .spot .mid { align-self: center; }
 [data-look="lino"] .spot .who { color: #3a2710; } [data-look="lino"] .spot .who span { color: rgba(40,24,8,.55); }
 [data-look="lino"] .spot .act, [data-look="lino"] .spot .act.hit { color: #14110e; }
@@ -605,7 +610,7 @@ function buildOfUnit(b) {
 const styleOf = (b) => E.STYLES[b.template].find((s) => s.id === b._style) ?? E.STYLES[b.template].find((s) => JSON.stringify(s.equip) === JSON.stringify(b.equip)) ?? E.STYLES[b.template][0];
 const spent = (team) => team.units.reduce((s, u) => s + cost(u), 0);
 const starsOf = (b) => tpl(b).stars ?? b.stars ?? 1;
-const lookOf = (b) => ({ faction: tpl(b).faction, job: tpl(b).job, stars: b.fid && G ? (E.CAST_BY_ID[b.fid]?.stars ?? starsOf(b)) : starsOf(b), tid: b._icon ?? b.template, ink: b._ink, fame: b._fame, maxHp: Math.round(E.resolveUnit(b).stats.hp) });
+const lookOf = (b) => ({ faction: tpl(b).faction, job: tpl(b).job, stars: b.fid && G ? (E.CAST_BY_ID[b.fid]?.stars ?? starsOf(b)) : starsOf(b), tid: b._icon ?? b.template, ink: b._ink, lean: b._lean, fame: b._fame, maxHp: Math.round(E.resolveUnit(b).stats.hp) });
 function nameTeam(team) {
   const seen = {}, R = ['', ' II', ' III', ' IV', ' V', ' VI', ' VII', ' VIII'];
   for (const u of team.units) { const n = tpl(u).name; seen[n] = (seen[n] ?? 0) + 1; u.name = n + (R[seen[n] - 1] ?? ` ${seen[n]}`); }
@@ -1355,43 +1360,69 @@ function tokenCracked(u) {
     <ellipse cx="20" cy="24" rx="19" ry="12" fill="#5e120e" opacity=".7"/><ellipse cx="9" cy="33" rx="5" ry="2.6" fill="#5e120e" opacity=".55"/><ellipse cx="33" cy="15" rx="3" ry="1.8" fill="#5e120e" opacity=".5"/>
     <g transform="translate(20 21) scale(.8) translate(-20 -20)">${half('a', 'translate(-2.5 1) rotate(-7 20 20)')}${half('b', 'translate(3 -1) rotate(8 20 20)')}</g></svg>`;
 }
-// ---------- Standing pieces (Counters look, on the board): a base in the sand and an upright slab. ----------
-// The slab's outline is the family, its height is the star tier, the base top is the side, the base's front edge is the health.
-const BASE_Y = 33;
-function slab(faction, h) {
-  const B = BASE_Y, t = B - h;
-  if (faction === 'legion') return `M5 ${B}V${t + 3}q0 -3 3 -3H32q3 0 3 3V${B}Z`;
-  if (faction === 'warren') return `M5 ${B}L6.5 ${t + 11}L12 ${t + 5}L17 ${t + 9}L23.5 ${t}L28.5 ${t + 8}L33.5 ${t + 6}L35 ${B}Z`;
-  return `M5.5 ${B}V${t + 14.5}a14.5 14.5 0 0 1 29 0V${B}Z`;
+// ---------- Standing pieces (Counters look, on the board): one turned set. ----------
+// Constant: the base, the anatomy (foot, stem, collar, top) and the four tops (ball = base, spire = shooter, tower = tank, mitre = specialist).
+// The family is the material and the hand that cut it. Rank is metal: 2★ a second collar, 3★ copper, 4★ silver with a capped top, 5★ gold with a gold foot.
+const SET_MAT = { legion: 'bone', riffraff: 'wood', warren: 'stone' };
+const SET_GRAD = { bone: ['#b9a67c', '#f4ead0', '#dccb9f', '#9c8a62'], wood: ['#7c5226', '#d6a86a', '#b07d42', '#6a4520'], stone: ['#3f5030', '#8fa66a', '#62784a', '#36462a'], iron: ['#3a3d42', '#9aa0a8', '#6a6f78', '#2c2f34'], dead: ['#3c3835', '#8a847b', '#67615a', '#2f2c29'], m3: ['#7a3216', '#e08a55', '#b5532a', '#6a2a12'], m4: ['#7d838c', '#ffffff', '#c9ccd1', '#6c727a'], m5: ['#9a6a12', '#fff0a8', '#e6b93c', '#8a5c0c'] };
+document.body.insertAdjacentHTML('afterbegin', `<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>${Object.entries(SET_GRAD).map(([k, g]) => `<linearGradient id="g-${k}" x1="0" x2="1"><stop offset="0" stop-color="${g[0]}"/><stop offset=".28" stop-color="${g[1]}"/><stop offset=".62" stop-color="${g[2]}"/><stop offset="1" stop-color="${g[3]}"/></linearGradient>`).join('')}</defs></svg>`);
+const LEAN_OF = (u) => u.lean ?? (u.job === 'tank' ? 'tank' : u.job === 'shooter' ? 'shooter' : u.job === 'controller' || u.job === 'support' ? 'specialist' : 'base');
+const setJit = (i, k) => (((i * 37 + k * 53) % 7) - 3) * .75;
+function setPiece(u, deadMat) {
+  const fam = u.faction, mat = deadMat ?? SET_MAT[fam] ?? 'iron', lean = LEAN_OF(u), stars = Math.min(5, u.stars || 1), tank = lean === 'tank', rough = fam === 'warren';
+  const A = `fill="url(#g-${mat})" stroke="#1d120a" stroke-width="2.2" stroke-linejoin="round"`;
+  const prof = (pts) => `<polygon ${A} points="${pts.map(([y, w], i) => `${50 + w + (rough ? setJit(i, 1) : 0)},${y}`).join(' ')} ${pts.slice().reverse().map(([y, w], i) => `${50 - w - (rough ? setJit(i, 2) : 0)},${y}`).join(' ')}"/>`;
+  const pa = (d) => `<path ${A} d="${d}"/>`, el = (cx, cy, rx, ry, m) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" ${m ? A.replace(`g-${mat}`, `g-${m}`) : A}/>`;
+  const cut = (d, w = 1.5) => `<path d="${d}" fill="none" stroke="rgba(30,16,6,.5)" stroke-width="${w}" stroke-linecap="round"/>`;
+  const F = tank ? 31 : 26, S = tank ? 20 : lean === 'shooter' ? 8.5 : 11, C = S + 7;
+  let stem, marks, head, tip = null;
+  if (fam === 'legion') { stem = prof([[130, F], [123, F], [123, F - 5], [118, F - 5], [118, S + 1], [85, S], [85, C], [77, C], [77, S - 1], [70, S - 1]]); marks = cut([-.55, 0, .55].map((k) => `M${50 + k * S},90 V114`).join(' ')); }
+  else if (rough) { stem = prof([[130, F], [124, F - 1], [120, F - 7], [110, S + 4], [97, S + 1], [86, S - 1], [83, C], [77, C - 2], [74, S - 2], [70, S - 2]]); marks = cut(`M${50 - S * .5},92 l4,7 M${50 + S * .3},100 l-3,8 M${50 - S * .2},110 l5,4`); }
+  else { stem = prof([[130, F], [125, F], [121, F - 6], [114, S + 5], [104, S + 6], [93, S + 1], [85, S - 2], [83, C], [77, C], [75, S - 2], [70, S - 2]]); marks = fam === 'riffraff' ? cut(Array.from({ length: Math.round(C / 2.2) }, (_, k) => `M${50 - C + 3 + k * 4.4},82 l3,-4.5`).join(' '), 1.2) : ''; }
+  if (lean === 'base') {
+    if (fam === 'legion') { head = `<rect x="46" y="36" width="8" height="9" rx="2" ${A}/>` + el(50, 56, 14, 14); tip = [50, 37, 4.6, 4.6]; }
+    else if (rough) { head = `<polygon ${A} points="35,58 40,44 52,39 63,47 65,60 55,71 42,70"/>` + cut('M40,44 L50,54 L63,47 M50,54 L52,70', 1.2); tip = [52, 38, 4.6, 4.6]; }
+    else { head = el(50, 57, 15.5, 13.5); tip = [50, 42, 4.6, 4.6]; }
+  } else if (lean === 'shooter') {
+    head = pa(fam === 'legion' ? 'M50,4 L57.5,62 Q50,76 42.5,62Z' : rough ? 'M57,6 L64,56 L50,76 L38,56Z' : 'M50,12 Q66,48 50,76 Q34,48 50,12Z'); tip = [rough ? 56.5 : 50, fam === 'legion' ? 9 : rough ? 11 : 16, 3.6, 5.4];
+  } else if (tank) {
+    if (fam === 'legion') head = prof([[70, S], [55, S], [51, S + 6], [38, S + 6]]) + `<path d="M36,37 h7 v9 h-7Z M46.5,37 h7 v9 h-7Z M57,37 h7 v9 h-7Z" fill="#1d120a"/>`;
+    else if (rough) head = `<polygon ${A} points="${50 - S - 3},70 ${50 - S - 6},44 35,34 41,45 47,32 53,45 60,33 65,46 ${50 + S + 7},38 ${50 + S + 3},70"/>` + cut('M36,58 l6,5 M58,54 l5,8');
+    else head = prof([[70, S - 2], [62, S + 3], [50, S + 4], [42, S + 1], [38, S - 1]]) + cut('M36,44 V66 M43,40 V68 M50,39 V69 M57,40 V68 M64,44 V66', 1.2) + cut(`M${50 - S - 3},48 Q50,52 ${50 + S + 3},48 M${50 - S - 3},62 Q50,66 ${50 + S + 3},62`, 1.8);
+  } else {
+    if (fam === 'legion') { head = el(50, 52, 12.5, 19) + cut('M56,40 L45,56', 2.4); tip = [50, 29, 5, 5]; }
+    else if (rough) { head = pa('M41,58 Q20,42 29,14 Q36,36 47,49Z') + pa('M59,58 Q80,42 71,14 Q64,36 53,49Z') + el(50, 59, 12, 12); tip = [50, 44, 4.6, 4.6]; }
+    else { head = el(50, 55, 14.5, 16) + cut('M38,55 Q50,60 62,55', 2); tip = [50, 35, 6, 5]; }
+  }
+  const metal = stars >= 3 && !deadMat ? `m${stars}` : null, band = (y, h, hw, m) => `<rect x="${50 - hw}" y="${y}" width="${hw * 2}" height="${h}" rx="2" ${m ? A.replace(`g-${mat}`, `g-${m}`) : A}/>`;
+  let ad = '';
+  if (stars === 2) ad += band(93, 6, S + 5, null);
+  if (metal) ad += band(76, 9, C + 3, metal);
+  if (stars >= 4 && tank && metal) ad += band(fam === 'legion' ? 46 : 55, 6, S + (fam === 'legion' ? 8 : 6), metal);
+  if (stars >= 5 && metal) ad += band(122, 7, F + 1.5, metal);
+  const fin = tip && (lean === 'specialist' || stars >= 4) ? el(tip[0], tip[1], tip[2], tip[3], stars >= 4 ? metal : null) : '';
+  const fame = u.fame && !deadMat ? `<path d="M${50 - C - 6},70 q-5,8 0,16 M${50 + C + 6},70 q5,8 0,16" fill="none" stroke="#e6b93c" stroke-width="3" stroke-linecap="round"/>` : '';
+  return stem + marks + head + fin + ad + fame;
 }
 function tokenStand(u, opts) {
-  const B = BASE_Y, lk = LOOK(u.faction), stars = Math.min(5, u.stars || 1), h = 32 + 2 * stars, t = B - h, d = slab(u.faction, h);
-  const edge = SIDE_EDGE(opts), rim = RIM[stars], id = `st${++clipN}`;
+  const stars = Math.min(5, u.stars || 1), edge = SIDE_EDGE(opts), id = `st${++clipN}`, rx = 34, cy = 131, ry = 10.2;
   const hp = Math.max(0, Math.min(1, opts.hp ?? 1)), max = u.maxHp || 30, seg = max > 120 ? 25 : 10, n = Math.max(1, Math.round(max / seg));
-  const band = `M2 ${B}a18 6.5 0 0 0 36 0v6a18 6.5 0 0 1 -36 0Z`;
+  const band = `M${50 - rx} ${cy}a${rx} ${ry} 0 0 0 ${rx * 2} 0v10a${rx} ${ry} 0 0 1 ${-rx * 2} 0Z`;
   let ticks = '';
-  for (let k = 1; k < n; k++) ticks += `<rect x="${(2 + 36 * k / n - .35).toFixed(2)}" y="${B}" width=".7" height="14"/>`;
-  const art = opts.big ? (ART.portraits[u.tid] ?? ART.portraits[ART.alias[u.tid]]) : null;
-  const drop = u.faction === 'warren' ? 10 : u.faction === 'legion' ? 4.5 : 6;
-  const front = art
-    ? `<image href="${art}" x="4" y="${t}" width="32" height="${h}" clip-path="url(#${id}s)" preserveAspectRatio="xMidYMin slice"/>`
-    : emblem(u, lk.glyph, [8, t + drop, 24]);
-  const pips = stars >= 2 ? Array.from({ length: stars }, (_, k) => `<circle cx="${20 - (stars - 1) * 2.2 + k * 4.4}" cy="${B - 3.2}" r="1.5" fill="${rim}" stroke="#14110e" stroke-width=".6"/>`).join('') : '';
-  return `<svg class="stand" viewBox="${opts.big ? '-4 -13 48 62' : '-4 -4 48 52'}" aria-hidden="true">
-    <defs><clipPath id="${id}"><path d="${band}"/></clipPath><clipPath id="${id}s"><path d="${d}"/></clipPath></defs>
-    <g opacity=".36" fill="#140c04"><ellipse cx="22.5" cy="${B + 5}" rx="19" ry="7"/><path d="${d}" transform="translate(21 ${B + 2}) skewX(-40) scale(1 .4) translate(-20 ${-B})"/></g>
-    <path d="${band}" fill="#14110e" stroke="#14110e" stroke-width="1.6" stroke-linejoin="round"/>
-    <g clip-path="url(#${id})"><rect x="2" y="${B}" width="${(36 * hp).toFixed(1)}" height="14" fill="${opts.side === 1 ? '#e0573f' : '#8fd36a'}"/><g fill="#14110e">${ticks}</g></g>
-    <ellipse cx="20" cy="${B}" rx="18" ry="6.5" fill="${edge}" stroke="#14110e" stroke-width="1.2"/>
-    <path d="${d}" fill="${edge}" stroke="${edge}" stroke-width="4.4" stroke-linejoin="round" transform="translate(0 -1.4)"/>
-    <path d="${d}" fill="${lk.fill}" stroke="#14110e" stroke-width="3.2" stroke-linejoin="round"/>
-    ${front}<path d="${d}" fill="none" stroke="${rim}" stroke-width="1.8" stroke-linejoin="round"/>${pips}</svg>`;
+  for (let k = 1; k < n; k++) ticks += `<rect x="${(50 - rx + 2 * rx * k / n - .6).toFixed(2)}" y="${cy}" width="1.2" height="24"/>`;
+  const k = (opts.big ? 1 : .8) * (1 + (stars - 1) * .05);
+  return `<svg class="stand" viewBox="${opts.big ? '0 -6 100 160' : '8 72 84 84'}" aria-hidden="true">
+    <defs><clipPath id="${id}"><path d="${band}"/></clipPath></defs>
+    <ellipse cx="62" cy="${cy + 9}" rx="${rx + 10}" ry="${ry + 1}" fill="rgba(30,14,2,.3)"/>
+    <path d="${band}" fill="#14110e" stroke="#14110e" stroke-width="2.6" stroke-linejoin="round"/>
+    <g clip-path="url(#${id})"><rect x="${50 - rx}" y="${cy}" width="${(2 * rx * hp).toFixed(1)}" height="24" fill="${opts.side === 1 ? '#e0573f' : '#8fd36a'}"/><g fill="#14110e">${ticks}</g></g>
+    <ellipse cx="50" cy="${cy}" rx="${rx}" ry="${ry}" fill="${edge}" stroke="#14110e" stroke-width="2"/>
+    <g transform="translate(50 130) scale(${(k * (stars >= 4 ? 1.04 : 1)).toFixed(3)} ${k.toFixed(3)}) translate(-50 -130)">${setPiece(u)}</g></svg>`;
 }
-/** A fallen piece: the slab toppled flat in the sand, on a stain. */
+/** A fallen piece: knocked over in the sand, on a stain. */
 function tokenFallen(u) {
-  const B = BASE_Y, lk = LOOK(u.faction), d = slab(u.faction, 32 + 2 * Math.min(5, u.stars || 1));
-  return `<svg class="stand" viewBox="-4 -4 48 52" aria-hidden="true"><ellipse cx="22" cy="${B}" rx="20" ry="10" fill="#5e120e" opacity=".65"/><ellipse cx="8" cy="${B + 8}" rx="5" ry="2.4" fill="#5e120e" opacity=".5"/>
-    <g transform="translate(9 ${B + 1}) scale(.82 .4) rotate(82) translate(-20 ${-B})"><path d="${d}" fill="#14110e" stroke="#14110e" stroke-width="4.5" stroke-linejoin="round"/><path d="${d}" fill="${lk.edge}" stroke="#6b5a45" stroke-width="1.6" stroke-linejoin="round" opacity=".92"/></g></svg>`;
+  return `<svg class="stand" viewBox="8 72 84 84" aria-hidden="true"><ellipse cx="54" cy="132" rx="40" ry="15" fill="#5e120e" opacity=".6"/><ellipse cx="22" cy="146" rx="9" ry="4" fill="#5e120e" opacity=".5"/>
+    <g transform="translate(22 136) rotate(84) scale(.62 .5) translate(-50 -130)" opacity=".92">${setPiece(u, 'dead')}</g></svg>`;
 }
 function tokenSvg(u, opts = {}) {
   if (opts.stand && lookNow === 'lino') return opts.dead ? tokenFallen(u) : tokenStand(u, opts);
@@ -1445,7 +1476,10 @@ finish = ((orig) => function () { orig(); fightDone(P.res); spotEnd(); })(finish
 function face(uid, hpShown) {
   const st = P.state.get(uid); if (!st) return '';
   // Counters: the close-up is the same piece on the same sand, with its painted face where it has one.
-  if (lookNow === 'lino') return `<div class="fig ${st.alive ? '' : 'down'}">${tokenStand(st.look, { side: st.side, hp: st.hp / st.maxHp, big: true })}</div>`;
+  if (lookNow === 'lino') {
+    const art = ART.portraits[st.look.tid] ?? ART.portraits[ART.alias[st.look.tid]], hp = Math.max(0, Math.min(1, st.hp / st.maxHp));
+    return `<div class="fig ${art ? 'port' : ''} ${st.side === 0 ? 'mine' : 'theirs'} ${st.alive ? '' : 'down'}">${art ? `<img src="${art}" alt=""><i><b style="width:${(hp * 100).toFixed(0)}%"></b></i>` : tokenStand(st.look, { side: st.side, hp, big: true })}</div>`;
+  }
   const art = ART.portraits[st.look.tid] ?? ART.portraits[ART.alias[st.look.tid]];
   const hp = Math.max(0, Math.min(1, st.hp / st.maxHp));
   return `<div class="face ${st.side === 0 ? 'mine' : 'theirs'} ${st.alive ? '' : 'down'}">${art ? `<img src="${art}" alt="">` : tokenSvg(st.look, { side: st.side, bare: true })}
@@ -1569,7 +1603,7 @@ function dress(f) { Object.defineProperties(f, { name: { get: () => E.memberOf(f
 function dressAll() { G.fighters.forEach(dress); }
 const M = (f) => E.memberOf(f);
 function unitOf(f, prev) {
-  const u = E.fighterUnit(f); u.fid = f.id; u._style = styleOf(u).id; u._icon = M(f).icon; u._ink = M(f).ink; u._fame = f.tokens > 0;
+  const u = E.fighterUnit(f); u.fid = f.id; u._style = styleOf(u).id; u._icon = M(f).icon; u._ink = M(f).ink; u._lean = M(f).lean; u._fame = f.tokens > 0;
   if (prev) { if (prev.pos) u.pos = prev.pos; if (prev.tactic) u.tactic = prev.tactic; }
   return u;
 }
