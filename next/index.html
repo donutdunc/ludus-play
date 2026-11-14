@@ -658,7 +658,7 @@ function buildOfUnit(b) {
 const styleOf = (b) => E.STYLES[b.template].find((s) => s.id === b._style) ?? E.STYLES[b.template].find((s) => JSON.stringify(s.equip) === JSON.stringify(b.equip)) ?? E.STYLES[b.template][0];
 const spent = (team) => team.units.reduce((s, u) => s + cost(u), 0);
 const starsOf = (b) => tpl(b).stars ?? b.stars ?? 1;
-const lookOf = (b) => ({ faction: tpl(b).faction, job: tpl(b).job, stars: b.fid && G ? (E.CAST_BY_ID[b.fid]?.stars ?? starsOf(b)) : starsOf(b), tid: b._icon ?? b.template, ink: b._ink, lean: b._lean, fame: b._fame, maxHp: Math.round(E.resolveUnit(b).stats.hp) });
+const lookOf = (b) => ({ faction: tpl(b).faction, job: tpl(b).job, stars: b.fid && G ? (E.CAST_BY_ID[b.fid]?.stars ?? starsOf(b)) : starsOf(b), tid: b._icon ?? b.template, ink: b._ink, lean: b._lean, tilt: b._tilt, who: b.fid ?? b.name, fame: b._fame, maxHp: Math.round(E.resolveUnit(b).stats.hp) });
 function nameTeam(team) {
   const seen = {}, R = ['', ' II', ' III', ' IV', ' V', ' VI', ' VII', ' VIII'];
   for (const u of team.units) { const n = tpl(u).name; seen[n] = (seen[n] ?? 0) + 1; u.name = n + (R[seen[n] - 1] ?? ` ${seen[n]}`); }
@@ -1415,11 +1415,15 @@ function tokenCracked(u) {
 // The family is the material and the hand that cut it. Rank is metal: 2★ a second collar, 3★ copper, 4★ silver with a capped top, 5★ gold with a gold foot.
 const SET_MAT = { legion: 'bone', riffraff: 'wood', warren: 'stone' };
 const SET_GRAD = { bone: ['#b9a67c', '#f4ead0', '#dccb9f', '#9c8a62'], wood: ['#7c5226', '#d6a86a', '#b07d42', '#6a4520'], stone: ['#3f5030', '#8fa66a', '#62784a', '#36462a'], iron: ['#3a3d42', '#9aa0a8', '#6a6f78', '#2c2f34'], dead: ['#3c3835', '#8a847b', '#67615a', '#2f2c29'], m3: ['#7a3216', '#e08a55', '#b5532a', '#6a2a12'], m4: ['#7d838c', '#ffffff', '#c9ccd1', '#6c727a'], m5: ['#9a6a12', '#fff0a8', '#e6b93c', '#8a5c0c'] };
+// Four tones of each family material, so two fighters of one kind are not the same block of wood.
+const SET_TONES = { wood: [['#7c5226', '#d6a86a', '#b07d42', '#6a4520'], ['#6b4a2a', '#c09a6c', '#98724a', '#553a20'], ['#8a5a22', '#e2b872', '#c08c48', '#754a1c'], ['#70482a', '#c8956a', '#a66f4a', '#5c3820']], bone: [['#b9a67c', '#f4ead0', '#dccb9f', '#9c8a62'], ['#a99a7c', '#e8e0cc', '#cfc3a4', '#8c7e62'], ['#c2a870', '#f8e8c0', '#e4cc94', '#a48c58'], ['#b0a088', '#efe6d6', '#d6c8ae', '#948468']], stone: [['#3f5030', '#8fa66a', '#62784a', '#36462a'], ['#35503a', '#84a67a', '#58785a', '#2c4632'], ['#4a5230', '#9ea666', '#6f7846', '#40462a'], ['#3a4a3a', '#86987a', '#5c6e58', '#303e32']] };
+for (const [m, ts] of Object.entries(SET_TONES)) ts.forEach((g, k) => { SET_GRAD[`${m}${k}`] = g; });
+const seedOf = (str) => { let h = 2166136261; for (const ch of String(str ?? '')) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return () => { h = Math.imul(h ^ (h >>> 15), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); return ((h ^= h >>> 16) >>> 0) / 4294967296; }; };
 document.body.insertAdjacentHTML('afterbegin', `<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>${Object.entries(SET_GRAD).map(([k, g]) => `<linearGradient id="g-${k}" x1="0" x2="1"><stop offset="0" stop-color="${g[0]}"/><stop offset=".28" stop-color="${g[1]}"/><stop offset=".62" stop-color="${g[2]}"/><stop offset="1" stop-color="${g[3]}"/></linearGradient>`).join('')}</defs></svg>`);
 const LEAN_OF = (u) => u.lean ?? (u.job === 'tank' ? 'tank' : u.job === 'shooter' ? 'shooter' : u.job === 'controller' || u.job === 'support' || u.job === 'skirmisher' ? 'specialist' : 'base');
 const setJit = (i, k) => (((i * 37 + k * 53) % 7) - 3) * .75;
 function setPiece(u, deadMat) {
-  const fam = u.faction, mat = deadMat ?? SET_MAT[fam] ?? 'iron', lean = LEAN_OF(u), stars = Math.min(5, u.stars || 1), tank = lean === 'tank', rough = fam === 'warren';
+  const rnd = seedOf(u.who ?? u.tid ?? ''), named = u.who != null, fam = u.faction, mat0 = SET_MAT[fam] ?? 'iron', mat = deadMat ?? (named && SET_TONES[mat0] ? `${mat0}${Math.floor(rnd() * 4)}` : mat0), lean = LEAN_OF(u), stars = Math.min(5, u.stars || 1), tank = lean === 'tank', rough = fam === 'warren';
   const A = `fill="url(#g-${mat})" stroke="#1d120a" stroke-width="2.2" stroke-linejoin="round"`;
   const prof = (pts) => `<polygon ${A} points="${pts.map(([y, w], i) => `${50 + w + (rough ? setJit(i, 1) : 0)},${y}`).join(' ')} ${pts.slice().reverse().map(([y, w], i) => `${50 - w - (rough ? setJit(i, 2) : 0)},${y}`).join(' ')}"/>`;
   const pa = (d) => `<path ${A} d="${d}"/>`, el = (cx, cy, rx, ry, m) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" ${m ? A.replace(`g-${mat}`, `g-${m}`) : A}/>`;
@@ -1452,7 +1456,23 @@ function setPiece(u, deadMat) {
   if (stars >= 5 && metal) ad += band(122, 7, F + 1.5, metal);
   const fin = tip && (lean === 'specialist' || stars >= 4) ? el(tip[0], tip[1], tip[2], tip[3], stars >= 4 ? metal : null) : '';
   const fame = u.fame && !deadMat ? `<path d="M${50 - C - 6},70 q-5,8 0,16 M${50 + C + 6},70 q5,8 0,16" fill="none" stroke="#e6b93c" stroke-width="3" stroke-linecap="round"/>` : '';
-  return stem + marks + head + fin + ad + fame;
+  // The small difference between two of a kind follows what the fighter is: Tough is thicker in the stem, Strong has the bigger head, Quick stands taller and slimmer, Sharp carries a cut mark.
+  const tilt = u.tilt, sx = tilt === 'hp' ? 1.13 : tilt === 'spd' ? .93 : 1, hs = tilt === 'atk' ? 1.14 : tilt === 'acc' ? .94 : 1, tall = tilt === 'spd' ? 1.05 : 1;
+  const sharp = tilt === 'acc' ? cut(`M${50 - S * .45},100 l${S * .45},5 l${S * .45},-5`, 1.8) : '';
+  // Riff-Raff pieces have been through it: chips of raw wood off the edges, scuffs, dents, sometimes a split.
+  let wear = '';
+  if (fam === 'riffraff' && !deadMat) {
+    const chip = (x, y, w, h, flip) => `<polygon points="${x},${y} ${x + w * flip},${y - h * .4} ${x + w * .7 * flip},${y + h * .7} ${x + w * .1 * flip},${y + h}" fill="#ecd6a6" stroke="#1d120a" stroke-width="1.1" stroke-linejoin="round"/>`;
+    const side = () => (rnd() < .5 ? -1 : 1);
+    { const f = side(); wear += chip(50 + f * (F - 1), 124 + rnd() * 2, 7 + rnd() * 3, 5, -f); }
+    { const f = side(); wear += chip(50 + f * (C + 1), 78, 5 + rnd() * 3, 4.5, -f); }
+    if (rnd() < .7 && !tank && lean !== 'shooter') { const f = side(); wear += chip(50 + f * 14, 52 + rnd() * 8, 5 + rnd() * 2, 5, -f); }
+    for (let k = 0, n = 3 + Math.floor(rnd() * 3); k < n; k++) { const x = 50 + (rnd() * 2 - 1) * (S - 2), y = 90 + rnd() * 26, a = rnd() * 2.4 - 1.2, l = 4 + rnd() * 6; wear += `<path d="M${x.toFixed(1)},${y.toFixed(1)} l${(Math.sin(a) * l).toFixed(1)},${(Math.cos(a) * l).toFixed(1)}" stroke="rgba(255,240,205,.6)" stroke-width="1.2" stroke-linecap="round"/>`; }
+    for (let k = 0; k < 2; k++) wear += `<ellipse cx="${(50 + (rnd() * 2 - 1) * (S - 3)).toFixed(1)}" cy="${(88 + rnd() * 30).toFixed(1)}" rx="${(1.6 + rnd() * 1.6).toFixed(1)}" ry="${(1 + rnd()).toFixed(1)}" fill="rgba(40,20,5,.4)"/>`;
+    if (rnd() < .45) { const x = 50 + (rnd() * 2 - 1) * (S - 4); wear += cut(`M${x},128 l${rnd() * 3 - 1.5},-9 l${rnd() * 4 - 2},-7 l${rnd() * 3 - 1.5},-8`, 1.1); }
+  }
+  const body = `<g transform="translate(50 130) scale(${sx} ${tall}) translate(-50 -130)">${stem}${marks}</g><g transform="translate(50 ${130 - 60 * tall}) scale(${(hs * (sx < 1 ? .97 : 1)).toFixed(3)} ${hs}) translate(-50 -70)">${head}${fin}</g>`;
+  return body + sharp + wear + ad + fame;
 }
 function tokenStand(u, opts) {
   const stars = Math.min(5, u.stars || 1), edge = SIDE_EDGE(opts), id = `st${++clipN}`, rx = 34, cy = 131, ry = 10.2;
@@ -1727,7 +1747,7 @@ function dress(f) { Object.defineProperties(f, { name: { get: () => E.memberOf(f
 function dressAll() { G.fighters.forEach(dress); }
 const M = (f) => E.memberOf(f);
 function unitOf(f, prev) {
-  const u = E.fighterUnit(f); u.fid = f.id; u._style = styleOf(u).id; u._icon = M(f).icon; u._ink = M(f).ink; u._lean = M(f).lean; u._fame = f.tokens > 0;
+  const u = E.fighterUnit(f); u.fid = f.id; u._style = styleOf(u).id; u._icon = M(f).icon; u._ink = M(f).ink; u._lean = M(f).lean; u._tilt = M(f).tilt; u._fame = f.tokens > 0;
   if (prev) { if (prev.pos) u.pos = prev.pos; if (prev.tactic) u.tactic = prev.tactic; }
   return u;
 }
