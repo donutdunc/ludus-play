@@ -541,6 +541,13 @@ body.fighting .ranklab, body.fighting .midlab { display: none; }
 .dust { position: absolute; border-radius: 50%; background: rgba(250,234,196,.9); box-shadow: 0 0 2px rgba(250,234,196,.6); pointer-events: none; animation: dust .62s ease-out forwards; }
 @keyframes dust { from { opacity: .95; transform: translate(-50%, -50%) scale(.5); } to { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.9); } }
 @media (prefers-reduced-motion: reduce) { .dust { display: none; } }
+
+/* Sound on or off: one button in the header, one beside the fight controls. */
+.sndbtn { display: inline-flex; align-items: center; justify-content: center; padding: 0; width: 40px; min-height: 36px; color: var(--ink-2); }
+.hud .sndbtn { padding: 0; width: 40px; }
+.sndbtn[aria-pressed="false"] { color: var(--ink-3); opacity: .75; }
+.transport { grid-template-columns: 44px 1fr 2fr 1fr 48px 44px; }
+.transport .sndbtn { width: auto; min-height: 44px; }
 </style>
 
 <div class="wrap">
@@ -1835,13 +1842,14 @@ function dragify() {
     el.onpointerdown = (ev) => {
       const r = board.getBoundingClientRect(), tw = r.width / 8, th = r.height / H, x0 = ev.clientX, y0 = ev.clientY;
       let drag = false, tgt = null;
-      const me0 = S.mine.units[i], seed = `d${++SAND.drags}`; let last = me0?.pos ? [me0.pos.y, H - 1 - me0.pos.x] : null, lx = x0;
+      const me0 = S.mine.units[i], seed = `d${++SAND.drags}`; let last = me0?.pos ? [me0.pos.y, H - 1 - me0.pos.x] : null, lx = x0, px = x0, py = y0, pt = ev.timeStamp;
       try { el.setPointerCapture(ev.pointerId); } catch (e) { /* capture is a nicety */ }
       el.onpointermove = (e) => {
         if (!drag && Math.hypot(e.clientX - x0, e.clientY - y0) < 8) return;
         if (!drag) { drag = true; el.classList.add('drag'); }
         el.style.left = `${e.clientX - r.left - tw / 2}px`; el.style.top = `${e.clientY - r.top - th * .9}px`;
-        // The base ploughs a furrow under your finger as it goes.
+        // The base ploughs a furrow under your finger as it goes, and you hear it at the speed you push.
+        { const dt = Math.max(1, e.timeStamp - pt); sfxDrag(Math.hypot(e.clientX - px, e.clientY - py) / dt); px = e.clientX; py = e.clientY; pt = e.timeStamp; }
         if (last) { const cur = [(e.clientX - r.left) / tw - .5, (e.clientY - r.top) / th - .9];
           if (Math.hypot((cur[0] - last[0]) * tw, (cur[1] - last[1]) * th) >= 4) { sandAdd(SAND.pre, { t: 'track', a: last, b: cur, open: true, seed }, 0); el.style.setProperty('--lean', `${Math.max(-8, Math.min(8, (e.clientX - lx) * 1.5)).toFixed(1)}deg`); last = cur; lx = e.clientX; } }
         const col = Math.floor((e.clientX - r.left) / tw), row = Math.floor((e.clientY - r.top) / th);
@@ -1851,6 +1859,7 @@ function dragify() {
       el.onpointerup = el.onpointercancel = () => {
         el.onpointermove = el.onpointerup = el.onpointercancel = null; clear();
         if (!drag) return;
+        sfxDrag(-1);
         el.onclick = null;
         if (tgt) { const me = S.mine.units[i], pos = { x: H - 1 - tgt.row, y: tgt.col }, other = S.mine.units.find((u) => u !== me && u.pos && u.pos.x === pos.x && u.pos.y === pos.y); if (other) other.pos = me.pos; me.pos = pos; }
         // It settles into its tile (or slides home); the furrow is already drawn, so the sand does not draw a second, straight one.
@@ -2349,7 +2358,7 @@ function sandAdd(list, m, ms) {
   requestAnimationFrame(frame);
 }
 /** The attendants rake the floor between bouts. */
-function sandRake() { SAND.pre = []; SAND.marks = []; SAND.at = new Map(); SAND.run++; SAND.bout++; SAND.turn = 0; sandPaint(); }
+function sandRake() { SAND.pre = []; SAND.marks = []; SAND.at = new Map(); SAND.run++; SAND.bout++; SAND.turn = 0; sandPaint(); sfxPlay('rake', .5, (r, t) => sndRake(r, t)); }
 /** A little dust, thrown the way things were moving, that hangs for half a second. */
 function sandPuff(pt, ux, uy, n = 5, big = false) {
   if (SAND.calm) return;
@@ -2369,17 +2378,22 @@ apply = ((orig) => function (e, anim) {
     const to = posOf(e.aid), dc = to.col - from.col, dr = to.row - from.row;
     if (dc || dr) {
       sandAdd(SAND.marks, { t: 'track', a: [from.col, from.row], b: [to.col, to.row], deep: e.note === 'dragged' }, anim ? ms : -1);
+      if (anim) { const lk = P.state.get(e.aid).look; sfxPlay('scrape', .02, (r, t) => sndScrape(r, t, { dur: ms / 1000, weight: sfxWeight(lk), pan: sfxAcross((from.col + to.col) / 2), gain: e.note === 'dragged' ? 1.4 : 1 })); }
       if (anim && !SAND.calm) { const res = P.res; mover.style.setProperty('--lean', `${Math.sign(dc) * 6}deg`); mover.classList.add('plough'); clearTimeout(mover._pl);
         mover._pl = setTimeout(() => { mover.classList.remove('plough'); if (P.res !== res || S.step !== 'fight' || !SAND.w) return;
           const B = sandPt([to.col, to.row]), len = Math.hypot(dc * SAND.tw, dr * SAND.th) || 1, ux = dc * SAND.tw / len, uy = dr * SAND.th / len;
           sandPuff([B[0] + ux * SAND_FOOT[2] * SAND.tw * .9, B[1] + uy * SAND_FOOT[3] * SAND.tw * .9], ux, uy); }, ms); }
     }
+  } else if (e.kind === 'attack' && e.outcome === 'miss' && P.state.get(e.tid)) {
+    if (anim) { const v = posOf(e.tid); sfxPlay('swish', .03, (r, t) => sndSwish(r, t, { pan: sfxAcross(v.col) })); }
   } else if (e.kind === 'attack' && e.outcome !== 'miss' && P.state.get(e.aid) && P.state.get(e.tid)) {
     const a = posOf(e.aid), v = posOf(e.tid), dir = [v.col - a.col, v.row - a.row];
+    if (anim) { const lk = P.state.get(e.tid).look, ranged = Math.max(Math.abs(dir[0]), Math.abs(dir[1])) > 1; sfxPlay('hit', .03, (r, t) => sndHit(r, t, sfxMat(lk), { crit: e.outcome === 'crit', block: e.outcome === 'block', ranged, pan: sfxAcross(v.col) })); }
     sandAdd(SAND.marks, { t: 'spray', at: [v.col, v.row], dir, big: e.outcome === 'crit' }, quiet);
     if (anim && SAND.w) { const V = sandPt([v.col, v.row]), len = Math.hypot(dir[0] * SAND.tw, dir[1] * SAND.th) || 1; sandPuff(V, dir[0] * SAND.tw / len, dir[1] * SAND.th / len, e.outcome === 'crit' ? 6 : 3); }
   } else if (e.kind === 'death' && P.state.get(e.tid)) {
     const v = posOf(e.tid); sandAdd(SAND.marks, { t: 'pit', at: [v.col, v.row] }, quiet);
+    if (anim) { const lk = P.state.get(e.tid).look; sfxPlay('fall', .05, (r, t) => sndFall(r, t, sfxMat(lk), { pan: sfxAcross(v.col) })); }
     if (anim && SAND.w) sandPuff(sandPt([v.col, v.row]), 0, -.4, 9, true);
   }
   return d;
@@ -2391,11 +2405,127 @@ go = ((orig) => function (step) { if (step === 'formation' && S.step !== 'format
 renderFormation = ((orig) => function () {
   if (SAND.fresh) { SAND.fresh = false; sandRake(); }
   if (S.step === 'formation') for (const u of S.mine.units) { if (!u.pos) continue; const was = SAND.at.get(u);
-    if (was && (was.x !== u.pos.x || was.y !== u.pos.y)) sandAdd(SAND.pre, { t: 'track', a: [was.y, H - 1 - was.x], b: [u.pos.y, H - 1 - u.pos.x] }, 0);
+    if (was && (was.x !== u.pos.x || was.y !== u.pos.y)) { sandAdd(SAND.pre, { t: 'track', a: [was.y, H - 1 - was.x], b: [u.pos.y, H - 1 - u.pos.x] }, 0); sfxPlay('scrape', .04, (r, t) => sndScrape(r, t, { dur: .2, weight: sfxWeight(lookOf(u)), pan: sfxAcross(u.pos.y) })); }
     SAND.at.set(u, { ...u.pos }); }
   orig();
 })(renderFormation);
 { const arrange = $('autoArrange').onclick; $('autoArrange').onclick = (ev) => { SAND.fresh = true; arrange(ev); }; }
+
+// ---------- Sound: sand, and the knock of the pieces ----------
+// Nothing here is a recording. Sand is shaped noise; each family's set knocks like what it is made of (turned wood, sawn bone, struck stone).
+// Tuned for a phone's speaker, which has almost nothing below 200 Hz: the weight of a thud sits at 110 to 230 Hz, not under it.
+const SFX = { rig: null, on: true, last: {}, drag: null };
+try { SFX.on = localStorage.getItem('ludus-sound') !== '0'; } catch (e) { /* sound stays on for this visit */ }
+// Each material: its partials as [pitch in Hz, how long it rings in seconds, level], and how hard the first click is.
+const SND_MAT = {
+  wood: { p: [[640, .16, 1], [1500, .09, .5], [2550, .05, .22]], click: .5 },
+  bone: { p: [[1180, .11, 1], [2950, .07, .55], [4400, .04, .25]], click: .7 },
+  stone: { p: [[450, .2, 1], [1040, .11, .6], [2500, .04, .3]], click: 1 },
+  cork: { p: [[430, .06, 1], [780, .04, .4]], click: .25 },
+  tin: { p: [[2150, .34, 1], [3380, .24, .6], [5300, .15, .3]], click: .4 },
+};
+/** A rig is everything a sound needs: the context, an output with a limiter on it, and two seconds each of plain and gritty noise. */
+function sfxRig(ac) {
+  const sr = ac.sampleRate, n = Math.floor(sr * 2), noise = ac.createBuffer(1, n, sr), grit = ac.createBuffer(1, n, sr), a = noise.getChannelData(0), b = grit.getChannelData(0), rnd = seedOf('sand');
+  let g = 0, left = 0;   // grit: the same noise, but in grains a few thousandths of a second long, most of them quiet
+  for (let i = 0; i < n; i++) { a[i] = rnd() * 2 - 1; if (left-- <= 0) { left = Math.floor(sr * (.004 + rnd() * .012)); g = rnd() ** 3; } b[i] = (rnd() * 2 - 1) * g; }
+  const out = ac.createGain(), lim = ac.createDynamicsCompressor();
+  out.gain.value = .55; lim.threshold.value = -18; lim.knee.value = 10; lim.ratio.value = 10; lim.attack.value = .002; lim.release.value = .12;
+  out.connect(lim); lim.connect(ac.destination);
+  return { ac, out, noise, grit, at: 0 };
+}
+const sfxPan = (rig, node, pan) => { if (!pan || !rig.ac.createStereoPanner) return node; const p = rig.ac.createStereoPanner(); p.pan.value = Math.max(-1, Math.min(1, pan)); node.connect(p); return p; };
+/** Shaped noise. With a curve (values 0 to 1) the loudness follows it; without one it is a quick attack and a fall. */
+function sndNoise(rig, t, { buf = 'noise', dur, type = 'bandpass', f, f1, q = .9, curve, gain = .1, pan = 0, top = 0 }) {
+  const { ac } = rig, src = ac.createBufferSource(), flt = ac.createBiquadFilter(), amp = ac.createGain();
+  let tail = amp; if (top) { tail = ac.createBiquadFilter(); tail.type = 'lowpass'; tail.frequency.value = top; tail.Q.value = .5; amp.connect(tail); }   // sand is dry, not hissy: the very top is taken off
+  src.buffer = rig[buf]; src.loop = true; flt.type = type; flt.Q.value = q; flt.frequency.setValueAtTime(f, t); if (f1) flt.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  if (curve) { amp.gain.value = 0; amp.gain.setValueCurveAtTime(Float32Array.from(curve, (v) => v * gain), t, dur); }
+  else { amp.gain.setValueAtTime(.0001, t); amp.gain.linearRampToValueAtTime(gain, t + Math.min(.004, dur / 4)); amp.gain.exponentialRampToValueAtTime(.0001, t + dur); }
+  src.connect(flt); flt.connect(amp); sfxPan(rig, tail, pan).connect(rig.out);
+  src.start(t, (rig.at = (rig.at + .37) % 1.6)); src.stop(t + dur + .03);
+}
+/** One ringing partial: a sine that starts a shade sharp and dies away. */
+function sndTone(rig, t, { f, f1, dur, gain, pan = 0, attack = .0015 }) {
+  const { ac } = rig, o = ac.createOscillator(), amp = ac.createGain();
+  o.frequency.setValueAtTime(f, t); if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  amp.gain.setValueAtTime(.0001, t); amp.gain.linearRampToValueAtTime(gain, t + attack); amp.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  o.connect(amp); sfxPan(rig, amp, pan).connect(rig.out); o.start(t); o.stop(t + dur + .02);
+}
+/** One piece knocks another. */
+function sndClack(rig, t, mat, { gain = .5, pitch = 1, pan = 0 } = {}) {
+  const M = SND_MAT[mat] ?? SND_MAT.wood;
+  for (const [f, ring, lvl] of M.p) sndTone(rig, t, { f: f * pitch * 1.04, f1: f * pitch, dur: ring, gain: gain * lvl, pan });
+  sndNoise(rig, t, { type: 'highpass', f: 3800, q: .5, dur: .012, gain: gain * M.click * .5, pan });
+}
+function sndThud(rig, t, { gain = .4, pan = 0, f = 330 } = {}) { sndTone(rig, t, { f, f1: f * .45, dur: .2, gain, pan, attack: .004 }); sndNoise(rig, t, { f: 520, q: .8, dur: .14, gain: gain * .7, pan }); }
+// How loud a slide is at each moment: the speed of the piece on the curve it moves along.
+const SND_SLIDE = (() => { const n = 24, v = []; for (let i = 0; i <= n; i++) v.push(i === 0 || i === n ? 0 : sandEase((i + .5) / n) - sandEase((i - .5) / n)); const mx = Math.max(...v); return v.map((x) => (x / mx) ** .8); })();
+const SND_BELL = Array.from({ length: 17 }, (_, i) => Math.sin(Math.PI * i / 16) ** 1.5);
+/** A piece pushed through sand: the hiss, the grit, the weight of it, and the small give when it stops. */
+function sndScrape(rig, t, { dur = .26, weight = .4, pan = 0, gain = 1 } = {}) {
+  sndNoise(rig, t, { dur, f: 2600 - 900 * weight, q: .8, curve: SND_SLIDE, gain: .12 * gain, pan, top: 6500 });
+  sndNoise(rig, t, { buf: 'grit', f: 3000, q: .6, dur, curve: SND_SLIDE, gain: .3 * gain, pan, top: 6500 });
+  sndNoise(rig, t, { dur, f: 760 - 260 * weight, q: .7, curve: SND_SLIDE, gain: (.07 + .12 * weight) * gain, pan });
+  sndTone(rig, t + dur * .9, { f: 330 - 80 * weight, f1: 170, dur: .09, gain: (.05 + .09 * weight) * gain, pan, attack: .003 });
+}
+function sndSwish(rig, t, { pan = 0 } = {}) { sndNoise(rig, t, { dur: .12, f: 1700, f1: 4600, q: 1.4, curve: SND_BELL, gain: .16, pan }); }
+function sndShot(rig, t, { pan = 0 } = {}) { sndNoise(rig, t, { dur: .075, f: 2300, f1: 6400, q: 2.2, curve: SND_BELL, gain: .11, pan }); }
+/** A blow lands: the knock of what was struck, and the sand it kicks up. A blocked blow knocks on the shield's wood. */
+function sndHit(rig, t, mat, { crit = false, block = false, ranged = false, pan = 0, jit = .95 + Math.random() * .1 } = {}) {
+  if (ranged) { sndShot(rig, t, { pan }); t += .07; }
+  sndClack(rig, t, block ? 'wood' : mat, { gain: crit ? .75 : block ? .4 : .5, pitch: (crit ? .86 : block ? .72 : 1) * jit, pan });
+  sndNoise(rig, t + .01, { dur: crit ? .16 : .09, f: 3200, q: .8, gain: crit ? .09 : .05, pan });
+}
+/** A fighter goes down: the piece knocks over, lands, and the sand settles round it. */
+function sndFall(rig, t, mat, { pan = 0 } = {}) {
+  sndClack(rig, t, mat, { gain: .6, pitch: .8, pan }); sndThud(rig, t + .05, { gain: .5, pan });
+  sndNoise(rig, t + .06, { dur: .42, f: 2500, f1: 1500, q: .8, gain: .12, pan, top: 6500 }); sndNoise(rig, t + .06, { buf: 'grit', f: 3000, q: .6, dur: .3, gain: .2, pan, top: 6500 });
+}
+/** The rake goes over the floor: one long pass, the tines catching. */
+function sndRake(rig, t) {
+  const n = 40, curve = Array.from({ length: n + 1 }, (_, i) => Math.sin(Math.PI * i / n) ** .7 * (.72 + .28 * Math.sin(i / n * 2 * Math.PI * 6))); curve[0] = curve[n] = 0;
+  sndNoise(rig, t, { dur: .6, f: 1500, f1: 2300, q: .9, curve, gain: .12, top: 6000 }); sndNoise(rig, t, { buf: 'grit', f: 2800, q: .6, dur: .6, curve, gain: .22, top: 6000 });
+}
+/** The live rig, if sound is on and the browser has let it start. */
+function sfx() { const r = SFX.on ? SFX.rig : null; return r && r.ac.state === 'running' ? r : null; }
+/** Browsers only let sound start from inside a tap, so every tap wakes it. */
+function sfxWake() {
+  if (!SFX.on) return;
+  if (!SFX.rig) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+    try { if (navigator.audioSession) navigator.audioSession.type = 'ambient'; } catch (e) { /* it then behaves as the browser decides */ }
+    try { SFX.rig = sfxRig(new AC()); } catch (e) { return; } }
+  if (SFX.rig.ac.state !== 'running') { try { SFX.rig.ac.resume()?.catch?.(() => {}); } catch (e) { /* the next tap tries again */ } }
+}
+for (const ev of ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown']) document.addEventListener(ev, sfxWake, { capture: true, passive: true });
+/** Play one sound, unless the same kind has only just played. A sound that fails must never stop a fight. */
+function sfxPlay(kind, gap, fn) { const r = sfx(); if (!r) return; const now = r.ac.currentTime; if (now - (SFX.last[kind] ?? -9) < gap) return; SFX.last[kind] = now; try { fn(r, now + .008); } catch (e) { /* silence */ } }
+/** The scrape under a dragged piece follows the finger: speed in pixels per millisecond on every move, and -1 when it is let go. */
+function sfxDrag(speed) {
+  const r = sfx(); let d = SFX.drag; if (!r) { SFX.drag = null; return; }
+  const now = r.ac.currentTime;
+  if (speed < 0) { if (!d) return; for (const g of d.amps) { g.gain.cancelScheduledValues(now); g.gain.setTargetAtTime(0, now, .03); } for (const src of d.srcs) src.stop(now + .3); SFX.drag = null; sndTone(r, now + .01, { f: 300, f1: 170, dur: .09, gain: .1, attack: .003 }); return; }
+  if (!d) { d = SFX.drag = { amps: [], srcs: [], lvl: [] }; const top = r.ac.createBiquadFilter(); top.type = 'lowpass'; top.frequency.value = 6500; top.Q.value = .5; top.connect(r.out);
+    for (const [buf, f, q, lvl] of [['noise', 2400, .8, .13], ['grit', 3000, .6, .32], ['noise', 640, .7, .11]]) { const src = r.ac.createBufferSource(), flt = r.ac.createBiquadFilter(), amp = r.ac.createGain();
+      src.buffer = r[buf]; src.loop = true; flt.type = 'bandpass'; flt.frequency.value = f; flt.Q.value = q; amp.gain.value = 0; src.connect(flt); flt.connect(amp); amp.connect(top); src.start(now, d.srcs.length * .5); d.amps.push(amp); d.srcs.push(src); d.lvl.push(lvl); } }
+  const level = Math.max(0, Math.min(1, speed / .9)) ** .7;
+  d.amps.forEach((g, i) => { g.gain.cancelScheduledValues(now); g.gain.setTargetAtTime(level * d.lvl[i], now, .03); g.gain.setTargetAtTime(0, now + .08, .07); });
+}
+// What a piece is made of, how heavy it drags, and where across the board it is heard.
+const sfxMat = (lk) => (lk.faction === 'legion' ? 'bone' : lk.faction === 'warren' ? 'stone' : (lk.stars || 1) === 1 && LEAN_OF(lk) === 'specialist' ? ({ skirmisher: 'cork', controller: 'tin' })[lk.job] ?? 'wood' : 'wood');
+const sfxWeight = (lk) => Math.min(1, (LEAN_OF(lk) === 'tank' ? .8 : LEAN_OF(lk) === 'shooter' ? .15 : .4) + ((lk.stars || 1) >= 4 ? .2 : 0));
+const sfxAcross = (col) => (col - 3.5) / 3.5 * .5;
+const SND_ICON = (on) => `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 9.5h3.2L12 5.5v13l-4.8-4H4z" fill="currentColor"/>${on ? '<path d="M15.2 9a4.2 4.2 0 0 1 0 6M17.6 6.6a7.6 7.6 0 0 1 0 10.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>' : '<path d="M15.5 9.5l5 5M20.5 9.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>'}</svg>`;
+function sfxButtons() { document.querySelectorAll('.sndbtn').forEach((b) => { b.innerHTML = SND_ICON(SFX.on); b.setAttribute('aria-pressed', String(SFX.on)); b.setAttribute('aria-label', SFX.on ? 'Sound is on. Turn it off' : 'Sound is off. Turn it on'); b.onclick = sfxToggle; }); }
+function sfxToggle() {
+  SFX.on = !SFX.on; try { localStorage.setItem('ludus-sound', SFX.on ? '1' : '0'); } catch (e) { /* kept for this visit only */ }
+  sfxButtons();
+  if (!SFX.on) { SFX.drag = null; try { SFX.rig?.ac.suspend?.(); } catch (e) { /* already quiet */ } return; }
+  sfxWake(); const knock = () => sfxPlay('ui', 0, (r, t) => sndClack(r, t, 'wood', { gain: .45 }));   // one knock, so you know it is on
+  try { SFX.rig?.ac.resume()?.then?.(knock); } catch (e) { /* nothing to confirm with */ }
+}
+renderHud = ((orig) => function () { orig(); $('fbOpen')?.insertAdjacentHTML('beforebegin', '<button class="sndbtn" type="button"></button>'); sfxButtons(); })(renderHud);
+$('transport').insertAdjacentHTML('beforeend', '<button class="sndbtn" type="button"></button>'); sfxButtons();
 
 // ---------- Start ----------
 loadG(); load();
