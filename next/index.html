@@ -482,6 +482,12 @@ body.fighting .ranklab, body.fighting .midlab { display: none; }
 .train button { display: flex; flex-direction: column; gap: 5px; align-items: center; min-height: 52px; } .train button em { font-style: normal; color: var(--gold); }
 .pips { display: flex; gap: 4px; } .pips i { width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid var(--ink-3); } .pips i.on { background: var(--gold); border-color: var(--gold); }
 .fsq { width: 100%; min-height: 44px; color: var(--ink-2); font-size: 14px; }
+
+.fhero { align-items: start !important; }
+.fport { position: relative; width: 96px; height: 120px; flex: none; border-radius: 6px; background: #1b1612; box-shadow: 0 0 0 2px #14110e, 0 0 0 3px #c9a24a; }
+.fport img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; display: block; }
+.fport svg.stand.icon { position: absolute; right: -14px; bottom: -8px; width: 40px !important; filter: drop-shadow(0 2px 3px rgba(0,0,0,.6)) !important; }
+.fport.none { display: flex; align-items: flex-end; justify-content: center; background: linear-gradient(#c39a55, #e3c27c); } .fport.none svg.stand.icon { position: static; width: 58px !important; filter: none !important; }
 </style>
 
 <div class="wrap">
@@ -1770,8 +1776,7 @@ const arenaIds = () => E.LADDER_ARENAS.map((a) => a.id);
 function renderSchool() {
   $('schoolCard').innerHTML = `<div class="sn" style="grid-column:1/-1">Your school</div><div class="st" style="grid-column:1/-1">${winsOf()} win${winsOf() === 1 ? '' : 's'} from ${G.fights} fight${G.fights === 1 ? '' : 's'}</div>
     <div class="purse"><div><b>${G.denarii}</b><span>Denarii</span></div><div><b>${G.renown}</b><span>Renown</span></div><div><b>${G.fighters.length}</b><span>Fighters</span></div></div>`;
-  const canTrain = G.fighters.filter((f) => f.points > 0).length;
-  $('toRoster').innerHTML = `Roster${canTrain ? ` · <b style="color:var(--gold)">${canTrain} can train</b>` : ''}`;
+  $('toRoster').innerHTML = 'Roster';
   const calls = Object.values(E.CALLS).filter((c) => G[c.currency] >= c.cost).length;
   $('toHall').innerHTML = `The calls${calls ? ` · <b style="color:var(--gold)">${calls} ready</b>` : ''}`;
   speak('schoolSpeak', 'herald', 'The herald', G.fights === 0
@@ -1812,7 +1817,8 @@ const fighterById = (id) => G.fighters.find((f) => f.id === id);
 const canField = (f) => !!E.fieldable(G.doctore, f.template);
 /** A stored fighter is just his cast id and his progress. For the screens, give him his name and current body. */
 function dress(f) { Object.defineProperties(f, { name: { get: () => E.memberOf(f).name, configurable: true }, template: { get: () => E.loadoutOf(f).template, configurable: true } }); return f; }
-function dressAll() { G.fighters.forEach(dress); G.fighters.forEach((f) => E.settleTraining?.(f)); }
+// No levels: a fighter is what he is. Anything an older save earned that way is cleared.
+function dressAll() { G.fighters.forEach(dress); G.fighters.forEach((f) => { f.training = {}; f.xp = 0; f.points = 0; }); }
 const M = (f) => E.memberOf(f);
 function unitOf(f, prev) {
   const u = E.fighterUnit(f); u.fid = f.id; u._style = styleOf(u).id; u._icon = M(f).icon; u._ink = M(f).ink; u._lean = M(f).lean; u._tone = M(f).tone; u._fame = f.tokens > 0;
@@ -1847,7 +1853,7 @@ function renderRosterScreen() {
   const order = (f) => `${M(f).faction}|${M(f).stars}|${M(f).title}|${M(f).lean}|${f.name}`;
   $('fighterList').innerHTML = [...G.fighters].sort((a, b) => order(a).localeCompare(order(b))).map((f) => { const t = E.UNITS[f.template], u = unitOf(f), r = E.resolveUnit(u);
     return `<div class="piece"><div class="ph" style="grid-template-columns:40px minmax(0,1fr) auto">${tokenSvg(lookOf(u), { side: 0, bare: true })}
-      <button class="info" data-f="${f.id}"><span class="pn"><em class="pdot" style="background:${paintOf(f)}"></em>${f.name}<i style="color:var(--ink-3)">Lv ${E.levelOf(f.xp)}</i>${f.points ? '<i style="color:var(--gold)">can train</i>' : ''}</span><span class="pk">${fighterLine(f)} · ${E.FACTIONS[t.faction]?.name ?? ''}</span>${statLine(r)}</button><span class="bc">${cost(u)}${costSplit(u)}</span></div></div>`; }).join('');
+      <button class="info" data-f="${f.id}"><span class="pn"><em class="pdot" style="background:${paintOf(f)}"></em>${f.name}</span><span class="pk">${fighterLine(f)} · ${E.FACTIONS[t.faction]?.name ?? ''}</span>${statLine(r)}</button><span class="bc">${cost(u)}${costSplit(u)}</span></div></div>`; }).join('');
   $('fighterList').querySelectorAll('[data-f]').forEach((el) => el.onclick = () => openFighter(el.dataset.f));
 }
 nameTeam = ((orig) => function (team) { orig(team); if (!FREE && G?.fighters) for (const u of team.units) if (u.fid && fighterById(u.fid)) u.name = fighterById(u.fid).name; })(nameTeam);
@@ -1856,7 +1862,7 @@ const GRADE = { light: 'light armor', medium: 'medium armor', heavy: 'heavy armo
 /** What he is, then what he carries: "Peasant ★ · Base" / "Club, light armor". */
 const fighterLine = (f) => { const u = E.fighterUnit(f), r = E.resolveUnit(u); return `${E.UNITS[u.template].name} ${'★'.repeat(M(f).stars)} · ${E.LEANS[M(f).lean].name}</span><span class="pk kit">${r.weapon.name}${u.equip?.off ? ` and ${E.ITEMS?.[u.equip.off]?.name ?? 'shield'}` : ''}, ${GRADE[u.grade ?? 'medium']}`; };
 /** The bill split: the body alone (unarmed, light), and what his kit adds. */
-const costSplit = (u) => { const total = cost(u), body = Math.min(total, E.billOf({ template: u.template, grade: 'light' }).total); return `<small>${body} + ${total - body} kit</small>`; };
+const costSplit = (u) => { const total = cost(u), body = Math.min(total, E.billOf({ template: u.template, grade: 'light' }).total); return total > body ? `<small>body ${body}<br>kit ${total - body}</small>` : ''; };
 
 renderRoster = ((orig) => function () {
   if (FREE) return orig();
@@ -1869,8 +1875,8 @@ renderRoster = ((orig) => function () {
     const u = unitOf(f), c = cost(u), r = E.resolveUnit(u, E.doctoreEffectsFor(S.mine, E.UNITS[f.template]));
     const inSquad = S.mine.units.some((x) => x.fid === f.id);
     const cant = !inSquad && (c > left || (E.fieldable(S.myDoc, f.template) === 'neutral' && neutralsIn >= 3));
-    return `<div class="piece frow ${inSquad ? 'in' : ''}"><div class="ph" style="grid-template-columns:40px minmax(0,1fr) 44px 44px">${tokenSvg(lookOf(u), { side: 0, bare: true })}
-      <button class="info" data-f="${f.id}"><span class="pn"><em class="pdot" style="background:${paintOf(f)}"></em>${f.name}<i style="color:var(--ink-3)">Lv ${E.levelOf(f.xp)}</i>${f.points ? '<i style="color:var(--gold)">can train</i>' : ''}</span><span class="pk">${fighterLine(f)}</span>${statLine(r)}</button>
+    return `<div class="piece frow ${inSquad ? 'in' : ''}"><div class="ph" style="grid-template-columns:40px minmax(0,1fr) 46px 44px">${tokenSvg(lookOf(u), { side: 0, bare: true })}
+      <button class="info" data-f="${f.id}"><span class="pn"><em class="pdot" style="background:${paintOf(f)}"></em>${f.name}</span><span class="pk">${fighterLine(f)}</span>${statLine(r)}</button>
       <span class="bc" style="${cant ? 'opacity:.5' : ''}">${c}${costSplit(u)}</span>
       <button class="add" data-toggle="${f.id}" ${cant ? 'disabled' : ''} aria-pressed="${inSquad}" aria-label="${inSquad ? 'Take' : 'Put'} ${f.name} ${inSquad ? 'out of' : 'in'} the squad">${inSquad ? '✓' : '+'}</button></div></div>`;
   }).join('') + (out.length ? `<p class="hint" style="margin:0">Sitting out under ${E.DOCTORE_BY_ID[G.doctore].name}: ${out.map((f) => f.name).join(', ')}.</p>` : '');
@@ -1900,17 +1906,14 @@ function renderFighter() {
   $('editIn').innerHTML = `
     <button id="edDone" class="fx-close" aria-label="Close">✕</button>
     <div class="card" style="border:0;padding:0;background:none">
-      <div class="head">${tokenSvg(lookOf(u), { side: 0, bare: true })}
+      <div class="head fhero">${(() => { const art = ART.portraits[M(f).icon] ?? ART.portraits[ART.alias[M(f).icon]]; return art ? `<div class="fport"><img src="${art}" alt="">${tokenSvg(lookOf(u), { side: 0, bare: true })}</div>` : `<div class="fport none">${tokenSvg(lookOf(u), { side: 0, bare: true })}</div>`; })()}
         <div class="who"><div class="name"><em class="pdot" style="background:${paintOf(f)}"></em>${f.name}</div><div class="meta">${t.name} ${'★'.repeat(M(f).stars)} · ${E.LEANS[M(f).lean].name}</div><div class="fline">${M(f).line}</div></div>
         <div class="cost"><b>${cost(u)}</b><span>on the bill</span></div></div>
       ${statsHtml(r)}
       ${chipsHtml(chips)}
     </div>
-    <div class="frow2"><span>Carries</span><b>${kitR.weapon.name}${u.equip?.off ? ` and ${E.ITEMS?.[u.equip.off]?.name ?? 'shield'}` : ''}, ${GRADE[u.grade ?? 'medium']}</b><small>${cur.role}. ${costSplit(u).replace(/<\/?small>/g, '')}.</small></div>
+    <div class="frow2"><span>Kit</span><b>${kitR.weapon.name}${u.equip?.off ? ` and ${E.ITEMS?.[u.equip.off]?.name ?? 'shield'}` : ''}, ${GRADE[u.grade ?? 'medium']}</b><small>${cur.role}.${costSplit(u) ? ` On the bill: ${costSplit(u).replace(/<\/?small>/g, '').replace('<br>', ' + ')}.` : ''}</small></div>
     <select id="fLoadout" hidden>${builds.map((b) => `<option value="${b.id}" ${b.id === cur.id ? 'selected' : ''}>${b.name}</option>`).join('')}</select>
-    <div class="frow2"><span>Level ${lvl}</span><div class="xpbar"><i style="width:${top ? 100 : (f.xp % E.XP_PER_LEVEL) / E.XP_PER_LEVEL * 100}%"></i></div><small>${top ? 'Top level.' : `${wins} win${wins > 1 ? 's' : ''} to level ${lvl + 1}. Each level gives one training point.`}</small></div>
-    <div class="frow2"><span>Training</span><b class="${f.points ? 'gold' : 'dim'}">${f.points ? `${f.points} point${f.points > 1 ? 's' : ''} to spend` : 'no points to spend'}</b>
-      <div class="opt c4 train">${E.TRAIN_STATS.filter((st) => t.trainable[st]).map((st) => `<button data-train="${st}" ${owned && E.canTrain(f, st) ? '' : 'disabled'}><span>${label[st]} <em>+${step[st]}</em></span><span class="pips">${pips(f.training[st] ?? 0, cap)}</span></button>`).join('')}</div></div>
     ${f.tokens ? `<div class="frow2"><span>Fame</span><b class="gold">${E.fameOf(f)}</b><small>${f.tokens} token${f.tokens > 1 ? 's' : ''} from answering the call again.</small></div>` : ''}
 `;
   const root = $('editIn');
@@ -1969,15 +1972,13 @@ function fightDone(res) {
     const joined = E.doctoresAt(winsOf()).filter((id) => !G.doctores.includes(id));
     const brought = {};
     for (const id of joined) { G.doctores.push(id); brought[id] = E.fightersWith(id, G.fighters.map((f) => f.id)); G.fighters.push(...brought[id]); dressAll(); }
-    const levelled = [];
-    for (const u of S.mine.units) { const f = u.fid && fighterById(u.fid); if (f && E.gainXp(f, won)) levelled.push(f.name); }
     saveG();
     const opened = E.LADDER_ARENAS.filter((x) => E.arenaOpen(x.id, G.arenaWins) && !openBefore.includes(x.id)).map((x) => x.name);
     const afford = Object.values(E.CALLS).filter((c) => G[c.currency] >= c.cost).map((c) => c.name);
     P.spoils = `<div class="big">${won ? 'Victory' : res.winner === null ? 'A draw' : 'Defeat'}: +${rw.denarii} denarii${rw.renown ? `, +${rw.renown} renown` : ''}</div>
       <p>${won ? (before ? `Another win over ${S.opponent?.name ?? 'them'} at ${a.name}.` : `Your first win at ${a.name} pays the full purse. You beat ${S.opponent?.name ?? 'them'}.`) : `${S.opponent?.name ?? 'They'} had your measure. A few coins for showing up: change the squad or the formation and go again.`}</p>
       ${joined.map((id) => { const x = E.DOCTORE_BY_ID[id]; return `<p><b style="color:var(--gold)">${x.name} now works for you.</b> ${E.FACTIONS[x.faction].name}: ${x.twist.name}. With the contract come ${brought[id].map((f) => f.name).join(', ')}. Pick this doctore at muster to fight under them.</p>`; }).join('')}
-      ${levelled.length ? `<p><b style="color:var(--gold)">Level up:</b> ${levelled.join(', ')}. A training point each: spend it on the fighter's sheet.</p>` : ''}
+
       ${opened.length ? `<p><b style="color:var(--gold)">${opened.join(' and ')} ${opened.length > 1 ? 'are' : 'is'} now open.</b></p>` : ''}
       ${afford.length ? `<p>You can sound a ${afford.join(' or a ')}.</p>` : ''}
       <button class="primary" id="toSchool">Back to the school</button>`;
