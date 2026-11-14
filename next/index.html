@@ -293,6 +293,7 @@ body.free #stepSchool small { visibility: hidden; }
 .dchip small { display: block; font: 600 10px var(--f-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
 .dchip[aria-pressed="true"] { border-color: var(--gold); background: var(--stone-3); box-shadow: inset 0 0 0 1px var(--gold); }
 
+div.dcard { background: var(--stone-2); border: 1px solid var(--line); border-radius: 10px; }
 .frow.in { border-color: var(--good); box-shadow: inset 0 0 0 1px var(--good); }
 .frow .add[aria-pressed="true"] { border-color: var(--good); color: var(--good); }
 .frow .ph .bc { text-align: right; font: 22px/1 var(--f-display); color: var(--gold); }
@@ -353,14 +354,22 @@ body.free #stepSchool small { visibility: hidden; }
   <!-- SCHOOL: home -->
   <section id="school" class="screen" hidden>
     <div class="school" id="schoolCard"></div>
-    <h2 class="sec">Doctores <span>the one in charge decides who you can field</span></h2>
-    <div class="docs" id="docRow"></div>
-    <div class="row"><button id="toHall" class="grow">Hiring hall</button><button id="fbOpen2" class="grow">Give feedback</button></div>
+    <div class="row"><button id="toRoster" class="grow">Roster</button><button id="toHall" class="grow">Hiring hall</button></div>
     <div class="speaker" id="schoolSpeak"></div>
     <div id="ladderList" class="screen" style="gap:8px"></div>
     <h2 class="sec">Look <span>try all three in a fight</span></h2>
     <div class="seg looks" id="looks"></div>
+    <div class="row"><button id="fbOpen2" class="grow">Give feedback</button></div>
     <div class="row"><button id="toFree" class="grow">Free battle (testers)</button><button id="resetSchool" class="grow">Start a new school</button></div>
+  </section>
+
+  <!-- ROSTER: doctores, their saved squads, and every fighter -->
+  <section id="rosterScr" class="screen" hidden>
+    <h2 class="sec">Doctores <span>each keeps his own squad</span></h2>
+    <div id="docList" class="screen" style="gap:8px"></div>
+    <h2 class="sec">Fighters <span id="fighterNote"></span></h2>
+    <div id="fighterList" class="roster"></div>
+    <button class="cta" id="rosterBack">Back to the school</button>
   </section>
 
   <!-- HALL: sign new pieces -->
@@ -378,6 +387,7 @@ body.free #stepSchool small { visibility: hidden; }
     <div class="twist free-only" id="myTwist"></div>
 
     <div id="arenaTop" class="camp-only" style="display:flex;flex-direction:column;gap:6px"></div>
+    <div class="camp-only" style="display:flex;flex-direction:column;gap:6px"><h2 class="sec">Doctore <span>each keeps his own squad</span></h2><div class="docs" id="docRow"></div><div class="twist" id="docTwist"></div></div>
     <h2 class="sec free-only">The rival <span id="rivalName"></span></h2>
     <div class="seg free-only" id="ladder"></div>
     <div class="hint free-only" id="rivalBlurb"></div>
@@ -1289,6 +1299,7 @@ function setLook(id) {
   else if (S.step === 'muster') renderMuster();
   else if (S.step === 'school') renderSchool();
   else if (S.step === 'hall') renderHall();
+  else if (S.step === 'rosterScr') renderRosterScreen();
   renderLegend();
 }
 
@@ -1302,16 +1313,16 @@ function renderHud() {
 function show(name) {
   S.run++; P.token++; P.playing = false; S.mode = 'idle'; S.step = name; S.sel = null;
   closeEdit(); closeSheet();
-  for (const id of ['start', 'school', 'hall', 'muster', 'arena']) $(id).hidden = id !== name;
+  for (const id of ['start', 'school', 'hall', 'rosterScr', 'muster', 'arena']) $(id).hidden = id !== name;
   document.body.classList.remove('fighting');
   $('steps').hidden = true;
   if (FREE) { FREE = false; document.body.classList.remove('free'); S.myDoc = G.doctore; S.mine.doctore = G.doctore; try { if (location.hash === '#battle') history.replaceState(null, '', location.pathname.replace(/\/battle\/?$/, '/') + location.search); } catch (e) { /* the address bar is cosmetic */ } }
   renderHud();
-  if (name === 'school') renderSchool(); else if (name === 'hall') renderHall();
+  if (name === 'school') renderSchool(); else if (name === 'hall') renderHall(); else if (name === 'rosterScr') renderRosterScreen();
   window.scrollTo(0, 0);
 }
 go = ((orig) => function (step) {
-  for (const id of ['start', 'school', 'hall']) $(id).hidden = true;
+  for (const id of ['start', 'school', 'hall', 'rosterScr']) $(id).hidden = true;
   $('steps').hidden = false; paintFloor(); orig(step); renderHud();
 })(go);
 setFightUi = ((orig) => function () { orig(); $('spoils').hidden = !(S.step === 'fight' && S.mode === 'done'); })(setFightUi);
@@ -1333,6 +1344,7 @@ renderFormation = ((orig) => function () {
 })(renderFormation);
 renderMuster = ((orig) => function (full) {
   orig(full);
+  if (hideRival()) renderDocRow();
   if (hideRival()) { const a = arenaNow(); $('arenaTop').innerHTML = `<div class="arena-h"><b>${a.name}</b><span>${a.line}</span></div><p class="hint" style="margin:0">Bill <b style="color:var(--gold)">${a.bill}</b> · purse <b style="color:var(--gold)">${E.reward(a.id, true, (G.arenaWins[a.id] ?? 0) > 0).denarii}</b>. You will not know who you face until the gates open.</p>`; }
 })(renderMuster);
 $('stepSchool').onclick = () => show('school');
@@ -1352,21 +1364,16 @@ function freeBattle() {
 const speak = (el, who, name, html) => { $(el).innerHTML = `${ART.npcs?.[who] ? `<img src="${ART.npcs[who]}" alt="">` : '<span></span>'}<div class="say"><b>${name}</b>${html}</div>`; };
 const arenaIds = () => E.LADDER_ARENAS.map((a) => a.id);
 function renderSchool() {
-  const d = E.DOCTORE_BY_ID[G.doctore];
-  $('schoolCard').innerHTML = `${docSigil(d)}<div class="sn">${d.name}'s school</div><div class="st">${E.FACTIONS[d.faction].name} · <b>${d.twist.name}</b>: ${d.twist.line}</div>
+  $('schoolCard').innerHTML = `<div class="sn" style="grid-column:1/-1">Your school</div><div class="st" style="grid-column:1/-1">${winsOf()} win${winsOf() === 1 ? '' : 's'} from ${G.fights} fight${G.fights === 1 ? '' : 's'}</div>
     <div class="purse"><div><b>${G.denarii}</b><span>Denarii</span></div><div><b>${G.renown}</b><span>Renown</span></div><div><b>${G.fighters.length}</b><span>Fighters</span></div></div>`;
-  $('docRow').innerHTML = E.DOCTORE_UNLOCKS.map((u) => { const x = E.DOCTORE_BY_ID[u.id], have = G.doctores.includes(u.id);
-    return `<button class="dchip" data-doc-pick="${u.id}" aria-pressed="${u.id === G.doctore}" ${have ? '' : 'disabled'}>${docSigil(x)}<span>${x.name}<small>${have ? E.FACTIONS[x.faction].name : `after ${u.wins} win${u.wins === 1 ? "" : "s"}`}</small></span></button>`; }).join('');
-  $('docRow').querySelectorAll('[data-doc-pick]').forEach((el) => el.onclick = () => {
-    G.doctore = el.dataset.docPick; S.myDoc = G.doctore; S.mine.doctore = G.doctore;
-    syncSquad(); refreshOffers(); saveG(); renderSchool(); renderHud();
-  });
+  const canTrain = G.fighters.filter((f) => f.points > 0).length;
+  $('toRoster').innerHTML = `Roster${canTrain ? ` · <b style="color:var(--gold)">${canTrain} can train</b>` : ''}`;
   if (!G.offers) refreshOffers();
   const canSign = G.offers.filter((f) => E.hirePrice(f.template) <= G.denarii).length;
   $('toHall').innerHTML = `Hiring hall${canSign ? ` · <b style="color:var(--gold)">${canSign} you can afford</b>` : ''}`;
   speak('schoolSpeak', 'herald', 'The herald', G.fights === 0
-    ? 'The school is yours now, and so are its debts. Old Magnus still trains here. Every fight has a bill: the most you may spend on your lineup.<ol><li>Pick where to fight. You will not know who you face.</li><li>Muster fighters under the bill.</li><li>Set the formation, then fight.</li></ol>Win, and other doctores will come asking for work.'
-    : `${winsOf()} wins from ${G.fights} fights. ${G.doctores.length < E.DOCTORE_UNLOCKS.length ? `Another doctore turns up after ${E.DOCTORE_UNLOCKS.find((u) => !G.doctores.includes(u.id)).wins} wins.` : 'Every doctore in the province has worked for you.'}`);
+    ? 'The school is yours now, and so are its debts. Old Magnus still trains here. Every fight has a bill: the most you may spend on your squad.<ol><li>Pick where to fight. You will not know who you face.</li><li>Muster fighters under the bill.</li><li>Set the formation, then fight.</li></ol>Win, and other doctores will come asking for work.'
+    : (() => { const nx = E.DOCTORE_UNLOCKS.find((u) => !G.doctores.includes(u.id)); if (!nx) return 'Every doctore in the province has worked for you.'; const n = Math.max(1, nx.wins - winsOf()); return `Word is another doctore will come asking for work after ${n} more win${n === 1 ? '' : 's'}.`; })());
   let html = '';
   const ids = arenaIds();
   // You choose where to fight, not whom. Open arenas, newest first, and one line about the next.
@@ -1378,7 +1385,7 @@ function renderSchool() {
   $('ladderList').innerHTML = html;
   $('ladderList').querySelectorAll('[data-arena-go]').forEach((el) => el.onclick = () => {
     S.arena = el.dataset.arenaGo; S.rival = 'random'; S.bill = arenaNow().bill; S.myDoc = G.doctore; S.mine.doctore = G.doctore;
-    syncSquad();
+    loadSquad();
     draftRival(); go('muster');
   });
   $('looks').innerHTML = LOOKS.map((l) => `<button data-look-id="${l[0]}" aria-pressed="${l[0] === lookNow}">${l[1]}<small>${l[2]}</small></button>`).join('');
@@ -1392,6 +1399,8 @@ $('resetSchool').onclick = () => {
   newSchool(); show('school');
 };
 $('toHall').onclick = () => show('hall');
+$('toRoster').onclick = () => show('rosterScr');
+$('rosterBack').onclick = () => show('school');
 $('toFree').onclick = freeBattle;
 $('hallBack').onclick = () => show('school');
 // ---------- Fighters: the school owns named individuals ----------
@@ -1406,7 +1415,39 @@ function unitOf(f, prev) {
 }
 /** Keep the squad in step with the roster: same men, their current loadout and training, only those this doctore can field. */
 function syncSquad() { S.mine.units = S.mine.units.filter((u) => u.fid && fighterById(u.fid) && canField(fighterById(u.fid))).map((u) => unitOf(fighterById(u.fid), u)); }
-function refreshOffers() { G.offers = E.hallOffers(G.doctore, winsOf(), rngNow(), G.fighters.map((f) => f.name)); }
+/** The hall draws from every family the school can field: one recruit per slot, for a doctore picked at random. */
+function refreshOffers() {
+  const rng = rngNow(), names = G.fighters.map((f) => f.name); G.offers = [];
+  for (let i = 0; i < 4; i++) { const d = G.doctores[Math.floor(rng.next() * G.doctores.length)]; const f = E.hallOffers(d, winsOf(), rng, names, 1)[0]; if (f) { names.push(f.name); G.offers.push(f); } }
+}
+/** Each doctore keeps his own squad: who is in it, where they stand and their orders. */
+function stashSquad() { if (FREE || !G) return; (G.squads ??= {})[G.doctore] = S.mine.units.filter((u) => u.fid).map((u) => ({ fid: u.fid, pos: u.pos ?? null, tactic: u.tactic ?? null })); }
+function loadSquad() { S.mine.units = ((G.squads ?? {})[G.doctore] ?? []).filter((m) => fighterById(m.fid) && canField(fighterById(m.fid))).map((m) => unitOf(fighterById(m.fid), { pos: m.pos ?? undefined, tactic: m.tactic ?? undefined })); }
+function putInCharge(id) {
+  if (id === G.doctore || !G.doctores.includes(id)) return;
+  stashSquad(); G.doctore = id; S.myDoc = id; S.mine.doctore = id; loadSquad(); saveG();
+}
+save = ((orig) => function () { orig(); if (!FREE && G) { stashSquad(); saveG(); } })(save);
+const squadOf = (id) => ((G.squads ?? {})[id] ?? []).map((m) => fighterById(m.fid)).filter(Boolean);
+function renderDocRow() {
+  $('docRow').innerHTML = G.doctores.map((id) => { const x = E.DOCTORE_BY_ID[id]; return `<button class="dchip" data-doc-pick="${id}" aria-pressed="${id === G.doctore}">${docSigil(x)}<span>${x.name}<small>${E.FACTIONS[x.faction].name}</small></span></button>`; }).join('');
+  $('docRow').querySelectorAll('[data-doc-pick]').forEach((el) => el.onclick = () => { putInCharge(el.dataset.docPick); renderMuster(); });
+  const d = E.DOCTORE_BY_ID[G.doctore];
+  $('docTwist').innerHTML = `<b>${d.twist.name}</b> · ${d.twist.line}`;
+}
+function renderRosterScreen() {
+  $('docList').innerHTML = E.DOCTORE_UNLOCKS.map((u) => { const x = E.DOCTORE_BY_ID[u.id], have = G.doctores.includes(u.id), sq = have ? squadOf(u.id) : [];
+    const n = have ? G.fighters.filter((f) => E.fieldable(u.id, f.template)).length : 0;
+    return have
+      ? `<div class="dcard" style="cursor:default">${docSigil(x)}<span class="dn">${x.name}</span><span class="df">${E.FACTIONS[x.faction].name} · can field ${n} of your fighters</span><span class="dt"><b>${x.twist.name}</b> · ${x.twist.line}</span><span class="ds">${sq.length ? `Squad: ${sq.map((f) => f.name).join(', ')}` : 'No squad saved yet. One is kept the first time you muster under this doctore.'}</span></div>`
+      : `<div class="dcard" style="cursor:default;opacity:.45">${docSigil(x)}<span class="dn">${x.name}</span><span class="df">${E.FACTIONS[x.faction].name}</span><span class="ds">Comes asking for work after ${u.wins} win${u.wins === 1 ? '' : 's'}.</span></div>`; }).join('');
+  $('fighterNote').textContent = `${G.fighters.length}`;
+  const order = (f) => `${E.UNITS[f.template].faction}|${E.UNITS[f.template].stars ?? 1}|${E.UNITS[f.template].name}|${f.name}`;
+  $('fighterList').innerHTML = [...G.fighters].sort((a, b) => order(a).localeCompare(order(b))).map((f) => { const t = E.UNITS[f.template], u = unitOf(f), r = E.resolveUnit(u);
+    return `<div class="piece"><div class="ph" style="grid-template-columns:40px minmax(0,1fr) auto">${tokenSvg(lookOf(u), { side: 0, bare: true })}
+      <button class="info" data-f="${f.id}"><span class="pn">${f.name}<i style="color:var(--ink-3)">Lv ${E.levelOf(f.xp)}</i>${f.points ? '<i style="color:var(--gold)">can train</i>' : ''}</span><span class="pk">${fighterLine(f)} · ${E.FACTIONS[t.faction]?.name ?? ''}</span>${statLine(r)}</button><span class="bc">${cost(u)}</span></div></div>`; }).join('');
+  $('fighterList').querySelectorAll('[data-f]').forEach((el) => el.onclick = () => openFighter(el.dataset.f));
+}
 nameTeam = ((orig) => function (team) { orig(team); if (!FREE && G?.fighters) for (const u of team.units) if (u.fid && fighterById(u.fid)) u.name = fighterById(u.fid).name; })(nameTeam);
 const statLine = (r) => `<span class="bs"><b>${Math.round(r.stats.hp)}</b> HP<b>${Math.round(r.stats.atk + r.weapon.damage)}</b> DMG<b>${Math.round(E.armorCut(r.stats.def) * 100)}%</b> ARM${r.weapon.range > 1 ? `<b>${r.weapon.range}</b> REACH` : ''}</span>`;
 const buildName = (f) => (E.BUILDS[f.template].find((b) => b.id === f.build) ?? E.BUILDS[f.template][0]).name;
@@ -1466,7 +1507,7 @@ function renderFighter() {
     <div class="row">${owned ? `<button id="fSquad" class="grow" ${['muster', 'formation'].includes(S.step) ? '' : 'hidden'}>${inSquad ? 'Take out of the squad' : 'Put in the squad'}</button>` : ''}<button id="edDone" class="primary grow">Done</button></div>`;
   const root = $('editIn');
   wireStats(root, r); wireChips(root, chips);
-  const after = () => { syncSquad(); saveG(); save(); if (S.step === 'muster') renderMuster(false); else if (S.step === 'formation') renderFormation(); else if (S.step === 'hall') renderHall(); renderFighter(); };
+  const after = () => { syncSquad(); saveG(); save(); if (S.step === 'muster') renderMuster(false); else if (S.step === 'formation') renderFormation(); else if (S.step === 'hall') renderHall(); else if (S.step === 'rosterScr') renderRosterScreen(); renderFighter(); };
   $('fLoadout').onchange = (e) => { f.build = e.target.value; after(); };
   root.querySelectorAll('[data-train]').forEach((el) => el.onclick = () => { if (E.train(f, el.dataset.train)) after(); });
   if ($('fSquad')) $('fSquad').onclick = () => { toggleSquad(f.id); after(); };
@@ -1481,8 +1522,7 @@ function renderHall() {
     return `<div class="piece"><div class="ph" style="grid-template-columns:40px minmax(0,1fr) auto">${tokenSvg(lookOf(u), { side: 0, bare: true })}
       <button class="info" data-f="${f.id}"><span class="pn">${f.name}${hire ? '' : `<i style="color:var(--ink-3)">Lv ${E.levelOf(f.xp)}</i>${f.points ? '<i style="color:var(--gold)">can train</i>' : ''}`}</span><span class="pk">${fighterLine(f)}</span>${statLine(r)}</button>
       ${hire ? `<button class="sign ${price <= G.denarii ? 'primary' : ''}" data-hire="${f.id}" ${price <= G.denarii ? '' : 'disabled'}>Hire · <b>${price}</b></button>` : `<span class="bc">${cost(u)}</span>`}</div></div>`; };
-  $('hallList').innerHTML = (G.offers.length ? G.offers.map((f) => row(f, true)).join('') : '<p class="hint">Nobody is looking for work today. Come back after your next fight.</p>')
-    + `<h2 class="sec" style="margin-top:10px">Your fighters <span>${G.fighters.length}</span></h2>` + G.fighters.map((f) => row(f, false)).join('');
+  $('hallList').innerHTML = (G.offers.length ? G.offers.map((f) => row(f, true)).join('') : '<p class="hint">Nobody is looking for work today. Come back after your next fight.</p>');
   $('hallList').querySelectorAll('[data-hire]').forEach((el) => el.onclick = () => {
     const k = G.offers.findIndex((f) => f.id === el.dataset.hire); if (k < 0) return;
     const f = G.offers[k], price = E.hirePrice(f.template); if (price > G.denarii) return;
@@ -1519,7 +1559,7 @@ function fightDone(res) {
     const afford = G.offers.filter((f) => E.hirePrice(f.template) <= G.denarii).map((f) => `${f.name} (${E.UNITS[f.template].name})`);
     P.spoils = `<div class="big">${won ? 'Victory' : res.winner === null ? 'A draw' : 'Defeat'}: +${rw.denarii} denarii${rw.renown ? `, +${rw.renown} renown` : ''}</div>
       <p>${won ? (before ? `Another win over ${S.opponent?.name ?? 'them'} at ${a.name}.` : `Your first win at ${a.name} pays the full purse. You beat ${S.opponent?.name ?? 'them'}.`) : `${S.opponent?.name ?? 'They'} had your measure. A few coins for showing up: change the squad or the formation and go again.`}</p>
-      ${joined.map((id) => { const x = E.DOCTORE_BY_ID[id]; return `<p><b style="color:var(--gold)">${x.name} now works for you.</b> ${E.FACTIONS[x.faction].name}: ${x.twist.name}. With the contract come ${brought[id].map((f) => `${f.name} (${E.UNITS[f.template].name})`).join(', ')}. Choose who is in charge from the school.</p>`; }).join('')}
+      ${joined.map((id) => { const x = E.DOCTORE_BY_ID[id]; return `<p><b style="color:var(--gold)">${x.name} now works for you.</b> ${E.FACTIONS[x.faction].name}: ${x.twist.name}. With the contract come ${brought[id].map((f) => `${f.name} (${E.UNITS[f.template].name})`).join(', ')}. Pick this doctore at muster to fight under them.</p>`; }).join('')}
       ${levelled.length ? `<p><b style="color:var(--gold)">Level up:</b> ${levelled.join(', ')}. A training point each: spend it on the fighter's sheet.</p>` : ''}
       ${opened.length ? `<p><b style="color:var(--gold)">${opened.join(' and ')} ${opened.length > 1 ? 'are' : 'is'} now open.</b></p>` : ''}
       ${afford.length ? `<p>Looking for work, and you can afford them: ${afford.slice(0, 4).join(', ')}.</p>` : ''}
@@ -1567,7 +1607,7 @@ loadG(); load();
 document.documentElement.dataset.look = lookNow;
 buildGrid(); renderLegend();
 if (!G) newSchool();
-S.myDoc = G.doctore; S.mine.doctore = G.doctore; syncSquad();
+S.myDoc = G.doctore; S.mine.doctore = G.doctore; if ((G.squads ?? {})[G.doctore]) loadSquad(); else syncSquad();
 if (location.hash === '#battle' || /\/battle\/?$/.test(location.pathname)) freeBattle(); else { draftRival(); show('school'); }
 window.addEventListener('hashchange', () => { if (location.hash === '#battle' && !FREE) freeBattle(); });
 </script>
