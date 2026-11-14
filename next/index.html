@@ -450,6 +450,23 @@ button.arena-h b { font: 22px/1.1 var(--f-display); font-weight: 400; color: var
 .pick svg.stand.icon { width: 30px; } .meter { gap: 6px; }
 
 .pdot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; box-shadow: 0 0 0 1.5px #14110e, 0 0 0 2.5px rgba(239,230,214,.5); margin-right: 2px; align-self: center; }
+
+/* Quiet sand and taller tiles: the arena painting keeps to the margins, the grid fades, and each tile has headroom above its piece. */
+[data-look="lino"] .board { aspect-ratio: 8 / 13.44; background-size: cover; --sandc: #d2ad66; }
+[data-look="lino"] .board[data-arena="dregs"] { --sandc: #cfaa68; } [data-look="lino"] .board[data-arena="cellar"] { --sandc: #c8a868; }
+[data-look="lino"] .board[data-arena="proving"] { --sandc: #dcb96f; } [data-look="lino"] .board[data-arena="provincial"] { --sandc: #e2c98d; }
+[data-look="lino"] .board::before { content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+  background: radial-gradient(ellipse 66% 60% at 50% 50%, var(--sandc) 72%, color-mix(in srgb, var(--sandc) 0%, transparent) 100%),
+    linear-gradient(color-mix(in srgb, var(--sandc) 70%, transparent), color-mix(in srgb, var(--sandc) 70%, transparent)); }
+[data-look="lino"] .board::after { background: radial-gradient(ellipse at center, transparent 72%, rgba(40,22,6,.2)); }
+[data-look="lino"] .tile { border-color: rgba(40,24,8,.075); }
+[data-look="lino"] .tile.rankline { border-top: 2px solid rgba(40,24,8,.38); box-shadow: none; }
+[data-look="lino"] .tile.zone-me { background: rgba(255,244,214,.09); } [data-look="lino"] .tile.zone-them { background: rgba(60,20,10,.06); }
+[data-look="lino"] .midlab { color: rgba(40,24,8,.16); }
+body.fighting .ranklab, body.fighting .midlab { display: none; }
+[data-look="lino"] .tok .tags { top: -22%; }
+[data-look="lino"] body.fighting .board { width: min(100%, calc((100dvh - 244px) * 0.5952)); }
+[data-look="lino"] body.fighting.drilling .board, body.fighting.drilling .board { width: min(100%, calc((54dvh - 44px) * 0.5952)); }
 </style>
 
 <div class="wrap">
@@ -1517,7 +1534,7 @@ function tokenStand(u, opts) {
   let ticks = '';
   for (let k = 1; k < n; k++) ticks += `<rect x="${(50 - rx + 2 * rx * k / n - .6).toFixed(2)}" y="${cy}" width="1.2" height="24"/>`;
   const icon = !opts.stand, k = (icon ? 1 : .8) * (1 + (stars - 1) * .05);
-  return `<svg class="stand${icon ? ' icon' : ''}" viewBox="${icon ? '10 -2 80 156' : '8 72 84 84'}" aria-hidden="true">
+  return `<svg class="stand${icon ? ' icon' : ''}" viewBox="${icon ? '10 -2 80 156' : '8 72 84 84'}" ${icon ? '' : 'preserveAspectRatio="xMidYMax meet"'} aria-hidden="true">
     <defs><clipPath id="${id}"><path d="${band}"/></clipPath></defs>
     <ellipse cx="62" cy="${cy + 9}" rx="${rx + 10}" ry="${ry + 1}" fill="rgba(30,14,2,.3)"/>
     <path d="${band}" fill="#14110e" stroke="#14110e" stroke-width="2.6" stroke-linejoin="round"/>
@@ -1527,7 +1544,7 @@ function tokenStand(u, opts) {
 }
 /** A fallen piece: knocked over in the sand, on a stain. */
 function tokenFallen(u) {
-  return `<svg class="stand" viewBox="8 72 84 84" aria-hidden="true"><ellipse cx="54" cy="132" rx="40" ry="15" fill="#5e120e" opacity=".6"/><ellipse cx="22" cy="146" rx="9" ry="4" fill="#5e120e" opacity=".5"/>
+  return `<svg class="stand" viewBox="8 72 84 84" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><ellipse cx="54" cy="132" rx="40" ry="15" fill="#5e120e" opacity=".6"/><ellipse cx="22" cy="146" rx="9" ry="4" fill="#5e120e" opacity=".5"/>
     <g transform="translate(22 136) rotate(84) scale(.62 .5) translate(-50 -130)" opacity=".92">${setPiece(u, 'dead')}</g></svg>`;
 }
 function tokenSvg(u, opts = {}) {
