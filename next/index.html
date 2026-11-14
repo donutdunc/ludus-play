@@ -445,7 +445,7 @@ button.arena-h b { font: 22px/1.1 var(--f-display); font-weight: 400; color: var
 .meter .info:empty { display: none; }
 #fighterList .ph svg.stand.icon, .frow .ph svg.stand.icon { width: 38px; }
 #fighterList .piece, .piece.frow { padding: 6px 8px; } .frow .ph, #fighterList .ph { gap: 10px; }
-.piece .pk.kit { color: var(--ink-3); font-size: 12.5px; }
+.piece .pk.kitline { color: var(--ink-3); font-size: 12.5px; }
 .piece .ph .bc small { display: block; font: 600 10px/1.2 var(--f-ui); letter-spacing: .04em; color: var(--ink-3); white-space: nowrap; margin-top: 2px; }
 .pick svg.stand.icon { width: 30px; } .meter { gap: 6px; }
 
@@ -1937,7 +1937,7 @@ nameTeam = ((orig) => function (team) { orig(team); if (!FREE && G?.fighters) fo
 const statLine = (r) => `<span class="bs"><span><b>${Math.round(r.stats.hp)}</b> HP</span><span><b>${Math.round(r.stats.atk + r.weapon.damage)}</b> DMG</span><span><b>${Math.round(E.armorCut(r.stats.def) * 100)}%</b> ARM</span>${r.weapon.range > 1 ? `<span><b>${r.weapon.range}</b> REACH</span>` : ''}</span>`;
 const GRADE = { light: 'light armor', medium: 'medium armor', heavy: 'heavy armor' };
 /** What he is, then what he carries: "Peasant ★ · Base" / "Club, light armor". */
-const fighterLine = (f) => { const u = E.fighterUnit(f), r = E.resolveUnit(u); return `${E.UNITS[u.template].name} ${'★'.repeat(M(f).stars)}</span><span class="pk kit">${r.weapon.name}${u.equip?.off ? ` and ${E.ITEMS?.[u.equip.off]?.name ?? 'shield'}` : ''}, ${GRADE[u.grade ?? 'medium']}`; };
+const fighterLine = (f) => { const u = E.fighterUnit(f), r = E.resolveUnit(u); return `${E.UNITS[u.template].name} ${'★'.repeat(M(f).stars)}</span><span class="pk kitline">${r.weapon.name}${u.equip?.off ? ` and ${E.ITEMS?.[u.equip.off]?.name ?? 'shield'}` : ''}, ${GRADE[u.grade ?? 'medium']}`; };
 /** The bill split: the body alone (unarmed, light), and what his kit adds. */
 const costSplit = (u) => { const total = cost(u), body = Math.min(total, E.billOf({ template: u.template, grade: 'light' }).total); return total > body ? `<small>body ${body}<br>kit ${total - body}</small>` : ''; };
 
