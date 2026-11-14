@@ -517,6 +517,8 @@ body.fighting .ranklab, body.fighting .midlab { display: none; }
 .train button small { font: 600 10.5px/1.1 var(--f-ui); color: var(--ink-3); letter-spacing: .02em; white-space: nowrap; }
 .train button { min-height: 70px; } .frow2 > b i { font-style: normal; font-variant-numeric: tabular-nums; }
 .kit.locked { opacity: .6; } .kit.locked em { font-size: 18px; } .kit.locked em::before { display: none; }
+
+.chip.lent { border-color: var(--gold); border-style: dashed; }
 </style>
 
 <div class="wrap">
@@ -1968,28 +1970,27 @@ function renderFighter() {
     return { id: b.id, name: b.name, cost: cost(ku), locked: n >= E.kitsOpen(f) ? n - 1 : 0, gear: `${kr.weapon.name}${ku.equip?.off ? ` and ${E.ITEMS?.[ku.equip.off]?.name ?? 'shield'}` : ''}, ${GRADE[ku.grade ?? 'medium']}`, skills: Object.entries(ku.skills ?? {}).filter(([, lv]) => lv).map(([id]) => E.SKILLS[id]?.name ?? id).join(', ') }; });
   const art = ART.portraits[M(f).icon] ?? ART.portraits[ART.alias[M(f).icon]];
   // What the kit changes: the same man unarmed in light armor, against him as he stands.
-  const fx = E.doctoreEffectsFor(team, t), bareU = { template: u.template, grade: 'light', spread: u.spread }, rB = E.resolveUnit(bareU, fx);
+  // He always wears a kit, so his first kit is his baseline: its price is his price, and the other kits are measured against it.
+  const fx = E.doctoreEffectsFor(team, t), firstKit = kits[0], rB = E.resolveUnit(E.fighterUnit({ ...f, loadout: firstKit.id }), fx), onFirst = cur.id === firstKit.id;
   const total = cost(u), bodyCost = Math.min(total, E.billOf({ template: u.template, grade: 'light' }).total);
   const val = (x) => ({ HP: Math.round(x.stats.hp), DMG: Math.round(x.stats.atk + x.weapon.damage), ARMOR: Math.round(E.armorCut(x.stats.def) * 100), SPD: Math.round(x.stats.spd), ACC: Math.round(x.stats.acc), EVA: Math.round(x.evasion), MOVE: x.move, REACH: x.weapon.range });
   const now = val(r), bare = val(rB), KEY = { DMG: 'ATK' };
-  const tiles = Object.keys(now).map((k) => { const d = now[k] - bare[k]; return `<button class="stat ${d ? 'kitted' : ''}" data-stat="${KEY[k] ?? k}"><b>${now[k]}${k === 'ARMOR' ? '%' : ''}</b><span>${k}</span>${d ? `<i>${d > 0 ? '+' : '−'}${Math.abs(d)}${k === 'ARMOR' ? '%' : ''} kit</i>` : ''}</button>`; }).join('');
+  const tiles = Object.keys(now).map((k) => { const d = now[k] - bare[k]; return `<button class="stat ${d ? 'kitted' : ''}" data-stat="${KEY[k] ?? k}"><b>${now[k]}${k === 'ARMOR' ? '%' : ''}</b><span>${k}</span>${d ? `<i>${d > 0 ? '+' : '−'}${Math.abs(d)}${k === 'ARMOR' ? '%' : ''}</i>` : ''}</button>`; }).join('');
   // Keywords by where they come from: the man, his kit, his doctore.
-  const lab = (c) => c.label, own = chipsFor(u, undefined).chips, bareChips = new Set(chipsFor(bareU, undefined).chips.map(lab)), ownSet = new Set(own.map(lab));
-  const isGrade = (c) => c.kind === 'Armor grade';
-  const groups = [['He is', own.filter((c) => bareChips.has(lab(c)) && !isGrade(c))], ['From his kit', own.filter((c) => !bareChips.has(lab(c)) || isGrade(c))], [`From ${E.DOCTORE_BY_ID[G.doctore].name}`, chips.filter((c) => !ownSet.has(lab(c)))]].filter((g) => g[1].length);
-  const allChips = groups.flatMap((g) => g[1]);
-  let ci = 0;
+  // Abilities: traits, moves and skills in one row. What his doctore lends him is ringed in gold.
+  const ownSet = new Set(chipsFor(u, undefined).chips.map((c) => c.label));
+  const allChips = chips.filter((c) => !['Role', 'Armor grade', 'Targeting'].includes(c.kind)).map((c) => ({ ...c, lent: !ownSet.has(c.label), kind: ownSet.has(c.label) ? c.kind : `${c.kind} · from ${E.DOCTORE_BY_ID[G.doctore].name}` }));
   $('editIn').innerHTML = `
     <button id="edDone" class="fx-close" aria-label="Close">✕</button>
     <div class="fhead">
       <div class="fport ${art ? '' : 'none'}" data-fam="${t.faction}">${art ? `<img src="${art}" alt="">` : ''}${frameSvg(t.faction, f.id)}${tokenSvg(lookOf(u), { side: 0, bare: true })}</div>
       <div class="fwho"><div class="fname"><em class="pdot" style="background:${paintOf(f)}"></em>${f.name}</div><div class="funit">${t.name}</div></div>
-      <div class="fcost"><span class="fstars">${'★'.repeat(M(f).stars)}</span><b>${total}</b><small>${total > bodyCost ? `${bodyCost} + ${total - bodyCost}` : ''}</small></div>
+      <div class="fcost"><span class="fstars">${'★'.repeat(M(f).stars)}</span><b>${total}</b></div>
     </div>
     <div class="stats fstats">${tiles}</div>
-    <div class="frow2 kitrow"><span>Kit</span><small style="grid-column:2;margin:0">${kits.length > 1 ? 'Pick one. Blue numbers above are what it changes.' : 'His only kit. Blue numbers above are what it changes.'}</small>
-      <div class="kits">${kits.map((k) => `<button class="kit ${k.locked ? 'locked' : ''}" data-kit="${k.id}" aria-pressed="${k.id === cur.id}" ${k.locked ? 'disabled' : ''}><b>${k.name}</b><span>${k.locked ? `Opens at ${k.locked} token${k.locked > 1 ? 's' : ''}: answer the call with ${f.name} again.` : `${k.gear}${k.skills ? ` · ${k.skills}` : ''}`}</span><em>${k.locked ? '🔒' : k.cost}</em></button>`).join('')}</div></div>
-    ${groups.map(([name, cs]) => `<div class="frow2 chiprow"><span>${name}</span><div class="chips">${cs.map((c) => `<button class="chip ${c.k}" data-chip="${ci++}">${c.label}</button>`).join('')}</div></div>`).join('')}
+    <div class="frow2 kitrow"><span>Kit</span><small style="grid-column:2;margin:0">${kits.length < 2 ? 'His only kit.' : onFirst ? 'Pick one.' : `Blue numbers above: the change from ${firstKit.name}.`}</small>
+      <div class="kits">${kits.map((k) => `<button class="kit ${k.locked ? 'locked' : ''}" data-kit="${k.id}" aria-pressed="${k.id === cur.id}" ${k.locked ? 'disabled' : ''}><b>${k.name}</b><span>${k.locked ? `Opens at ${k.locked} token${k.locked > 1 ? 's' : ''}: answer the call with ${f.name} again.` : `${k.gear}${k.skills ? ` · ${k.skills}` : ''}${k.cost !== firstKit.cost ? ` · ${k.cost > firstKit.cost ? '+' : '−'}${Math.abs(k.cost - firstKit.cost)}` : ''}`}</span><em>${k.locked ? '🔒' : k.cost}</em></button>`).join('')}</div></div>
+    ${allChips.length ? `<div class="frow2 chiprow"><span>Abilities</span><div class="chips">${allChips.map((c, n) => `<button class="chip ${c.k} ${c.lent ? 'lent' : ''}" data-chip="${n}">${c.label}</button>`).join('')}</div></div>` : ''}
     ${E.trainsAt(f) ? (() => { const tr = G.training, mine = tr && tr.fid === f.id, other = tr && !mine ? G.fighters.find((x) => x.id === tr.fid) : null;
       return `<div class="frow2"><span>Training</span><b class="${mine ? 'gold' : 'dim'}">${mine ? `${label[tr.stat]} in training · <i id="trainClock">${clock(tr.doneAt - Date.now())}</i>` : other ? `The yard is busy: ${other.name}, <i id="trainClock">${clock(tr.doneAt - Date.now())}</i>` : 'Denarii and time. Free on the bill.'}</b>
       <div class="opt c4 train">${E.TRAIN_STATS.filter((st) => t.trainable[st]).map((st) => { const lv = f.training[st] ?? 0, full = lv >= cap; return `<button data-train="${st}" ${!tr && E.canStartTraining(f, st, G.denarii) ? '' : 'disabled'}><span>${label[st]} <em>+${step[st]}</em></span><span class="pips">${pips(lv + (mine && tr.stat === st ? 0 : 0), cap)}</span><small>${full ? 'full' : `${E.trainPrice(f, st)} den · ${clock(E.trainSeconds(f, st) * 1000)}`}</small></button>`; }).join('')}</div></div>`; })() : ''}
