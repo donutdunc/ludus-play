@@ -404,6 +404,11 @@ body.fighting .board { width: min(100%, calc((100dvh - 196px) * 0.6667)); }
 #fighterList .ph svg, .frow .ph svg { width: 58px; height: 58px; }
 .tok.drag { transition: none !important; z-index: 99 !important; } .tok.drag svg { transform: scale(1.25); filter: drop-shadow(0 8px 6px rgba(20,10,0,.5)) !important; }
 .tile.dropat { background: rgba(226,181,62,.5) !important; box-shadow: inset 0 0 0 2px var(--gold); }
+
+/* The turned set off the board: rosters, trays, cards. Taller than wide. */
+svg.stand.icon { height: auto !important; aspect-ratio: 80 / 156; filter: none !important; overflow: visible; }
+#fighterList .ph svg.stand.icon, .frow .ph svg.stand.icon { width: 48px; }
+.fig svg.stand.icon { width: 62px; height: 80px !important; aspect-ratio: auto; }
 </style>
 
 <div class="wrap">
@@ -426,8 +431,7 @@ body.fighting .board { width: min(100%, calc((100dvh - 196px) * 0.6667)); }
     <div class="row"><button id="toRoster" class="grow">Roster</button><button id="toHall" class="grow">The calls</button></div>
     <div class="speaker" id="schoolSpeak"></div>
     <div id="ladderList" class="screen" style="gap:8px"></div>
-    <h2 class="sec">Look <span>try all three in a fight</span></h2>
-    <div class="seg looks" id="looks"></div>
+    <div class="seg looks" id="looks" hidden></div>
     <div class="row"><button id="fbOpen2" class="grow">Give feedback</button></div>
     <div class="row"><button id="toFree" class="grow">Free battle (testers)</button><button id="resetSchool" class="grow">Start a new school</button></div>
   </section>
@@ -1300,7 +1304,8 @@ function renderLegend() {
 }
 
 // ================= The app layer: a school, a ladder, a hiring hall, three looks, feedback =================
-const LOOKS = [['lino', 'Counters', 'Carved pieces on sand'], ['mosaic', 'Mosaic', 'A Roman floor'], ['painted', 'Painted', 'Busts on arena art']];
+// One look now: the turned set on sand, painted portraits in the close-up. The mosaic and painted renderers are kept but not offered.
+const LOOKS = [['lino', 'Counters', 'Carved pieces on sand']];
 let G = null, lookNow = 'lino', FREE = false;
 const winsOf = () => G?.wins ?? 0;
 const arenaNow = () => E.LADDER_ARENAS.find((a) => a.id === S.arena) ?? E.LADDER_ARENAS[0];
@@ -1415,14 +1420,14 @@ function tokenStand(u, opts) {
   const band = `M${50 - rx} ${cy}a${rx} ${ry} 0 0 0 ${rx * 2} 0v10a${rx} ${ry} 0 0 1 ${-rx * 2} 0Z`;
   let ticks = '';
   for (let k = 1; k < n; k++) ticks += `<rect x="${(50 - rx + 2 * rx * k / n - .6).toFixed(2)}" y="${cy}" width="1.2" height="24"/>`;
-  const k = (opts.big ? 1 : .8) * (1 + (stars - 1) * .05);
-  return `<svg class="stand" viewBox="${opts.big ? '0 -6 100 160' : '8 72 84 84'}" aria-hidden="true">
+  const icon = !opts.stand, k = (icon ? 1 : .8) * (1 + (stars - 1) * .05);
+  return `<svg class="stand${icon ? ' icon' : ''}" viewBox="${icon ? '10 -2 80 156' : '8 72 84 84'}" aria-hidden="true">
     <defs><clipPath id="${id}"><path d="${band}"/></clipPath></defs>
     <ellipse cx="62" cy="${cy + 9}" rx="${rx + 10}" ry="${ry + 1}" fill="rgba(30,14,2,.3)"/>
     <path d="${band}" fill="#14110e" stroke="#14110e" stroke-width="2.6" stroke-linejoin="round"/>
-    <g clip-path="url(#${id})"><rect x="${50 - rx}" y="${cy}" width="${(2 * rx * hp).toFixed(1)}" height="24" fill="${opts.side === 1 ? '#e0573f' : '#8fd36a'}"/><g fill="#14110e">${ticks}</g></g>
+    <g clip-path="url(#${id})">${opts.bare ? `<rect x="${50 - rx}" y="${cy}" width="${2 * rx}" height="24" fill="${opts.side === 1 ? '#3a322b' : '#b9ab8c'}"/>` : `<rect x="${50 - rx}" y="${cy}" width="${(2 * rx * hp).toFixed(1)}" height="24" fill="${opts.side === 1 ? '#e0573f' : '#8fd36a'}"/><g fill="#14110e">${ticks}</g>`}</g>
     <ellipse cx="50" cy="${cy}" rx="${rx}" ry="${ry}" fill="${edge}" stroke="#14110e" stroke-width="2"/>
-    <g transform="translate(50 130) scale(${(k * (stars >= 4 ? 1.04 : 1)).toFixed(3)} ${k.toFixed(3)}) translate(-50 -130)">${setPiece(u)}</g></svg>`;
+    <g transform="translate(50 130) scale(${(k * (stars >= 4 ? 1.04 : 1)).toFixed(3)} ${k.toFixed(3)}) translate(-50 -130)">${setPiece(u, opts.dead ? 'dead' : undefined)}</g></svg>`;
 }
 /** A fallen piece: knocked over in the sand, on a stain. */
 function tokenFallen(u) {
@@ -1430,7 +1435,7 @@ function tokenFallen(u) {
     <g transform="translate(22 136) rotate(84) scale(.62 .5) translate(-50 -130)" opacity=".92">${setPiece(u, 'dead')}</g></svg>`;
 }
 function tokenSvg(u, opts = {}) {
-  if (opts.stand && lookNow === 'lino') return opts.dead ? tokenFallen(u) : tokenStand(u, opts);
+  if (lookNow === 'lino') return opts.dead && opts.stand ? tokenFallen(u) : tokenStand(u, opts);
   if (opts.dead) return lookNow === 'lino' ? tokenCracked(u) : tokenBase(u, opts);
   return lookNow === 'mosaic' ? tokenMosaic(u, opts) : lookNow === 'painted' ? tokenPainted(u, opts) : tokenLino(u, opts);
 }
@@ -1438,8 +1443,9 @@ function paintFloor() {
   const id = FREE ? rivalNow()?.arena : arenaNow().id, b = $('board');
   b.dataset.arena = id ?? '';
   // Counters: the arena painting, pulled into one sand tone so the pieces sit cleanly on it. Painted: the painting as it is.
-  b.style.backgroundImage = id && ART.floors[id] && lookNow !== 'mosaic' ? `url(${ART.floors[id]})` : '';
-  const sp = $('spot'); if (sp) { sp.dataset.arena = b.dataset.arena; sp.style.backgroundImage = lookNow === 'lino' ? b.style.backgroundImage : ''; }
+  // The two indoor floors are dark paintings; a sand wash lifts them so the pieces and the rank labels read.
+  b.style.backgroundImage = id && ART.floors[id] && lookNow !== 'mosaic' ? `${id === 'dregs' || id === 'cellar' ? 'linear-gradient(rgba(226,194,130,.62), rgba(226,194,130,.62)), ' : ''}url(${ART.floors[id]})` : '';
+  const sp = $('spot'); if (sp) { sp.dataset.arena = b.dataset.arena; sp.style.backgroundImage = ''; }
 }
 function setLook(id) {
   lookNow = id; document.documentElement.dataset.look = id; saveG(); paintFloor(); renderHud();
@@ -1455,8 +1461,7 @@ function setLook(id) {
 // ---------- HUD, screens ----------
 function renderHud() {
   const l = LOOKS.find((x) => x[0] === lookNow);
-  $('hud').innerHTML = `${G ? `<span class="coin">${G.denarii}<small>DEN</small></span>` : ''}<button id="lookBtn" aria-label="Change the look">${l[1]}</button><button id="fbOpen">Feedback</button>`;
-  $('lookBtn').onclick = () => setLook(LOOKS[(LOOKS.findIndex((x) => x[0] === lookNow) + 1) % LOOKS.length][0]);
+  $('hud').innerHTML = `${G ? `<span class="coin">${G.denarii}<small>DEN</small></span>` : ''}<button id="fbOpen">Feedback</button>`;
   $('fbOpen').onclick = openFeedback;
 }
 function show(name) {
