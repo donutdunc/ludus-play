@@ -467,6 +467,21 @@ body.fighting .ranklab, body.fighting .midlab { display: none; }
 [data-look="lino"] .tok .tags { top: -22%; }
 [data-look="lino"] body.fighting .board { width: min(100%, calc((100dvh - 244px) * 0.5952)); }
 [data-look="lino"] body.fighting.drilling .board, body.fighting.drilling .board { width: min(100%, calc((54dvh - 44px) * 0.5952)); }
+
+/* Fighter sheet, cleaned up */
+#editIn { position: relative; }
+.fx-close { position: absolute; top: -6px; right: -4px; width: 40px; min-height: 40px; padding: 0; border-radius: 50%; z-index: 2; font-size: 16px; }
+#editIn .card .head { padding-right: 34px; } #editIn .card .head .cost { margin-right: 6px; }
+.fline { font: italic 500 13px/1.3 var(--f-ui); color: var(--ink-3); margin-top: 3px; }
+.frow2 { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 3px 10px; align-items: center; padding: 9px 0 0; border-top: 1px solid var(--line); }
+.frow2 > span { font: 600 11px var(--f-ui); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+.frow2 > b { font: 600 16px/1.2 var(--f-ui); color: var(--ink); } .frow2 > b.gold { color: var(--gold); } .frow2 > b.dim { color: var(--ink-3); font-weight: 500; font-size: 14px; }
+.frow2 > small { grid-column: 2; font: 500 12.5px/1.3 var(--f-ui); color: var(--ink-3); }
+.frow2 .train { grid-column: 1 / -1; margin-top: 4px; }
+.xpbar { height: 9px; background: #14110e; border-radius: 5px; overflow: hidden; border: 1px solid var(--line); } .xpbar i { display: block; height: 100%; background: var(--gold); }
+.train button { display: flex; flex-direction: column; gap: 5px; align-items: center; min-height: 52px; } .train button em { font-style: normal; color: var(--gold); }
+.pips { display: flex; gap: 4px; } .pips i { width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid var(--ink-3); } .pips i.on { background: var(--gold); border-color: var(--gold); }
+.fsq { width: 100%; min-height: 44px; color: var(--ink-2); font-size: 14px; }
 </style>
 
 <div class="wrap">
@@ -1870,7 +1885,7 @@ openEdit = ((orig) => function (i) { const u = S.mine.units[i]; if (!FREE && u?.
 
 /** One fighter's sheet: who he is, his loadout (a dropdown), and his training. */
 let sheetFid = null;
-function openFighter(fid) { sheetFid = fid; S.editing = null; $('edit').hidden = false; $('scrim2').hidden = false; renderFighter(); }
+function openFighter(fid) { sheetFid = fid; S.editing = null; $('edit').hidden = false; $('scrim2').hidden = false; $('scrim2').onclick = closeEdit; renderFighter(); }
 function renderFighter() {
   const f = fighterById(sheetFid);
   if (!f) return closeEdit();
@@ -1880,22 +1895,24 @@ function renderFighter() {
   const step = E.BALANCE.trainStep;
   const label = { hp: 'HP', atk: 'ATK', spd: 'SPD', acc: 'ACC' };
   const builds = M(f).loadouts, cur = E.loadoutOf(f);
+  const need = E.XP_PER_LEVEL - (f.xp % E.XP_PER_LEVEL), wins = Math.ceil(need / 2), top = lvl >= E.MAX_LEVEL, kitR = E.resolveUnit(E.fighterUnit(f));
+  const pips = (n, of) => Array.from({ length: of }, (_, k) => `<i class="${k < n ? 'on' : ''}"></i>`).join('');
   $('editIn').innerHTML = `
+    <button id="edDone" class="fx-close" aria-label="Close">✕</button>
     <div class="card" style="border:0;padding:0;background:none">
-      <div class="head">${tokenSvg(lookOf(u), { side: 0 })}
-        <div class="who"><div class="name">${f.name}</div><div class="meta">${M(f).title} ${'★'.repeat(M(f).stars)} · ${E.LEANS[M(f).lean].name} · ${E.FACTIONS[t.faction]?.name ?? ''} · Level ${lvl}</div></div>
+      <div class="head">${tokenSvg(lookOf(u), { side: 0, bare: true })}
+        <div class="who"><div class="name"><em class="pdot" style="background:${paintOf(f)}"></em>${f.name}</div><div class="meta">${t.name} ${'★'.repeat(M(f).stars)} · ${E.LEANS[M(f).lean].name}</div><div class="fline">${M(f).line}</div></div>
         <div class="cost"><b>${cost(u)}</b><span>on the bill</span></div></div>
       ${statsHtml(r)}
       ${chipsHtml(chips)}
     </div>
-    <div class="lab"><span>Kit</span><span>${cur.name} · ${cur.role}</span></div>
-    <div class="hint" style="margin:-4px 0 0">${M(f).line} <b style="color:var(--ink-2)">${E.LEANS[M(f).lean].name}:</b> ${E.LEANS[M(f).lean].line}</div>
-    <select id="fLoadout" hidden>${builds.map((b) => `<option value="${b.id}" ${b.id === cur.id ? 'selected' : ''}>${b.name} · ${cost(E.fighterUnit({ id: f.id, loadout: b.id, training: {} }))} on the bill</option>`).join('')}</select>
-    <div class="lab"><span>Training</span><span>${lvl >= E.MAX_LEVEL ? 'Top level' : `${f.xp % E.XP_PER_LEVEL} / ${E.XP_PER_LEVEL} to level ${lvl + 1}`}</span></div>
-    <div class="opt c4">${E.TRAIN_STATS.filter((s) => t.trainable[s]).map((s) => `<button data-train="${s}" ${owned && E.canTrain(f, s) ? '' : 'disabled'}><span>${label[s]} <em>+${step[s]}</em></span><small>${f.training[s] ?? 0} of ${cap}</small></button>`).join('')}</div>
-    <div class="hint">${f.points ? `<b style="color:var(--gold)">${f.points} training point${f.points > 1 ? 's' : ''} to spend.</b> Training is free on the bill.` : 'A training point comes with each level. Fighting earns experience; winning earns more.'}</div>
-    <div class="hint">${f.tokens ? `<b style="color:var(--gold)">${f.tokens} token${f.tokens > 1 ? 's' : ''} · ${E.fameOf(f)}.</b> ` : ''}Each time ${f.name} answers a call again, you get a token for him. Next standing: ${(() => { const nx = [...E.FAME].reverse().find((x) => x.tokens > f.tokens); return nx ? `${nx.name} at ${nx.tokens}` : 'none, he is a legend'; })()}.</div>
-    <div class="row">${owned ? `<button id="fSquad" class="grow" ${['muster', 'formation'].includes(S.step) ? '' : 'hidden'}>${inSquad ? 'Take out of the squad' : 'Put in the squad'}</button>` : ''}<button id="edDone" class="primary grow">Done</button></div>`;
+    <div class="frow2"><span>Carries</span><b>${kitR.weapon.name}${u.equip?.off ? ` and ${E.ITEMS?.[u.equip.off]?.name ?? 'shield'}` : ''}, ${GRADE[u.grade ?? 'medium']}</b><small>${cur.role}. ${costSplit(u).replace(/<\/?small>/g, '')}.</small></div>
+    <select id="fLoadout" hidden>${builds.map((b) => `<option value="${b.id}" ${b.id === cur.id ? 'selected' : ''}>${b.name}</option>`).join('')}</select>
+    <div class="frow2"><span>Level ${lvl}</span><div class="xpbar"><i style="width:${top ? 100 : (f.xp % E.XP_PER_LEVEL) / E.XP_PER_LEVEL * 100}%"></i></div><small>${top ? 'Top level.' : `${wins} win${wins > 1 ? 's' : ''} to level ${lvl + 1}. Each level gives one training point.`}</small></div>
+    <div class="frow2"><span>Training</span><b class="${f.points ? 'gold' : 'dim'}">${f.points ? `${f.points} point${f.points > 1 ? 's' : ''} to spend` : 'no points to spend'}</b>
+      <div class="opt c4 train">${E.TRAIN_STATS.filter((st) => t.trainable[st]).map((st) => `<button data-train="${st}" ${owned && E.canTrain(f, st) ? '' : 'disabled'}><span>${label[st]} <em>+${step[st]}</em></span><span class="pips">${pips(f.training[st] ?? 0, cap)}</span></button>`).join('')}</div></div>
+    ${f.tokens ? `<div class="frow2"><span>Fame</span><b class="gold">${E.fameOf(f)}</b><small>${f.tokens} token${f.tokens > 1 ? 's' : ''} from answering the call again.</small></div>` : ''}
+`;
   const root = $('editIn');
   wireStats(root, r); wireChips(root, chips);
   const after = () => { syncSquad(); saveG(); save(); if (S.step === 'muster') renderMuster(false); else if (S.step === 'formation') renderFormation(); else if (S.step === 'hall') renderHall(); else if (S.step === 'rosterScr') renderRosterScreen(); renderFighter(); };
