@@ -691,6 +691,13 @@ body:not(.free) #toFormation { display: none; }
 body:not(.free) #banner, body:not(.free) #noteBox { display: none !important; }
 #spoils .gains { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 3px; font: 500 14px/1.35 var(--f-ui); color: var(--ink-2); } #spoils .gains b { color: var(--gold); font-weight: 600; }
 #spoils p.hh { border-left-width: 2px; }
+/* Faces: where someone arrives, you see who. */
+.pface { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; width: 58px; }
+.pface img, .pface svg.stand.icon { width: 54px !important; height: 54px !important; aspect-ratio: auto; object-fit: cover; border-radius: 6px; background: linear-gradient(#c39a55, #e3c27c); box-shadow: 0 0 0 1px #14110e, 0 0 0 3px #5a3a1c, 0 0 0 4px #14110e; }
+.pface svg.stand.icon { padding: 4px 12px 2px; box-sizing: border-box; }
+.pface i { font: 600 11px var(--f-ui); font-style: normal; color: var(--ink-2); }
+#spoils .gains .faces { display: flex; gap: 12px; margin: 8px 2px 6px; }
+.answer .head { grid-template-columns: 62px minmax(0, 1fr) auto; } .answer .head .pface i { display: none; }
 </style>
 
 <div class="wrap">
@@ -711,7 +718,7 @@ body:not(.free) #banner, body:not(.free) #noteBox { display: none !important; }
   <section id="school" class="screen" hidden>
     <div class="home" id="schoolCard"></div>
     <div class="nextcard" id="nextCard"></div>
-    <h2 class="sec">Where to fight</h2>
+    <h2 class="sec" id="ladderH">Where to fight</h2>
     <div id="ladderList" class="screen" style="gap:8px"></div>
     <h2 class="sec">The school</h2>
     <div id="rooms" class="rooms"></div>
@@ -1693,7 +1700,7 @@ function tokenCracked(u) {
 const SET_MAT = { legion: 'bone', riffraff: 'wood', warren: 'stone' };
 const SET_GRAD = { bone: ['#b9a67c', '#f4ead0', '#dccb9f', '#9c8a62'], wood: ['#7c5226', '#d6a86a', '#b07d42', '#6a4520'], stone: ['#3f5030', '#8fa66a', '#62784a', '#36462a'], iron: ['#3a3d42', '#9aa0a8', '#6a6f78', '#2c2f34'], dead: ['#3c3835', '#8a847b', '#67615a', '#2f2c29'], m3: ['#7a3216', '#e08a55', '#b5532a', '#6a2a12'], m4: ['#7d838c', '#ffffff', '#c9ccd1', '#6c727a'], m5: ['#9a6a12', '#fff0a8', '#e6b93c', '#8a5c0c'] };
 // Four tones of each family material, so two fighters of one kind are not the same block of wood.
-const SET_TONES = { wood: [['#a27a48', '#f2dcae', '#dcbe88', '#8a6a3e'], ['#957556', '#e8d4b4', '#cdb490', '#7d634a'], ['#ac7c40', '#f6e0a8', '#e2c27e', '#946a36'], ['#9a7258', '#ecd0b2', '#d2b08e', '#82604a']], bone: [['#b9a67c', '#f4ead0', '#dccb9f', '#9c8a62'], ['#a99a7c', '#e8e0cc', '#cfc3a4', '#8c7e62'], ['#c2a870', '#f8e8c0', '#e4cc94', '#a48c58'], ['#b0a088', '#efe6d6', '#d6c8ae', '#948468']], stone: [['#6f8458', '#dbe8c2', '#b2c696', '#5f7450'], ['#62846a', '#d2e6c8', '#a6c4a2', '#547460'], ['#7a8456', '#e4e8bc', '#bcc48e', '#6a724c'], ['#687a6a', '#d6e0cc', '#aebcaa', '#5a6a5c']] };
+const SET_TONES = { wood: [['#a27a48', '#f2dcae', '#dcbe88', '#8a6a3e'], ['#957556', '#e8d4b4', '#cdb490', '#7d634a'], ['#ac7c40', '#f6e0a8', '#e2c27e', '#946a36'], ['#9a7258', '#ecd0b2', '#d2b08e', '#82604a']], bone: [['#b9a67c', '#f4ead0', '#dccb9f', '#9c8a62'], ['#a99a7c', '#e8e0cc', '#cfc3a4', '#8c7e62'], ['#c2a870', '#f8e8c0', '#e4cc94', '#a48c58'], ['#b0a088', '#efe6d6', '#d6c8ae', '#948468']], stone: [['#33492f', '#9dba86', '#5e7d52', '#27391f'], ['#2c4a3a', '#8fb89c', '#4f7a62', '#203829'], ['#3e4a2a', '#a6b478', '#6a7a48', '#2e381e'], ['#2f4440', '#90aea6', '#52726a', '#223430']] };
 for (const [m, ts] of Object.entries(SET_TONES)) ts.forEach((g, k) => { SET_GRAD[`${m}${k}`] = g; });
 const seedOf = (str) => { let h = 2166136261; for (const ch of String(str ?? '')) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return () => { h = Math.imul(h ^ (h >>> 15), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); return ((h ^= h >>> 16) >>> 0) / 4294967296; }; };
 document.body.insertAdjacentHTML('afterbegin', `<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>${Object.entries(SET_GRAD).map(([k, g]) => `<linearGradient id="g-${k}" x1="0" x2="1"><stop offset="0" stop-color="${g[0]}"/><stop offset=".28" stop-color="${g[1]}"/><stop offset=".62" stop-color="${g[2]}"/><stop offset="1" stop-color="${g[3]}"/></linearGradient>`).join('')}</defs></svg>`);
@@ -2285,8 +2292,7 @@ function renderNext() {
 }
 function renderSchool() {
   const w = winsOf();
-  $('schoolCard').innerHTML = `<div class="kick">${standing()}</div>
-    <div class="hrow"><div><div class="sn">Your school</div><div class="st">${G.fights ? `${w} win${w === 1 ? '' : 's'} from ${G.fights} fight${G.fights === 1 ? '' : 's'}` : 'No fights yet'}</div></div></div>${yardHtml()}`;
+  $('schoolCard').innerHTML = `    <div class="hrow"><div><div class="sn">Your school</div><div class="st">${G.fights ? `${w} win${w === 1 ? '' : 's'} from ${G.fights} fight${G.fights === 1 ? '' : 's'}` : 'No fights yet'}</div></div></div>${yardHtml()}`;
   $('schoolCard').querySelectorAll('[data-f]').forEach((el) => el.onclick = () => openFighter(el.dataset.f));
   renderNext();
   // Where to fight: the arenas that are open, newest first, and one line about the next. Never the whole road.
@@ -2295,7 +2301,7 @@ function renderSchool() {
     return `<div class="rcard arena${here ? ' here' : ''}"><span class="athumb" data-a="${a.id}"></span><div class="rn">${a.name}${here ? '<em>The herald\'s fight</em>' : n ? `<i>${n} win${n > 1 ? 's' : ''}</i>` : ''}</div><div class="rb">${a.line}</div><div class="rm">Bill <b>${a.bill}</b> · purse <b>${purse}</b></div><button data-arena-go="${a.id}">Fight here</button></div>`; }).join('');
   const last = open[open.length - 1], nextA = E.LADDER_ARENAS[E.LADDER_ARENAS.indexOf(last) + 1];
   if (nextA && !E.arenaHeld(SC(), nextA.id)) { const need = Math.max(1, last.opensAfter - (G.arenaWins[last.id] ?? 0)); html += `<p class="hint" style="margin:0">Win ${need} more in ${last.name} and the school gets a bigger stage.</p>`; }
-  $('ladderList').innerHTML = html;
+  $('ladderList').innerHTML = b ? '' : html; $('ladderH').hidden = !!b;
   $('ladderList').querySelectorAll('[data-arena-go]').forEach((el) => el.onclick = () => enterArena(el.dataset.arenaGo));
   // The school's rooms. Each one is here because it has arrived, and each says what state it is in.
   const rooms = [`<button class="room" id="toRoster"><b>Roster</b><span>${G.fighters.length} fighters · ${G.doctores.length === 1 ? E.DOCTORE_BY_ID[G.doctore].name : `${G.doctores.length} doctores, each with a squad`}</span>${yardNew.size ? `<em>${yardNew.size} new</em>` : ''}<i>›</i></button>`];
@@ -2525,6 +2531,8 @@ function renderFighter() {
 }
 
 let lastCall = null;
+/** A fighter's painted face in a small frame, or his piece where he has no portrait yet. */
+function faceOf(f) { const art = ART.portraits[M(f).icon] ?? ART.portraits[ART.alias[M(f).icon]]; return `<span class="pface" title="${f.name}">${art ? `<img src="${art}" alt="">` : tokenSvg(lookOf(unitOf(f)), { side: 0, bare: true })}<i>${f.name}</i></span>`; }
 /** Sound a call. `free` is 'morning' for the day's free call, or 'skip' when a tester skips a step that is a call. */
 function soundCall(id, free) {
   const c = E.CALLS[id]; if (!free && G[c.currency] < c.cost) return;
@@ -2552,7 +2560,7 @@ function renderHall() {
   if (f) { const t = E.UNITS[f.template], u = unitOf(f), r = E.resolveUnit(u), mine = G.doctores.filter((d) => E.fieldableBy(d, f.id)).map((d) => E.DOCTORE_BY_ID[d].name);
     const callName = lastCall.morning ? 'morning call' : E.CALLS[lastCall.call].name;
     $('callResult').innerHTML = `<div class="answer"><span class="sub">${lastCall.duplicate ? `Answering the ${callName}: a familiar face` : `Answering the ${callName}`}</span>
-      <div class="head">${tokenSvg(lookOf(u), { side: 0, bare: true })}<div class="who"><div class="name">${f.name}</div><div class="meta">${M(f).title} · ${E.LEANS[M(f).lean].name} · ${E.FACTIONS[t.faction]?.name ?? ''}</div></div><div class="stars">${'★'.repeat(M(f).stars)}</div></div>
+      <div class="head">${faceOf(f)}<div class="who"><div class="name">${f.name}</div><div class="meta">${M(f).title} · ${E.LEANS[M(f).lean].name} · ${E.FACTIONS[t.faction]?.name ?? ''}</div></div><div class="stars">${'★'.repeat(M(f).stars)}</div></div>
       ${lastCall.duplicate
         ? `<div class="pk"><b style="color:var(--gold)">You already have ${f.name}.</b> The call becomes a token: ${f.tokens} now${E.fameOf(f) ? `, ${E.fameOf(f)}` : ''}. ${f.tokens <= E.kitsOf(f).length - 2 ? 'It has opened a new kit on the sheet.' : ''}</div>`
         : `${statLine(r)}<div class="pk">${M(f).line}</div><div class="pk">Wears: ${M(f).loadouts.map((l) => l.name).join(', ')}.</div><div class="pk">Fights under ${mine.join(', ')}.</div>`}
@@ -2589,7 +2597,7 @@ function fightDone(res) {
     const opened = openArenas().filter((x) => !openBefore.includes(x.id)).map((x) => x.name);
     const afford = inSight('calls') ? callsReady() : [], nx = beatNow(), again = !won && onBeat;
     // One compact card. The bar above already says who won; this says what you got, what arrived, and what is next.
-    const gains = [...joined.map(({ id, brought }) => `<li><b>${E.DOCTORE_BY_ID[id].name} joins</b> with ${brought.map((f) => f.name).join(', ')}</li>`), ...opened.map((n) => `<li><b>${n}</b> opens</li>`)];
+    const gains = [...joined.map(({ id, brought }) => `<li><b>${E.DOCTORE_BY_ID[id].name} joins</b> with ${brought.map((f) => f.name).join(', ')}<span class="faces">${brought.map(faceOf).join('')}</span></li>`), ...opened.map((n) => `<li><b>${n}</b> opens</li>`)];
     P.spoils = `<div class="big">+${rw.denarii} denarii${rw.renown ? ` · +${rw.renown} renown` : ''}</div>
       ${again && b0.hint ? `<p class="hh">${b0.hint}</p>` : !won && !again ? '<p>Change the squad or the formation and go again.</p>' : ''}
       ${gains.length ? `<ul class="gains">${gains.join('')}</ul>` : ''}
