@@ -671,7 +671,7 @@ body.fighting .board.jolt, body.fighting .spot.jolt { animation: jolt .28s ease-
 [data-look="lino"] .board.revealing .tokens { clip-path: inset(0); }
 /* The bar above the board is the lintel over the gate while the far side is dark: a dark plaque over it carries the name of the place.
    When the dark is thrown back the plaque goes up off the bar too, a moment after the board's, and under it is who came out. */
-.spot .shade { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; pointer-events: none; background: radial-gradient(80% 130% at 50% 135%, rgba(226,160,60,.2), transparent 62%), #0f0b08; }
+.spot .shade { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 0 14px; pointer-events: none; background: radial-gradient(80% 130% at 50% 135%, rgba(226,160,60,.2), transparent 62%), #0f0b08; }
 .spot .shade b { font: 400 22px/1.1 var(--f-display); letter-spacing: .08em; color: #e9cd84; text-shadow: 0 1px 0 #000, 0 0 14px rgba(0,0,0,.8); white-space: nowrap; animation: vfade .25s ease-out both; }
 .spot.lit .shade { transform: translateY(-104%); transition: transform .3s cubic-bezier(.55,0,.25,1) .14s; }
 .spot .who.kick { font: 600 11px/1.5 var(--f-ui); letter-spacing: .2em; text-transform: uppercase; } [data-look="lino"] .spot .who.kick { color: #7a5520; }
@@ -916,6 +916,15 @@ body.fighting::after { content: ''; position: fixed; z-index: 5; left: 0; right:
 @keyframes drain { to { width: var(--to); } }
 @media (max-height: 760px) { [data-look="lino"] body.fighting .spot .act.hit, [data-look="lino"] body.fighting .spot .act.crit { font-size: 22px; } [data-look="lino"] body.fighting .spot .mid.big .act { font-size: 34px; } [data-look="lino"] body.fighting .spot .mid.big .act.crit { font-size: 28px; } }
 @media (prefers-reduced-motion: reduce) { [data-look="lino"] .spot .act.hit, [data-look="lino"] .spot .act.crit, .spot .fig.port.struck, .spot .fig.port.struck .pic::after, .spot .fig.port.struck .pin::after { animation: none; } .spot .fig.port i u { animation-duration: .01s; } }
+
+/* The plaque over the gate: a rule either side of "Tonight", the name of the place, and its one line under it. Brass pins hold its corners. */
+.spot .shade i { display: flex; align-items: center; gap: 10px; align-self: stretch; font: 600 10px/1 var(--f-ui); font-style: normal; letter-spacing: .24em; text-transform: uppercase; color: var(--gold); animation: vfade .25s ease-out both; }
+.spot .shade i::before, .spot .shade i::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(233,205,132,.55)); } .spot .shade i::after { transform: scaleX(-1); }
+.spot .shade span { max-width: 100%; font: 500 12.5px/1.2 var(--f-ui); font-style: italic; color: #b7a580; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; animation: vfade .3s ease-out .15s both; }
+.spot .shade::before, .spot .shade::after { content: ''; position: absolute; top: 7px; bottom: 7px; width: 5px; background: radial-gradient(circle 2.5px at 50% 2.5px, #c9a24a 60%, transparent 62%), radial-gradient(circle 2.5px at 50% calc(100% - 2.5px), #c9a24a 60%, transparent 62%); }
+.spot .shade::before { left: 8px; } .spot .shade::after { right: 8px; }
+@media (max-height: 760px) { .spot .shade span { display: none; } .spot .shade b { font-size: 19px; } }
+@media (prefers-reduced-motion: reduce) { .spot .shade i, .spot .shade span { animation: none; } }
 </style>
 
 <div class="wrap">
@@ -2255,7 +2264,6 @@ renderReport = ((orig) => function () {
   return out;
 })(renderReport);
 /** The reason for a target, said once: on the first move or swing after he picks someone new. */
-function freshWhy(aid, tid) { const st = P.state.get(aid); if (!st?.fresh || st.tgt !== tid || !st.why) return ''; st.fresh = false; return `Picked: ${st.why.split(' · ')[0]}`; }
 const DOT_NAME = { bleed: 'Bleeding', burn: 'Burning', poison: 'Poison', thorns: 'Thorns' };
 /** A reaction the engine reports as a sentence ("goes berserk as Nib falls"), as a headline and the rest. */
 function trigWords(note) {
@@ -2273,12 +2281,12 @@ function trigGroup(e) {
 function spotArgs(e) {
   switch (e.kind) {
     case 'intent': spotNow = { a: e.aid, t: e.tid }; return null;   // shown when he moves or swings, not as an empty line
-    case 'attack': return [e.aid, e.tid, e.outcome === 'miss' ? 'Miss' : `${e.amount}${e.outcome === 'crit' ? ' crit' : ''}`, e.outcome === 'block' ? 'Blocked' : '', e.outcome === 'miss' ? 'dim' : e.outcome === 'crit' ? 'crit' : 'hit', freshWhy(e.aid, e.tid), `${e.label}${typeof e.chance === 'number' ? ` · ${e.chance}% to hit` : ''}`];
+    case 'attack': return [e.aid, e.tid, e.outcome === 'miss' ? 'Miss' : `${e.amount}${e.outcome === 'crit' ? ' crit' : ''}`, e.outcome === 'block' ? 'Blocked' : '', e.outcome === 'miss' ? 'dim' : e.outcome === 'crit' ? 'crit' : 'hit', '', `${e.label}${typeof e.chance === 'number' ? ` · ${e.chance}% to hit` : ''}`];
     case 'active': { const w = whyOf(e); return [e.aid, spotNow.a === e.aid ? spotNow.t : null, e.label, [e.summary, w.lasts && `for ${w.lasts}`].filter(Boolean).join(' '), 'trick', '', w.why]; }
     case 'death': return [e.aid ?? spotNow.a, e.tid, 'Down', `${spotName(e.tid)} falls${e.note ? ` ${e.note}` : ''}`, 'crit'];
     case 'heal': return [e.aid ?? e.tid, e.tid, `+${e.amount}`, 'patched up', 'heal'];
     case 'stunned': return [e.tid, null, 'Stunned', 'loses the turn', 'dim'];
-    case 'move': { const tg = P.state.get(e.aid)?.tgt ?? (spotNow.a === e.aid ? spotNow.t : null); return [e.aid, e.note === 'falls back' ? null : tg, e.note || 'approaches', e.note === 'falls back' ? '' : freshWhy(e.aid, tg), 'dim']; }
+    case 'move': { const tg = P.state.get(e.aid)?.tgt ?? (spotNow.a === e.aid ? spotNow.t : null); return [e.aid, e.note === 'falls back' ? null : tg, e.note || 'approaches', '', 'dim']; }
     case 'dot': return [e.tid, null, `${e.amount}`, DOT_NAME[e.note] ?? e.note ?? '', 'hit'];
     case 'flee': return [e.aid, null, 'Flees', e.note ?? '', 'dim'];
     case 'trigger': { const [head, rest] = trigWords(e.note), g = trigGroup(e), names = g.map((x) => (x.aid != null ? spotName(x.aid) : x.actor));
@@ -2423,7 +2431,7 @@ function reveal() {
   const at = (ms, fn) => R.timers.push(setTimeout(() => { if (REVEAL === R) fn(); }, ms));
   const begin = () => { revealEnd(); if (S.step === 'fight' && !S.manual) playLoop(false); };
   // The bar already holds who is coming; over it lies the dark plaque with the name of the place, which goes up with the dark.
-  bar.classList.remove('more', 'lit'); bar.classList.add('lintel'); bar.innerHTML = `${foePlate()}<div class="shade"><b>${a.name}</b></div>`;
+  bar.classList.remove('more', 'lit'); bar.classList.add('lintel'); bar.innerHTML = `${foePlate()}<div class="shade"><i>Tonight</i><b>${a.name}</b><span>${a.line ?? ''}</span></div>`;
   v.dataset.kind = kind; v.className = ''; v.hidden = false;
   v.querySelector('.vtx').innerHTML = `<i>Out of the far gate</i>${veilName(S.opponent.name)}<span>${E.FACTIONS[d.faction].name} · ${d.twist.name}</span>`;
   void v.offsetWidth; v.classList.add('named');
