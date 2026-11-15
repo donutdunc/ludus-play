@@ -548,6 +548,13 @@ body.fighting .ranklab, body.fighting .midlab { display: none; }
 .sndbtn[aria-pressed="false"] { color: var(--ink-3); opacity: .75; }
 .transport { grid-template-columns: 44px 1fr 2fr 1fr 48px 44px; }
 .transport .sndbtn { width: auto; min-height: 44px; }
+
+/* The page never zooms or slides sideways; text fields are 16px so iOS does not zoom in on them. */
+html, body { touch-action: pan-x pan-y; overflow-x: clip; -webkit-text-size-adjust: 100%; overscroll-behavior-x: none; }
+textarea, input, select { font-size: 16px; }
+.dstats { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.dstats .stat { min-height: 40px; padding: 4px 0; } .dstats .stat b { font-size: 15px; } .dstats .stat span { font-size: 9px; letter-spacing: .06em; }
+body.drilling #noteBox, body.drilling #report { display: none !important; }
 </style>
 
 <div class="wrap">
@@ -1878,6 +1885,8 @@ resetState = ((orig) => function () { orig(); for (const st of P.state.values())
 document.body.insertAdjacentHTML('beforeend', '<section id="drill" class="drill" hidden aria-live="polite"></section>');
 let drillUid = null;
 function closeDrill() { drillUid = null; $('drill').hidden = true; document.body.classList.remove('drilling'); document.querySelectorAll('.aim.drillaim').forEach((x) => x.remove()); document.querySelectorAll('.tok.sel, .tok.aimed').forEach((x) => x.classList.remove('sel', 'aimed')); }
+// The same numbers as his sheet, in one row (his health is already the bar above).
+const drillStats = (r) => `<div class="stats dstats">${[['DMG', Math.round(r.stats.atk + r.weapon.damage), 'ATK'], ['ARMOR', `${Math.round(E.armorCut(r.stats.def) * 100)}%`], ['SPD', Math.round(r.stats.spd)], ['ACC', Math.round(r.stats.acc)], ['EVA', Math.round(r.evasion)], ['MOVE', r.move], ['REACH', r.weapon.range]].map(([k, v, key]) => `<button class="stat" data-stat="${key ?? k}"><b>${v}</b><span>${k}</span></button>`).join('')}</div>`;
 function openDrill(uid) { if (P.playing) pause(); drillUid = uid; renderDrill(); }
 function renderDrill() {
   const st = P.state.get(drillUid); if (!st || S.step !== 'fight') return closeDrill();
@@ -1888,6 +1897,7 @@ function renderDrill() {
   if (st.alive && tg?.alive) { aimLine(posOf(drillUid), posOf(st.tgt), st.side); document.querySelector('.fx .aim:last-child, .aim:last-of-type')?.classList.add('drillaim'); document.querySelectorAll('.aim').forEach((x) => x.classList.add('drillaim')); P.els.get(st.tgt)?.classList.add('aimed'); }
   const onIt = [...P.state.values()].filter((o) => o.alive && o.side !== st.side && o.tgt === drillUid).map((o) => o.name);
   const art = ART.portraits[st.look.tid] ?? ART.portraits[ART.alias[st.look.tid]], hp = Math.max(0, st.hp), cr = b ? chipsFor(b, team) : null;
+  if (cr) cr.chips = cr.chips.filter((c) => c.k !== 'k-order' && c.kind !== 'Armor grade');   // what he can do, not what we call him
   const stats = [...st.statuses].map((id) => `<div class="dst ${ST[id]?.[1] ? 'good' : 'bad'}"><b>${ST[id]?.[0] ?? id}</b><i>${st.left?.[id] > 0 ? `${st.left[id]} turn${st.left[id] > 1 ? 's' : ''} left` : ''}</i><span>${ST[id]?.[2] ?? ''}</span></div>`).join('');
   $('drill').innerHTML = `<div class="dh">${art ? `<img src="${art}" alt="">` : tokenSvg(st.look, { side: st.side, bare: true })}
       <div class="dw"><div class="dn">${st.name}<small>${st.side === 0 ? 'yours' : 'theirs'}${b ? ` · ${tpl(b).name}` : ''}</small></div>
@@ -1895,7 +1905,7 @@ function renderDrill() {
       <button id="drillX" aria-label="Close">✕</button></div>
     ${st.alive ? `<div class="dgo"><span>Going for</span><b>${tg?.alive ? tg.name : tg ? `picks again on his turn (${tg.name} is down)` : 'nobody yet'}</b></div><div class="dgo"><span>On him</span><b>${onIt.length ? onIt.join(', ') : 'nobody'}</b></div>` : ''}
     ${st.alive ? (stats || '<div class="dst none"><span>No statuses on him right now.</span></div>') : ''}
-    ${cr ? statsHtml(cr.r, st) + chipsHtml(cr.chips) : ''}`;
+    ${cr ? drillStats(cr.r) + chipsHtml(cr.chips) : ''}`;
   $('drill').hidden = false;
   $('drillX').onclick = closeDrill;
   if (cr) { wireStats($('drill'), cr.r); wireChips($('drill'), cr.chips); }
@@ -2526,6 +2536,9 @@ function sfxToggle() {
 }
 renderHud = ((orig) => function () { orig(); $('fbOpen')?.insertAdjacentHTML('beforebegin', '<button class="sndbtn" type="button"></button>'); sfxButtons(); })(renderHud);
 $('transport').insertAdjacentHTML('beforeend', '<button class="sndbtn" type="button"></button>'); sfxButtons();
+
+// A board, not a document: no pinch or double-tap zoom (two quick taps on a step button used to zoom the page and leave it scrolling sideways).
+{ const vp = document.querySelector('meta[name="viewport"]'); if (vp && !/maximum-scale/.test(vp.content)) vp.content += ', maximum-scale=1, user-scalable=no'; }
 
 // ---------- Start ----------
 loadG(); load();
