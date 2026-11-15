@@ -488,7 +488,7 @@ body.fighting .ranklab, body.fighting .midlab { display: none; }
 .fport.none { display: flex; align-items: flex-end; justify-content: center; background: linear-gradient(#c39a55, #e3c27c); } .fport.none svg.stand.icon { position: static; width: 58px !important; filter: none !important; }
 
 /* The bill mark: a tally tablet. It sits beside every number that counts against the bill, and nowhere else. */
-.fcost b::before, .piece .ph .bc::before, .meter .big::before { content: ''; display: inline-block; width: .62em; height: .62em; margin-right: .18em; background: currentColor; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='2.5' y='1.5' width='11' height='13' rx='1.5' fill='none' stroke='black' stroke-width='1.6'/%3E%3Cpath d='M5.6 5v6M8 5v6M10.4 5v6M4.4 9.6l7.2-3.2' stroke='black' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='2.5' y='1.5' width='11' height='13' rx='1.5' fill='none' stroke='black' stroke-width='1.6'/%3E%3Cpath d='M5.6 5v6M8 5v6M10.4 5v6M4.4 9.6l7.2-3.2' stroke='black' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat; vertical-align: -.02em; opacity: .85; }
+.fcost b::before, .piece .ph .bc::before, .meter .big::before { content: ''; display: inline-block; width: .62em; height: .62em; margin-right: .18em; background: currentColor; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.2 2.6l.3 10.6M6.4 3l-.2 10.2M9.4 2.6l.3 10.6M12.6 3l-.2 10.2M1 10.8L15 5' stroke='black' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.2 2.6l.3 10.6M6.4 3l-.2 10.2M9.4 2.6l.3 10.6M12.6 3l-.2 10.2M1 10.8L15 5' stroke='black' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat; vertical-align: -.02em; opacity: .85; }
 .piece .ph .bc small { display: none; }
 /* Fighter sheet, second pass */
 .fhead { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: 16px; align-items: start; padding-right: 2px; }
@@ -509,7 +509,7 @@ body.fighting .ranklab, body.fighting .midlab { display: none; }
 .kit { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1px 10px; align-items: center; text-align: left; min-height: 52px; padding: 8px 12px; }
 .kit b { font: 600 16px/1.2 var(--f-ui); color: var(--ink); } .kit span { grid-column: 1; font: 500 13px/1.25 var(--f-ui); color: var(--ink-3); }
 .kit em { grid-column: 2; grid-row: 1 / 3; font: 24px/1 var(--f-display); font-style: normal; color: var(--gold); white-space: nowrap; }
-.kit em::before { content: ''; display: inline-block; width: .62em; height: .62em; margin-right: .18em; background: currentColor; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='2.5' y='1.5' width='11' height='13' rx='1.5' fill='none' stroke='black' stroke-width='1.6'/%3E%3Cpath d='M5.6 5v6M8 5v6M10.4 5v6M4.4 9.6l7.2-3.2' stroke='black' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='2.5' y='1.5' width='11' height='13' rx='1.5' fill='none' stroke='black' stroke-width='1.6'/%3E%3Cpath d='M5.6 5v6M8 5v6M10.4 5v6M4.4 9.6l7.2-3.2' stroke='black' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat; opacity: .85; }
+.kit em::before { content: ''; display: inline-block; width: .62em; height: .62em; margin-right: .18em; background: currentColor; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.2 2.6l.3 10.6M6.4 3l-.2 10.2M9.4 2.6l.3 10.6M12.6 3l-.2 10.2M1 10.8L15 5' stroke='black' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.2 2.6l.3 10.6M6.4 3l-.2 10.2M9.4 2.6l.3 10.6M12.6 3l-.2 10.2M1 10.8L15 5' stroke='black' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat; opacity: .85; }
 .kit[aria-pressed="true"] { border-color: #9fd3e6; box-shadow: inset 0 0 0 1px #9fd3e6; background: var(--stone-3); }
 
 .train button small { font: 600 10.5px/1.1 var(--f-ui); color: var(--ink-3); letter-spacing: .02em; white-space: nowrap; }
@@ -718,6 +718,18 @@ body.fighting .spot, body.fighting .board { transition: transform .22s ease; tra
 /* A solid cap over the status-bar strip, so nothing scrolls under the clock and gets blurred. Every screen. */
 body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top, 0px); background: var(--stone); z-index: 80; pointer-events: none; }
 table.rep.slim tr.fell td:first-child { text-decoration: none; } table.rep.slim { table-layout: fixed; } table.rep.slim th:first-child { width: 34%; }
+/* Muster, tightened so the whole first screen fits: who runs it (one line), what he says (his face, a bubble), the bill in chalk, the squad, the roster. */
+.docbox { background: none; border: 0; padding: 0; gap: 6px; }
+#docRow { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 10px; background: var(--stone-2); border: 1px solid var(--line); border-radius: 10px; } #docRow .docsel { flex: 1 1 auto; min-width: 0; min-height: 0; }
+#docRow .docsel span { display: flex; align-items: baseline; gap: 8px; white-space: nowrap; overflow: hidden; } #docRow .tw { flex: 0 0 auto; align-self: center; white-space: nowrap; }
+#docTwist { display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 12px; align-items: center; min-height: 50px; }
+#docTwist img, #docTwist .sig { width: 46px; height: 46px; border-radius: 50%; object-fit: cover; object-position: top; box-shadow: 0 0 0 1px #14110e, 0 0 0 3px #5a3a1c; background: var(--stone-3); display: grid; place-items: center; } #docTwist .sig svg { width: 28px; height: 28px; }
+#docTwist p { margin: 0; position: relative; padding: 7px 11px; border-radius: 10px; background: #e9dcc0; color: #2a2118; font: 500 14.5px/1.3 var(--f-ui); }
+#docTwist p::before { content: ''; position: absolute; left: -6px; top: 50%; margin-top: -6px; border: 6px solid transparent; border-left: 0; border-right-color: #e9dcc0; }
+.meter { padding: 8px 12px; } .meter .big { font-size: 26px; } svg.tally { display: block; width: 100%; height: 20px; }
+svg.tally path { fill: none; stroke: #4a443c; stroke-width: 1.3; stroke-linecap: round; } svg.tally path.on { stroke: #efe6d2; } svg.tally path.ov { stroke: var(--bad); }
+body:not(.free) .meter .tray { height: 50px; } body:not(.free) .meter .pick svg.stand.icon { width: 26px; height: auto; }
+.piece.frow.slim { padding: 2px 8px; } .frow.slim .ph .add { min-height: 36px; height: 36px; } #roster { gap: 6px; }
 </style>
 
 <div class="wrap">
@@ -2414,15 +2426,22 @@ function renderDocRow() {
   $('docRow').innerHTML = `<label class="docsel">${docSigil(d)}<span><b>${d.name}</b><small>${E.FACTIONS[d.faction].name}${lock ? ' · runs this fight' : ''}</small></span>${many ? '<i>▾</i>' : ''}
     <select aria-label="Doctore" ${many ? '' : 'disabled'}>${G.doctores.map((id) => { const x = E.DOCTORE_BY_ID[id]; return `<option value="${id}" ${id === G.doctore ? 'selected' : ''}>${x.name} · ${E.FACTIONS[x.faction].name}</option>`; }).join('')}</select></label>`;
   $('docRow').querySelector('select').onchange = (e) => { putInCharge(e.target.value); renderMuster(); };
-  // Advice about the squad comes from the man who runs it. With a scripted fight here he says the one thing that matters; otherwise the box shows his twist.
+  // Two things, kept apart: the card says who runs the squad and what his twist is; the speech below it is him talking, with his face on it.
   const b = beatNow(), mine = b?.fight?.arena === S.arena ? b : null, lost = mine ? SC().lost[mine.id] ?? 0 : 0;
-  $('docTwist').innerHTML = `<span class="${mine ? 'docsay' : ''}">${mine ? (lost ? mine.hint : mine.brief) : `<b>${d.twist.name}</b> · ${d.twist.line}`}</span>${mine ? `<button class="tw" id="twInfo" aria-label="What ${d.twist.name} does">${d.twist.name} ⓘ</button>` : ''}`;
-  if ($('twInfo')) $('twInfo').onclick = () => explain(d.name, d.twist.name, d.twist.line);
+  $('docRow').insertAdjacentHTML('beforeend', `<button class="tw" id="twInfo" aria-label="What ${d.twist.name} does">${d.twist.name} ⓘ</button>`);
+  $('twInfo').onclick = () => explain(d.name, d.twist.name, d.twist.line);
+  const face = d.id === 'magnus' && ART.npcs?.mentor ? `<img src="${ART.npcs.mentor}" alt="">` : `<span class="sig">${docSigil(d)}</span>`;
+  $('docTwist').innerHTML = mine ? `${face}<p>${lost ? mine.hint : mine.brief}</p>` : ''; $('docTwist').hidden = !mine;
 }
 // The bill card carries the way forward, so nothing floats over the roster.
 renderMeter = ((orig) => function () {
   orig(); if (FREE) return;
   const e = $('meter').querySelector('.empty'); if (e) e.textContent = 'Tap + on a fighter to put him in the squad.';
+  { const sp = spent(S.mine), n = Math.ceil(S.bill / 5), w = 16, over = sp > S.bill; let g = '';
+    for (let i = 0; i < n; i++) { const x = i * w, on = (k) => (i * 5 + k < sp ? (over ? 'ov' : 'on') : '');
+      for (let k = 0; k < 4; k++) g += `<path class="${on(k)}" d="M${x + 2.5 + k * 2.6} ${2 + (k % 2) * .6}l${k % 2 ? -.4 : .5} ${9.4}"/>`;
+      g += `<path class="${on(4)}" d="M${x + .6} ${9.6}L${x + 12.6} ${4}"/>`; }
+    $('meter').querySelector('.bar').outerHTML = `<svg class="tally" viewBox="0 0 ${n * w - 3} 14" preserveAspectRatio="xMinYMid meet" style="max-width:${n * 30}px" aria-hidden="true">${g}</svg>`; }
   $('meter').querySelector('.top').insertAdjacentHTML('beforeend', `<button class="primary" id="toForm2" ${$('toFormation').disabled ? 'disabled' : ''}>Formation ›</button>`);
   $('toForm2').onclick = () => go('formation');
   // In the school the tray is the squad at a glance, on one line that never changes height: tap a piece to send him back. His kit is on his roster row.
