@@ -633,6 +633,32 @@ body.drilling #noteBox, body.drilling #report { display: none !important; }
 .frow2.beat-here { box-shadow: 0 0 0 1px var(--gold); border-radius: 8px; border-top-color: transparent; padding: 9px 8px 8px; margin: 0 -8px; }
 /* In the school the spoils card carries the one gold button; "Fight again" under it is a plain one. */
 body:not(.free) #after .primary { background: var(--stone-2); color: var(--ink); border-color: var(--line); }
+
+/* Muster rows, slim: name and kind, the kit and what it is for, two numbers, the price. */
+.piece.frow.slim { padding: 5px 8px; } .frow.slim .ph { grid-template-columns: 30px minmax(0, 1fr) 38px 42px; gap: 8px; }
+.frow.slim .ph svg.stand.icon { width: 28px; }
+.frow.slim .pn { flex-wrap: nowrap; white-space: nowrap; } .frow.slim .pn small { font: 500 12px var(--f-ui); color: var(--ink-3); letter-spacing: .02em; overflow: hidden; text-overflow: ellipsis; }
+.frow.slim .pk { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink-3); margin-top: 2px; } .frow.slim .pk b { color: var(--ink); font-weight: 600; }
+.frow.slim .mini { display: flex; gap: 10px; margin-left: auto; align-items: baseline; font: 600 10px/1.15 var(--f-ui); letter-spacing: .08em; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.frow.slim .mini b { font: 700 15px/1.1 var(--f-ui); letter-spacing: 0; color: var(--ink); margin-right: 3px; }
+.frow.slim .ph .add { min-height: 40px; width: 42px; }
+/* The far side of the board before the gates open, and the reveal. */
+#veil { position: absolute; left: 0; right: 0; top: 0; height: 41%; z-index: 40; pointer-events: none; overflow: hidden; }
+#veil .vbg { position: absolute; inset: 0; transition: opacity 1.3s ease-in, transform 1.3s cubic-bezier(.5,0,.8,.4), filter 1.3s ease-in; }
+#veil[data-kind="shadow"] .vbg { background: radial-gradient(120% 60% at 12% 0%, rgba(226,160,60,.16), transparent 60%), linear-gradient(rgba(10,7,4,.95) 0 72%, rgba(10,7,4,0)); }
+#veil[data-kind="gate"] .vbg { bottom: 19%; background: repeating-linear-gradient(90deg, #17120d 0 9px, rgba(23,18,13,.82) 9px 30px), linear-gradient(#17120d 0 12%, transparent 12% 46%, #17120d 46% 54%, transparent 54% 92%, #17120d 92%); box-shadow: 0 6px 14px rgba(0,0,0,.5); }
+#veil[data-kind="dust"] .vbg { background: linear-gradient(rgba(214,186,128,.97) 0 66%, rgba(214,186,128,0)); filter: blur(0); }
+#veil.lift[data-kind="shadow"] .vbg { opacity: 0; }
+#veil.lift[data-kind="gate"] .vbg { transform: translateY(-108%); }
+#veil.lift[data-kind="dust"] .vbg { opacity: 0; transform: scale(1.25) translateX(6%); filter: blur(10px); }
+#veil .vtx { position: absolute; left: 6%; right: 6%; top: 0; height: 81%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; transition: opacity .5s ease-in .8s; }
+#veil .vtx b { font: 400 34px/1.05 var(--f-display); letter-spacing: .06em; color: #f1e2bd; text-shadow: 0 2px 0 #0d0a07, 0 0 22px rgba(0,0,0,.9); }
+#veil .vtx span { font: 500 14px/1.3 var(--f-ui); color: #cdbb97; max-width: 30ch; text-shadow: 0 1px 0 #0d0a07, 0 0 10px rgba(0,0,0,.9); }
+#veil .vtx i { font: 600 11px var(--f-ui); font-style: normal; letter-spacing: .2em; text-transform: uppercase; color: var(--gold); text-shadow: 0 1px 0 #0d0a07; }
+#veil[data-kind="dust"] .vtx b { color: #2a1c10; text-shadow: 0 1px 0 rgba(255,244,214,.6); } #veil[data-kind="dust"] .vtx span { color: #4a3520; text-shadow: none; } #veil[data-kind="dust"] .vtx i { color: #7c1d17; text-shadow: none; }
+#veil.named .vtx b { animation: vname .5s ease-out; } #veil.lift .vtx { opacity: 0; }
+@keyframes vname { from { transform: scale(.9); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { #veil .vbg, #veil .vtx { transition: none; } #veil.named .vtx b { animation: none; } }
 </style>
 
 <div class="wrap">
@@ -2049,13 +2075,34 @@ fight = ((orig) => function () {
     $('spot').innerHTML = `<span></span><div class="mid"><div class="who"><b>Out of the far gate</b></div><div class="act trick">${S.opponent.name}</div><div class="sm">${E.FACTIONS[d.faction].name} · ${d.twist.name}</div></div><span></span>`; }
   else $('spot').innerHTML = '';
   // Let the announcement land before the first move.
-  if (hideRival()) { pause(); const tok = P.token; setTimeout(() => { if (P.token === tok && S.step === 'fight') playLoop(false); }, 1500); }
+  if (hideRival()) { pause(); const tok = P.token, wait = liftVeil(); setTimeout(() => { if (P.token === tok && S.step === 'fight') playLoop(false); }, wait); }
 })(fight);
 renderFormation = ((orig) => function () {
   orig();
   dragify();
-  if (hideRival()) $('billline').innerHTML = `<span>Yours ${spent(S.mine)} / ${S.bill} · ${S.mine.units.length} fighters</span><span>${arenaNow().name}</span>`;
+  $('billline').hidden = hideRival();
+  renderVeil();
 })(renderFormation);
+// ---------- The far side: until the gates open it is the arena's name over whatever hides the other gate. Lifting it is the start of the fight. ----------
+const VEIL_KIND = { dregs: 'shadow', cellar: 'shadow', proving: 'gate', provincial: 'dust' };
+function veilEl() { let v = $('veil'); if (!v) { v = document.createElement('div'); v.id = 'veil'; v.innerHTML = '<div class="vbg"></div><div class="vtx"></div>'; $('board').appendChild(v); } return v; }
+function renderVeil() {
+  const v = veilEl(), on = S.step === 'formation' && hideRival();
+  v.hidden = !on; v.className = ''; if (!on) return;
+  const a = arenaNow(); v.dataset.kind = VEIL_KIND[a.id] ?? 'shadow';
+  v.querySelector('.vtx').innerHTML = `<b>${a.name}</b><span>${a.line}</span>`;
+}
+/** The reveal: the opponent's name over the far side, then whatever hid them lifts. Returns how long it takes. */
+function liftVeil() {
+  const v = veilEl(), a = arenaNow(), d = E.DOCTORE_BY_ID[S.theirDoc], calm = SAND.calm;
+  v.dataset.kind = VEIL_KIND[a.id] ?? 'shadow'; v.className = ''; v.hidden = false;
+  v.querySelector('.vtx').innerHTML = `<i>Out of the far gate</i><b>${S.opponent.name}</b><span>${E.FACTIONS[d.faction].name} · ${d.twist.name}</span>`;
+  void v.offsetWidth; v.classList.add('named');
+  const tok = P.token, hold = calm ? 900 : 1100, lift = calm ? 0 : 1300;
+  setTimeout(() => { if (P.token !== tok) { v.hidden = true; return; } v.classList.add('lift'); sfxPlay('reveal', .5, (r, t) => { sndThud(r, t, { gain: .5, f: 180 }); sndNoise(r, t + .05, { dur: .9, f: 900, f1: 300, q: .6, gain: .1 }); }); }, hold);
+  setTimeout(() => { v.hidden = true; v.className = ''; }, hold + lift + 250);
+  return hold + lift;
+}
 renderMuster = ((orig) => function (full) {
   if (hideRival()) { const lock = E.scriptDoctore(SC(), S.arena); if (lock && lock !== G.doctore && G.doctores.includes(lock)) putInCharge(lock); }
   orig(full);
@@ -2333,9 +2380,11 @@ renderRoster = ((orig) => function () {
     const u = unitOf(f), c = cost(u), r = E.resolveUnit(u, E.doctoreEffectsFor(S.mine, E.UNITS[f.template]));
     const inSquad = S.mine.units.some((x) => x.fid === f.id);
     const cant = !inSquad && (c > left || (E.fieldable(S.myDoc, f.template) === 'neutral' && neutralsIn >= 3));
-    return `<div class="piece frow ${inSquad ? 'in' : ''}"><div class="ph" style="grid-template-columns:40px minmax(0,1fr) 46px 44px">${tokenSvg(lookOf(u), { side: 0, bare: true })}
-      <button class="info" data-f="${f.id}"><span class="pn"><em class="pdot" style="background:${paintOf(f)}"></em>${f.name}</span><span class="pk">${fighterLine(f)}</span>${statLine(r)}</button>
-      <span class="bc" style="${cant ? 'opacity:.5' : ''}">${c}${costSplit(u)}</span>
+    // One short row: who he is, the kit he is wearing and what that kit is for, two numbers, his price. The rest is on his sheet.
+    const lo = E.loadoutOf(f), role = E.BUILDS[lo.template]?.find((b) => b.id === lo.build)?.role ?? '';
+    return `<div class="piece frow slim ${inSquad ? 'in' : ''}"><div class="ph">${tokenSvg(lookOf(u), { side: 0, bare: true })}
+      <button class="info" data-f="${f.id}"><span class="pn"><em class="pdot" style="background:${paintOf(f)}"></em>${f.name}<small>${E.UNITS[f.template].name} ${'★'.repeat(M(f).stars)}</small><span class="mini"><span><b>${Math.round(r.stats.hp)}</b>HP</span><span><b>${Math.round(r.stats.atk + r.weapon.damage)}</b>DMG</span></span></span><span class="pk"><b>${lo.name}</b>${role ? ` · ${role}` : ''}</span></button>
+      <span class="bc" style="${cant ? 'opacity:.5' : ''}">${c}</span>
       <button class="add" data-toggle="${f.id}" ${cant ? 'disabled' : ''} aria-pressed="${inSquad}" aria-label="${inSquad ? 'Take' : 'Put'} ${f.name} ${inSquad ? 'out of' : 'in'} the squad">${inSquad ? '✓' : '+'}</button></div></div>`;
   }).join('') + (out.length ? `<p class="hint" style="margin:0">Sitting out under ${E.DOCTORE_BY_ID[G.doctore].name}: ${out.map((f) => f.name).join(', ')}.</p>` : '');
   $('roster').querySelectorAll('[data-toggle]').forEach((el) => el.onclick = () => { toggleSquad(el.dataset.toggle); renderMuster(false); });
