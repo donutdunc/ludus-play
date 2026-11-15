@@ -813,6 +813,8 @@ body:not(.free) .meter { gap: 4px; padding: 8px 12px 6px; } body:not(.free) .met
 body:not(.free) .meter .pick svg.stand.icon { width: 23px; } body:not(.free) .meter .pick { gap: 0; padding: 0; }
 /* The legend under the board explained more than the board needs. Not in the school game. */
 body:not(.free) #arena details { display: none; }
+/* A popup holds the page still, and its own scrolling stops at its edges instead of passing through to the page. */
+html.held, html.held body { overflow: hidden; } .edit, .sheet, .drill { overscroll-behavior: contain; }
 </style>
 
 <div class="wrap">
@@ -3174,6 +3176,16 @@ window.addEventListener('hashchange', () => { if (location.hash === '#battle' &&
     const inset = Math.max(0, probe.getBoundingClientRect().top, b.getBoundingClientRect().top + window.scrollY + pad - 26);   // 26 is the page's own top padding
     document.documentElement.style.setProperty('--inset', `${Math.round(inset)}px`); };
   set(); window.addEventListener('resize', set); window.addEventListener('orientationchange', set);
+})();
+// ---------- A popup holds the page still ----------
+// While a sheet, the fighter's card, the feedback form or the fight panel is open, the screen behind it does not scroll.
+(function holdStill() {
+  const pops = ['edit', 'sheet', 'fb', 'drill'].map((id) => $(id)).filter(Boolean), open = () => pops.some((el) => !el.hidden);
+  const sync = () => document.documentElement.classList.toggle('held', open());
+  for (const el of pops) new MutationObserver(sync).observe(el, { attributes: true, attributeFilter: ['hidden'] });
+  // Phones ignore overflow on the page for a finger already moving, so swallow drags that start outside the popup.
+  document.addEventListener('touchmove', (ev) => { if (open() && !pops.some((el) => !el.hidden && el.contains(ev.target))) ev.preventDefault(); }, { passive: false });
+  sync();
 })();
 </script>
 
