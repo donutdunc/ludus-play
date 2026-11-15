@@ -389,7 +389,7 @@ body.fighting .board { width: min(100%, calc((100dvh - 196px) * 0.6667)); }
 .fig { width: 62px; height: 80px; } .fig svg { width: 62px; height: 80px; display: block; overflow: visible; }
 .fig:first-child { transform: rotate(3deg); transform-origin: 50% 90%; } .fig:last-child { transform: rotate(-3deg); transform-origin: 50% 90%; }
 .fig.down svg, .fig.down img { filter: grayscale(1) brightness(.55); }
-.fig.port { transform: none !important; box-sizing: border-box; position: relative; border: 3px solid #f6f1e4; outline: 2px solid #14110e; border-radius: 3px; background: #241d16; }
+.fig.port { transform: none; box-sizing: border-box; position: relative; border: 3px solid #f6f1e4; outline: 2px solid #14110e; border-radius: 3px; background: #241d16; }
 .fig.port.theirs { border-color: #14110e; outline-color: #8a7d6a; }
 .fig.port img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .fig.port i { display: block; background: #14110e; overflow: hidden; }
@@ -891,6 +891,31 @@ html.held, html.held body { overflow: hidden; } .edit, .sheet, .drill { overscro
 [data-sets="own"] .spot .fig.port.theirs .pin { background: linear-gradient(#3a2e22, #1d1711); box-shadow: inset 0 3px 4px rgba(0,0,0,.4); }
 .spot .fig.port i { grid-row: 2; grid-column: 1 / -1; }
 @media (max-height: 760px) { [data-look="lino"] body.fighting .spot { --pw: 36px; --nw: 22px; } .spot .fig.port { grid-template-rows: minmax(0, 1fr) 6px; } }
+
+/* ---------- The end of a fight ----------
+   The result (and the way on) takes the place under the board; the playback controls and the report follow it, for whoever wants to look back. */
+body.fighting .transport { order: 1; } body.fighting #report, body.fighting #after { order: 2; }
+/* The bar over the fight never moves: it sticks exactly where it already sits, frame and all, and what scrolls past above it is covered. */
+html body.fighting .spot { top: calc(var(--lintel) + 27px) !important; }
+body.fighting::after { content: ''; position: fixed; z-index: 5; left: 0; right: 0; top: var(--lintel); height: 17px; background: var(--stone); pointer-events: none; }
+@media (max-height: 760px) { html body.fighting .spot { top: calc(var(--lintel) + 24px) !important; } body.fighting::after { height: 14px; } }
+/* ---------- A blow ----------
+   The number lands large (largest when it has the middle to itself), the card it lands on is knocked back and flashes, and the health lost shows pale before it drains. */
+[data-look="lino"] .spot .act.hit, [data-look="lino"] .spot .act.crit { font-size: 30px; line-height: 1; animation: punch .3s cubic-bezier(.2,1.5,.4,1); }
+[data-look="lino"] .spot .mid.big .act { font-size: 50px; } [data-look="lino"] .spot .mid.big .act.crit { font-size: 40px; }
+[data-look="lino"] .spot .mid.big .sm { -webkit-line-clamp: 1; height: 1.2em; }
+@keyframes punch { from { transform: scale(1.9); opacity: .2; } }
+.spot .fig.port.struck { animation: struckL .34s cubic-bezier(.2,.8,.3,1); } .spot .fig.port.struck.theirs { animation-name: struckR; }
+@keyframes struckL { 0% { transform: none; } 25% { transform: translateX(-6px) rotate(-1.5deg); } 100% { transform: none; } } @keyframes struckR { 0% { transform: none; } 25% { transform: translateX(6px) rotate(1.5deg); } 100% { transform: none; } }
+.spot .fig.port.struck.hard { animation-duration: .42s; }
+.spot .fig.port .pic { position: relative; } .spot .fig.port.struck .pic::after, .spot .fig.port.struck .pin::after { content: ''; position: absolute; inset: 0; background: #fff3d6; opacity: 0; animation: flashout .3s ease-out; pointer-events: none; }
+.spot .fig.port.struck.hard .pic::after { background: #ffd9c2; animation-duration: .42s; }
+@keyframes flashout { from { opacity: .75; } }
+.spot .fig.port i { position: relative; } .spot .fig.port i b { position: relative; }
+.spot .fig.port i u { position: absolute; left: 0; top: 0; bottom: 0; width: var(--from); background: #f6f1e4; animation: drain .45s ease-in .3s forwards; }
+@keyframes drain { to { width: var(--to); } }
+@media (max-height: 760px) { [data-look="lino"] body.fighting .spot .act.hit, [data-look="lino"] body.fighting .spot .act.crit { font-size: 22px; } [data-look="lino"] body.fighting .spot .mid.big .act { font-size: 34px; } [data-look="lino"] body.fighting .spot .mid.big .act.crit { font-size: 28px; } }
+@media (prefers-reduced-motion: reduce) { [data-look="lino"] .spot .act.hit, [data-look="lino"] .spot .act.crit, .spot .fig.port.struck, .spot .fig.port.struck .pic::after, .spot .fig.port.struck .pin::after { animation: none; } .spot .fig.port i u { animation-duration: .01s; } }
 </style>
 
 <div class="wrap">
@@ -2178,7 +2203,7 @@ setFightUi = ((orig) => function () { orig(); $('spoils').hidden = !(S.step === 
 finish = ((orig) => function () { orig(); document.querySelectorAll('.aim').forEach((x) => x.remove()); document.querySelectorAll('.tok.aimed').forEach((x) => x.classList.remove('aimed')); fightDone(P.res); spotEnd(); })(finish);
 
 // ---------- The spotlight: who is acting on whom, with their faces. It replaces the text log during a fight. ----------
-function face(uid, hpShown) {
+function face(uid, hpShown, struck) {
   const st = P.state.get(uid); if (!st) return '';
   // Counters: the close-up is the same piece on the same sand, with its painted face where it has one.
   if (lookNow === 'lino') {
@@ -2186,6 +2211,10 @@ function face(uid, hpShown) {
     // The bar is where a piece becomes a person: one card, two cells. His face on the outside, his piece in a niche beside it so you can find him on the sand,
     // and one health strip under both. Where a fighter has no painting yet, his piece has the whole card.
     const pc = tokenSvg(st.look, { side: st.side, bare: true });
+    // A blow shows on the card it lands on: the card is knocked back and flashes, and the health just lost stays pale for a moment before it drains.
+    const seen = (P.hpSeen ??= new Map()), was = seen.get(uid) ?? hp; seen.set(uid, hp);
+    const lost = struck && was > hp ? `<u style="--from:${(was * 100).toFixed(0)}%;--to:${(hp * 100).toFixed(0)}%"></u>` : '';
+    if (struck) return `<div class="fig port struck${struck === 'crit' ? ' hard' : ''} ${art ? '' : 'noart'} ${st.side === 0 ? 'mine' : 'theirs'} ${st.alive ? '' : 'down'}" data-fam="${st.look.faction}">${art ? `<span class="pic"><img src="${art}" alt=""></span><span class="pin">${pc}</span>` : `<span class="stand-in">${pc}</span>`}<i>${lost}<b style="width:${(hp * 100).toFixed(0)}%"></b></i></div>`;
     return `<div class="fig port ${art ? '' : 'noart'} ${st.side === 0 ? 'mine' : 'theirs'} ${st.alive ? '' : 'down'}" data-fam="${st.look.faction}">${art ? `<span class="pic"><img src="${art}" alt=""></span><span class="pin">${pc}</span>` : `<span class="stand-in">${pc}</span>`}<i><b style="width:${(hp * 100).toFixed(0)}%"></b></i></div>`;
   }
   const art = artOf(st.look);
@@ -2202,9 +2231,10 @@ function spot(a, t, big, small, tone, why, more, title) {
   const L = sa === 0 ? a : st === 0 ? t : null, R = sa === 1 ? a : st === 1 ? t : null, cross = pair && sa !== st;
   const who = title ? `<b>${title}</b>` : cross ? `<b>${spotName(L)}</b><span class="dir">${sa === 0 ? '▸' : '◂'}</span><b>${spotName(R)}</b>`
     : `<b>${a != null ? spotName(a) : ''}</b>${pair ? `<span class="dir">▸</span><b>${spotName(t)}</b>` : ''}`;
-  const slot = (u) => (u != null ? face(pair && !cross ? t : u, u !== a) : '<span></span>');
+  const blow = tone === 'hit' || tone === 'crit', slot = (u) => (u != null ? face(pair && !cross ? t : u, u !== a, blow && pair && u === t ? tone : null) : '<span></span>');
+  // A plain blow has the middle to itself, so the number is as big as the bar allows.
   $('spot').innerHTML = `${slot(L)}
-    <div class="mid${why ? ' two' : ''}"><div class="who">${who}</div>
+    <div class="mid${why ? ' two' : ''}${blow && !small && !why ? ' big' : ''}"><div class="who">${who}</div>
       <div class="act ${tone ?? ''}">${big ?? ''}</div><div class="sm">${small ?? ''}${more ? `<span class="more">${small ? ' · ' : ''}${more}</span>` : ''}</div>${why ? `<div class="sm why">${why}</div>` : ''}</div>
     ${slot(R)}`;
 }
@@ -2305,7 +2335,7 @@ apply = ((orig) => function (e, anim) {
   if (e.kind === 'turn') P.aim = null;
   else if (e.kind === 'intent') { P.aim = { a: e.aid, t: e.tid }; const st = P.state.get(e.aid); if (st) { st.fresh = st.tgt !== e.tid; st.tgt = e.tid; st.why = e.note ?? ''; } }
   const d = orig(e, anim); spotEvent(e, !anim); return d; })(apply);
-resetState = ((orig) => function () { orig(); P.aim = null; spotLast = null; spotNow = { a: null, t: null }; for (const st of P.state.values()) { st.tgt = null; st.why = ''; st.fresh = false; } })(resetState);
+resetState = ((orig) => function () { orig(); P.aim = null; P.hpSeen = new Map(); spotLast = null; spotNow = { a: null, t: null }; for (const st of P.state.values()) { st.tgt = null; st.why = ''; st.fresh = false; } })(resetState);
 
 // ---------- Drill-down: tap a piece in a fight to pause and read it: who it is going for, who is on it, what is on it. ----------
 document.body.insertAdjacentHTML('beforeend', '<section id="drill" class="drill" hidden aria-live="polite"></section>');
@@ -2979,7 +3009,8 @@ function fightDone(res) {
   if ($('tryAgain')) $('tryAgain').onclick = () => enterArena(arenaNow().id);
   renderHud();
   // The result sits below the board. Once the last blow has landed, bring it up: the purse, the herald's word and the way back are all on it.
-  if (fresh) { const tok = P.token; setTimeout(() => { if (P.token !== tok || S.step !== 'fight' || S.mode !== 'done') return; window.scrollTo({ top: window.scrollY + $('spoils').getBoundingClientRect().top - 96, behavior: SAND.calm ? 'auto' : 'smooth' }); }, 900); }
+  // The result sits under the board, where the fight's controls were. The page only moves if the card is too tall to show whole, and then only as far as its foot.
+  if (fresh) { const tok = P.token; setTimeout(() => { if (P.token !== tok || S.step !== 'fight' || S.mode !== 'done') return; const over = $('spoils').getBoundingClientRect().bottom + 16 - window.innerHeight; if (over > 0) window.scrollBy({ top: over, behavior: SAND.calm ? 'auto' : 'smooth' }); }, 700); }
 }
 
 // ---------- Feedback ----------
