@@ -773,6 +773,7 @@ body.forming .fightbar { display: flex; } body.forming #card { display: none; }
 #spoils ul.read { margin: 4px 0 2px; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; font: 500 14.5px/1.35 var(--f-ui); color: var(--ink-2); } #spoils ul.read b { color: var(--ink); }
 #spoils .hh.nc-talk { background: none; border: 0; padding: 0; margin: 4px 0; }
 #spoils .hh.nc-talk p { color: #2a2118; font: 500 15px/1.38 var(--f-ui); } .nc-talk .sig { width: 52px; height: 52px; border-radius: 50%; box-shadow: 0 0 0 1px #14110e, 0 0 0 3px #5a3a1c; background: var(--stone-3); display: grid; place-items: center; } .nc-talk .sig svg { width: 30px; height: 30px; }
+#crumb div.arena-h { display: flex; flex-direction: row; justify-content: space-between; align-items: center; gap: 10px; margin: 0; min-width: 0; } #crumb div.arena-h b { font: 20px/1.1 var(--f-display); font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; } #crumb div.arena-h span { font: 600 13px var(--f-ui); color: var(--ink-3); white-space: nowrap; } #crumb div.arena-h em { font-style: normal; color: var(--gold); font-size: 16px; }
 </style>
 
 <div class="wrap">
@@ -847,7 +848,7 @@ body.forming .fightbar { display: flex; } body.forming #card { display: none; }
 
     <h2 class="sec">Roster <span id="rosterNote"></span></h2>
     <div class="roster" id="roster"></div>
-    <div class="row"><button id="draftMe" class="grow">Draft for me</button><button id="clearMe" class="grow">Clear lineup</button></div>
+    <div class="row"><button id="draftMe" class="grow">Auto Select</button><button id="clearMe" class="grow">Clear lineup</button></div>
     <button class="primary cta" id="toFormation">Set the formation</button>
   </section>
 
@@ -2248,7 +2249,6 @@ renderMuster = ((orig) => function (full) {
   if (hideRival()) { const a = arenaNow(), purse = E.reward(a.id, true, (G.arenaWins[a.id] ?? 0) > 0).denarii;
     const b = beatNow(), mine = b?.fight?.arena === a.id ? b : null, lost = mine ? SC().lost[mine.id] ?? 0 : 0;
     $('arenaTop').innerHTML = ''; renderCrumb();
-    $('arenaInfo').onclick = () => explain('Arena', a.name, `${a.line} The bill here is ${a.bill}: that is the most your squad may cost. A win pays ${purse} denarii${(G.arenaWins[a.id] ?? 0) > 0 ? ' (less than your first win here did)' : ''}. ${mine ? '' : 'You will not know who you face until the gates open.'}`);
   }
 })(renderMuster);
 $('stepSchool').onclick = () => show('school');
@@ -2257,9 +2257,8 @@ function renderCrumb() {
   if (FREE || !S.arena) return;
   let c = $('crumb'); if (!c) { c = document.createElement('div'); c.id = 'crumb'; $('steps').appendChild(c); }
   const a = arenaNow(), purse = E.reward(a.id, true, (G.arenaWins[a.id] ?? 0) > 0).denarii, form = S.step === 'formation';
-  c.innerHTML = `<button id="crumbBack" aria-label="Back to ${form ? 'the squad' : 'the school'}">‹ ${form ? 'Squad' : 'School'}</button><button class="arena-h" id="arenaInfo"><b>${form ? '' : a.name}</b><span>Purse <em>${purse}</em> · ⓘ</span></button>`;   // on formation the board itself announces the arena
+  c.innerHTML = `<button id="crumbBack" aria-label="Back to ${form ? 'the squad' : 'the school'}">‹ ${form ? 'Squad' : 'School'}</button><div class="arena-h"><b>${a.name}</b><span>Purse <em>${purse}</em></span></div>`;
   $('crumbBack').onclick = () => (S.step === 'formation' ? go('muster') : show('school'));
-  $('arenaInfo').onclick = () => explain('Arena', a.name, `${a.line} The bill here is ${a.bill}: that is the most your squad may cost. A win pays ${purse} denarii.`);
 }
 go = ((orig) => function (step) {
   orig(step); const forming = !FREE && S.step === 'formation';
