@@ -631,6 +631,8 @@ body.drilling #noteBox, body.drilling #report { display: none !important; }
 #toast b { font: 600 15px/1.25 var(--f-ui); color: var(--gold); } #toast span { font: 500 14px/1.3 var(--f-ui); color: var(--ink); }
 @keyframes toast { from { transform: translateY(-14px); opacity: 0; } } @media (prefers-reduced-motion: reduce) { #toast { animation: none; } }
 .frow2.beat-here { box-shadow: 0 0 0 1px var(--gold); border-radius: 8px; border-top-color: transparent; padding: 9px 8px 8px; margin: 0 -8px; }
+/* In the school the spoils card carries the one gold button; "Fight again" under it is a plain one. */
+body:not(.free) #after .primary { background: var(--stone-2); color: var(--ink); border-color: var(--line); }
 </style>
 
 <div class="wrap">
@@ -2035,7 +2037,8 @@ $('stepBack').onclick = () => stepBack();
 fight = ((orig) => function () {
   if (hideRival()) {
     // The gates open: only now is the opponent drawn.
-    const sr = E.scriptRival(SC(), arenaNow().id);
+    // A showcase's opponent only walks out when its doctore is in charge ("Fight again" skips the muster, where that is settled).
+    const lock = E.scriptDoctore(SC(), arenaNow().id), sr = !lock || lock === G.doctore ? E.scriptRival(SC(), arenaNow().id) : null;
     const o = sr ? { team: E.rivalTeam(sr), name: sr.name, rivalId: sr.id } : E.drawOpponent(arenaNow().id, new E.Rng(Math.floor(Math.random() * 1e9)), G.beaten, G.fights === 0);
     for (const u of o.team.units) u._style = styleOf(u).id;
     nameTeam(o.team); E.deploy(o.team).forEach((p, i) => { o.team.units[i].pos = { x: p.x, y: p.y }; });
@@ -2468,6 +2471,7 @@ $('draftMe').onclick = () => {
 // ---------- Spoils ----------
 function fightDone(res) {
   if (FREE || !G) { $('spoils').hidden = true; return; }
+  const fresh = !P.paid;
   if (!P.paid) {
     P.paid = true;
     const a = arenaNow(), sc = SC(), b0 = beatNow(), openBefore = openArenas().map((x) => x.id);
@@ -2497,6 +2501,8 @@ function fightDone(res) {
   $('toSchool').onclick = () => show('school');
   if ($('tryAgain')) $('tryAgain').onclick = () => enterArena(arenaNow().id);
   renderHud();
+  // The result sits below the board. Once the last blow has landed, bring it up: the purse, the herald's word and the way back are all on it.
+  if (fresh) { const tok = P.token; setTimeout(() => { if (P.token !== tok || S.step !== 'fight' || S.mode !== 'done') return; window.scrollTo({ top: window.scrollY + $('banner').getBoundingClientRect().top - 84, behavior: SAND.calm ? 'auto' : 'smooth' }); }, 900); }
 }
 
 // ---------- Feedback ----------
