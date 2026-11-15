@@ -555,6 +555,7 @@ textarea, input, select { font-size: 16px; }
 .dstats { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
 .dstats .stat { min-height: 40px; padding: 4px 0; } .dstats .stat b { font-size: 15px; } .dstats .stat span { font-size: 9px; letter-spacing: .06em; }
 body.drilling #noteBox, body.drilling #report { display: none !important; }
+[data-look="lino"] body.fighting.drilling .board, body.fighting.drilling .board { width: min(100%, var(--drillw, calc((54dvh - 44px) * 0.5952))); }
 </style>
 
 <div class="wrap">
@@ -1908,6 +1909,8 @@ function renderDrill() {
     ${cr ? drillStats(cr.r) + chipsHtml(cr.chips) : ''}`;
   $('drill').hidden = false;
   $('drillX').onclick = closeDrill;
+  // The board shrinks to sit whole in the space the panel leaves, measured on this screen rather than assumed.
+  window.scrollTo(0, 0); { const top = $('board').getBoundingClientRect().top, room = $('drill').getBoundingClientRect().top - Math.max(top, 0) - 18; $('board').style.setProperty('--drillw', `${Math.max(120, Math.floor(room * .5952))}px`); }
   if (cr) { wireStats($('drill'), cr.r); wireChips($('drill'), cr.chips); }
 }
 $('tokens').addEventListener('click', (ev) => {
@@ -2503,7 +2506,7 @@ function sfx() { const r = SFX.on ? SFX.rig : null; return r && r.ac.state === '
 function sfxWake() {
   if (!SFX.on) return;
   if (!SFX.rig) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
-    try { if (navigator.audioSession) navigator.audioSession.type = 'ambient'; } catch (e) { /* it then behaves as the browser decides */ }
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { /* it then behaves as the browser decides */ }
     try { SFX.rig = sfxRig(new AC()); } catch (e) { return; } }
   if (SFX.rig.ac.state !== 'running') { try { SFX.rig.ac.resume()?.catch?.(() => {}); } catch (e) { /* the next tap tries again */ } }
 }
