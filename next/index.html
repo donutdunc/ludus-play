@@ -709,6 +709,11 @@ body:not(.free) #banner, body:not(.free) #noteBox { display: none !important; }
 .rtabs button small { margin-left: 6px; font: 600 12px var(--f-ui); color: var(--ink-3); font-variant-numeric: tabular-nums; }
 .rtabs button[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); background: var(--stone-3); }
 h3.rfam { margin: 6px 0 -2px; font: 600 11px var(--f-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+/* Muster tray in the school: one fixed line however many are in. Pieces narrow to fit; no remove buttons, a tap sends him back. */
+body:not(.free) .meter .tray { flex-wrap: nowrap; gap: 2px; height: 58px; min-height: 0; overflow: hidden; align-items: flex-end; }
+body:not(.free) .meter .pickwrap { flex: 0 1 46px; min-width: 0; padding-top: 0; } body:not(.free) .meter .drop { display: none; }
+body:not(.free) .meter .pick { width: 100%; padding: 2px 0; overflow: hidden; } body:not(.free) .meter .pick svg { flex: 0 0 auto; }
+body:not(.free) .meter .info { white-space: nowrap; margin-left: 4px; text-align: left; } .meter .info b { color: var(--ink); } .meter .info.full { color: var(--gold); }
 </style>
 
 <div class="wrap">
@@ -2402,6 +2407,11 @@ renderMeter = ((orig) => function () {
   const e = $('meter').querySelector('.empty'); if (e) e.textContent = 'Tap + on a fighter to put him in the squad.';
   $('meter').querySelector('.top').insertAdjacentHTML('beforeend', `<button class="primary" id="toForm2" ${$('toFormation').disabled ? 'disabled' : ''}>Formation ›</button>`);
   $('toForm2').onclick = () => go('formation');
+  // In the school the tray is the squad at a glance, on one line that never changes height: tap a piece to send him back. His kit is on his roster row.
+  $('meter').querySelectorAll('[data-m]').forEach((el) => { el.setAttribute('aria-label', `Take ${S.mine.units[+el.dataset.m].name} out of the squad`); el.onclick = () => { S.mine.units.splice(+el.dataset.m, 1); renderMuster(false); }; });
+  // The neutral count has its place from the start under a doctore with a family of his own, so it does not pop in.
+  const fam = E.DOCTORE_BY_ID[S.myDoc]?.faction, info = $('meter').querySelector('.info');
+  if (info && fam && !E.FACTIONS[fam].neutral) { const n = S.mine.units.length, k = S.mine.units.filter((u) => E.fieldable(S.myDoc, u.template) === 'neutral').length; info.innerHTML = `Neutral <b>${k}</b> / ${Math.min(3, Math.max(1, E.neutralRoom(Math.max(n, 2))))}`; info.classList.toggle('full', k >= 3); }
 })(renderMeter);
 function renderRosterScreen() {
   const rumour = nextDoctore();
