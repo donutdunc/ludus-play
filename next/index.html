@@ -715,6 +715,9 @@ body:not(.free) #muster h2.sec:has(#rosterNote) { display: none; }
 /* Reading a piece mid-fight: nothing resizes. The bar and the board keep their size and slide up together only if the panel would cover him. */
 body.fighting .spot, body.fighting .board { transition: transform .22s ease; transform: translateY(calc(-1 * var(--drilly, 0px))); }
 .drill { max-height: 42dvh; } .drill .dgo b small { display: block; font: 500 13px/1.3 var(--f-ui); color: var(--gold); margin-top: 1px; }
+/* A solid cap over the status-bar strip, so nothing scrolls under the clock and gets blurred. Every screen. */
+body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top, 0px); background: var(--stone); z-index: 80; pointer-events: none; }
+table.rep.slim tr.fell td:first-child { text-decoration: none; } table.rep.slim { table-layout: fixed; } table.rep.slim th:first-child { width: 34%; }
 </style>
 
 <div class="wrap">
@@ -2024,6 +2027,14 @@ function whyOf(e) {
   const when = !def.when ? '' : def.when === 'Always' ? '' : def.when[0].toLowerCase() + def.when.slice(1);
   return { lasts: lasts ? `${lasts} turn${lasts > 1 ? 's' : ''}` : '', why: [when && `Why: ${when}`, def.cooldown && `again in ${def.cooldown} turns`].filter(Boolean).join(' · ') };
 }
+// In the school the report is one small table a side: who did the work and who is still standing. No trick tallies, no turn codes.
+renderReport = ((orig) => function () {
+  const out = orig(); if (FREE) return out;
+  const all = [...out.by.values()];
+  const table = (side, title) => `<div class="lab"><span>${title}</span></div><table class="rep slim"><thead><tr><th></th><th>Dealt</th><th>Taken</th><th>Kills</th><th>Left</th></tr></thead><tbody>${all.filter((c) => c.side === side).sort((a, b) => b.counters.dealt - a.counters.dealt).map((c) => `<tr class="${c.alive ? '' : 'fell'}"><td>${c.name}</td><td>${Math.round(c.counters.dealt)}</td><td>${Math.round(c.counters.taken)}</td><td>${c.counters.kills}</td><td>${c.alive ? `${Math.round(c.hp)} HP` : 'Down'}</td></tr>`).join('')}</tbody></table>`;
+  $('report').innerHTML = table(0, 'Yours') + table(1, S.opponent?.name ?? 'Theirs');
+  return out;
+})(renderReport);
 /** The reason for a target, said once: on the first move or swing after he picks someone new. */
 function freshWhy(aid, tid) { const st = P.state.get(aid); if (!st?.fresh || st.tgt !== tid || !st.why) return ''; st.fresh = false; return `Picked: ${st.why.split(' · ')[0]}`; }
 function spotEvent(e) {
