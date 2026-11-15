@@ -698,6 +698,11 @@ body:not(.free) #banner, body:not(.free) #noteBox { display: none !important; }
 .pface i { font: 600 11px var(--f-ui); font-style: normal; color: var(--ink-2); }
 #spoils .gains .faces { display: flex; gap: 12px; margin: 8px 2px 6px; }
 .answer .head { grid-template-columns: 62px minmax(0, 1fr) auto; } .answer .head .pface i { display: none; }
+/* The school's doors: a fixed strip under the banner. */
+.doors { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; height: 44px; margin-top: -4px; }
+.doors button { height: 44px; min-height: 0; position: relative; font: 600 15px var(--f-ui); }
+.doors button em { position: absolute; top: 8px; right: 10px; width: 8px; height: 8px; border-radius: 50%; background: var(--gold); }
+.home .yard { cursor: pointer; }
 </style>
 
 <div class="wrap">
@@ -717,12 +722,10 @@ body:not(.free) #banner, body:not(.free) #noteBox { display: none !important; }
   <!-- SCHOOL: home. A banner with the yard, what the herald wants next, where to fight, the rooms that have arrived, the chronicle. -->
   <section id="school" class="screen" hidden>
     <div class="home" id="schoolCard"></div>
+    <div id="rooms" class="doors"></div>
     <div class="nextcard" id="nextCard"></div>
     <h2 class="sec" id="ladderH">Where to fight</h2>
     <div id="ladderList" class="screen" style="gap:8px"></div>
-    <h2 class="sec">The school</h2>
-    <div id="rooms" class="rooms"></div>
-    <div id="chronBox" class="screen" style="gap:6px"></div>
     <div class="seg looks" id="looks" hidden></div>
     <div class="row"><button id="fbOpen2" class="grow">Give feedback</button></div>
     <details class="testers" id="testers">
@@ -1634,8 +1637,8 @@ const arenaIsOpen = (id) => !E.arenaHeld(SC(), id) && (E.arenaOpen(id, G.arenaWi
 const openArenas = () => E.LADDER_ARENAS.filter((a) => arenaIsOpen(a.id));
 const lcThe = (name) => name.replace(/^The /, 'the ');
 const mmss = (secs) => `${Math.floor(secs / 60)}:${String(Math.floor(secs % 60)).padStart(2, '0')}`;
-/** The school's chronicle: what happened, in the order it happened. The herald remembers. */
-function chron(text) { (G.chron ??= []).push({ d: G.day ?? 1, t: text }); if (G.chron.length > 80) G.chron.splice(0, G.chron.length - 80); }
+/** The chronicle is gone from the game; the calls to it are left as no-ops. */
+function chron() {}
 /** A new day starts when the calendar says so (or a tester does). The morning call goes out once a day. */
 function dayCheck(force) {
   if (!G) return false;
@@ -2231,7 +2234,7 @@ const standing = () => { let best = 'none'; for (const a of E.LADDER_ARENAS) if 
 const STAT_LABEL = { hp: 'HP', atk: 'ATK', spd: 'SPD', acc: 'ACC' };
 const callsReady = () => Object.entries(E.CALLS).filter(([id, c]) => (id !== 'glory' || inSight('glory')) && G[c.currency] >= c.cost).map(([, c]) => c.name);
 const canDrill = () => G.fighters.filter((f) => E.trainsAt(f) && E.TRAIN_STATS.some((st) => E.canStartTraining(f, st, G.denarii)));
-let yardNew = new Set(), chronAll = false;
+let yardNew = new Set();
 /** The yard: every fighter the school owns, as his piece, standing on the school's own sand. One group per family; it fills as the school grows. */
 function yardHtml() {
   const fams = ['riffraff', 'warren', 'legion'].map((fam) => G.fighters.filter((f) => M(f).faction === fam).sort((a, b) => M(a).stars - M(b).stars || a.name.localeCompare(b.name))).filter((r) => r.length);
@@ -2303,20 +2306,10 @@ function renderSchool() {
   if (nextA && !E.arenaHeld(SC(), nextA.id)) { const need = Math.max(1, last.opensAfter - (G.arenaWins[last.id] ?? 0)); html += `<p class="hint" style="margin:0">Win ${need} more in ${last.name} and the school gets a bigger stage.</p>`; }
   $('ladderList').innerHTML = b ? '' : html; $('ladderH').hidden = !!b;
   $('ladderList').querySelectorAll('[data-arena-go]').forEach((el) => el.onclick = () => enterArena(el.dataset.arenaGo));
-  // The school's rooms. Each one is here because it has arrived, and each says what state it is in.
-  const rooms = [`<button class="room" id="toRoster"><b>Roster</b><span>${G.fighters.length} fighters · ${G.doctores.length === 1 ? E.DOCTORE_BY_ID[G.doctore].name : `${G.doctores.length} doctores, each with a squad`}</span>${yardNew.size ? `<em>${yardNew.size} new</em>` : ''}<i>›</i></button>`];
-  if (inSight('calls')) { const ready = callsReady().length + (G.morning ? 1 : 0);
-    rooms.push(`<button class="room" id="toHall"><b>The calls</b><span>${G.morning ? 'The morning call has gone out: it costs nothing today' : inSight('glory') ? 'Coin brings whoever needs work. Your name brings the ones worth having' : 'Coin on the table brings whoever needs work'}</span>${ready ? `<em>${ready} ready</em>` : ''}<i>›</i></button>`); }
-  if (inSight('training')) { const t = G.training, f = t && fighterById(t.fid), can = canDrill().length;
-    rooms.push(`<button class="room" id="toYard"><b>The yard</b><span>${f ? `${f.name} · ${STAT_LABEL[t.stat]} · <u id="yardClock">${clock(t.doneAt - Date.now())}</u>` : can ? `Empty. ${can === 1 ? 'One of your fighters' : `${can} of your fighters`} can train` : 'Empty'}</span>${!f && can ? '<em>free</em>' : ''}<i>›</i></button>`); }
-  $('rooms').innerHTML = rooms.join('');
-  $('toRoster').onclick = () => show('rosterScr');
-  if ($('toHall')) $('toHall').onclick = () => show('hall');
-  if ($('toYard')) $('toYard').onclick = () => { const f = G.training && fighterById(G.training.fid); if (f) openFighter(f.id); else show('rosterScr'); };
-  // The chronicle: the last few things that happened, newest first.
-  const all = G.chron ?? [], rows = [...all].reverse(), shown = chronAll ? rows : rows.slice(0, 4);
-  $('chronBox').innerHTML = all.length ? `<h2 class="sec">The chronicle ${all.length > 4 ? `<button class="linkish" id="chronMore">${chronAll ? 'Latest only' : `All ${all.length}`}</button>` : ''}</h2><ol class="chron">${shown.map((e) => `<li><span>${e.t}</span></li>`).join('')}</ol>` : '';
-  if ($('chronMore')) $('chronMore').onclick = () => { chronAll = !chronAll; renderSchool(); };
+  // Two doors, no commentary: the pieces in the yard are the roster, and the calls appear once they have arrived. The strip keeps its height either way.
+  $('rooms').innerHTML = `<button id="toRoster">Roster${yardNew.size ? '<em></em>' : ''}</button>${inSight('calls') ? `<button id="toHall">The calls${callsReady().length ? '<em></em>' : ''}</button>` : ''}`;
+  $('toRoster').onclick = () => show('rosterScr'); if ($('toHall')) $('toHall').onclick = () => show('hall');
+  const yd = $('schoolCard').querySelector('.yard'); if (yd) yd.onclick = () => show('rosterScr');
   $('looks').innerHTML = LOOKS.map((l) => `<button data-look-id="${l[0]}" aria-pressed="${l[0] === lookNow}">${l[1]}<small>${l[2]}</small></button>`).join('');
   $('looks').querySelectorAll('[data-look-id]').forEach((el) => el.onclick = () => setLook(el.dataset.lookId));
   renderTesters();
