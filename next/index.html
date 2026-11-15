@@ -757,6 +757,11 @@ body.fighting #crumb { display: none; } #arenaTop:empty { display: none !importa
 .nc-talk p { margin: 0; position: relative; padding: 9px 12px; border-radius: 10px; background: #e9dcc0; color: #2a2118; font: 500 15px/1.38 var(--f-ui); }
 .nc-talk p::before { content: ''; position: absolute; left: -6px; top: 20px; border: 6px solid transparent; border-left: 0; border-right-color: #e9dcc0; }
 #crumb button.arena-h { align-items: center; }
+/* A doctore joins: one face (the person arriving) and his squad as pieces (what you will put on the board). */
+#spoils .gains li.joins { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 12px; align-items: center; }
+#spoils .gains li.joins > img, #spoils .gains li.joins > .sig { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; object-position: top; box-shadow: 0 0 0 1px #14110e, 0 0 0 3px #5a3a1c; background: var(--stone-3); display: grid; place-items: center; } #spoils .gains li.joins > .sig svg { width: 30px; height: 30px; }
+#spoils .gains .sq { display: flex; gap: 4px; margin-top: 4px; } #spoils .gains .sq svg.stand.icon { width: 28px; height: auto; }
+#spoils .gains .sq svg { width: 28px !important; height: auto !important; }
 </style>
 
 <div class="wrap">
@@ -2703,7 +2708,7 @@ function fightDone(res) {
     const opened = openArenas().filter((x) => !openBefore.includes(x.id)).map((x) => x.name);
     const afford = inSight('calls') ? callsReady() : [], nx = beatNow(), again = !won && onBeat;
     // One compact card. The bar above already says who won; this says what you got, what arrived, and what is next.
-    const gains = [...joined.map(({ id, brought }) => `<li><b>${E.DOCTORE_BY_ID[id].name} joins</b> with ${brought.map((f) => f.name).join(', ')}<span class="faces">${brought.map(faceOf).join('')}</span></li>`), ...opened.map((n) => `<li><b>${n}</b> opens</li>`)];
+    const gains = [...joined.map(({ id, brought }) => `<li class="joins">${id === 'magnus' && ART.npcs?.mentor ? `<img src="${ART.npcs.mentor}" alt="">` : `<span class="sig">${docSigil(E.DOCTORE_BY_ID[id])}</span>`}<span><b>${E.DOCTORE_BY_ID[id].name} joins</b> with ${brought.map((f) => f.name).join(', ')}<span class="sq">${brought.map((f) => tokenSvg(lookOf(unitOf(f)), { side: 0, bare: true })).join('')}</span></span></li>`), ...opened.map((n) => `<li><b>${n}</b> opens</li>`)];
     P.spoils = `<div class="big">+${rw.denarii} denarii${rw.renown ? ` · +${rw.renown} renown` : ''}</div>
       ${again && b0.hint ? `<p class="hh">${b0.hint}</p>` : !won && !again ? '<p>Change the squad or the formation and go again.</p>' : ''}
       ${gains.length ? `<ul class="gains">${gains.join('')}</ul>` : ''}
