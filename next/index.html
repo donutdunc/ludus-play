@@ -730,6 +730,10 @@ table.rep.slim tr.fell td:first-child { text-decoration: none; } table.rep.slim 
 svg.tally path { fill: none; stroke: #4a443c; stroke-width: 1.3; stroke-linecap: round; } svg.tally path.on { stroke: #efe6d2; } svg.tally path.ov { stroke: var(--bad); }
 body:not(.free) .meter .tray { height: 50px; } body:not(.free) .meter .pick svg.stand.icon { width: 26px; height: auto; }
 .piece.frow.slim { padding: 2px 8px; } .frow.slim .ph .add { min-height: 36px; height: 36px; } #roster { gap: 6px; }
+/* Formation in the school: the board and the buttons, nothing explaining rows. */
+body:not(.free):not(.fighting) #caption, body:not(.free) .ranklab, body:not(.free) .midlab { display: none !important; }
+.fightbar .speed button { white-space: nowrap; }
+.fightbar { flex-wrap: nowrap; } .fightbar .speed { flex-wrap: nowrap; flex: 0 0 auto; gap: 6px; } .fightbar .speed button { padding: 0 10px; min-width: 0; } .fightbar #autoArrange { white-space: nowrap; flex: 0 0 auto; padding: 0 12px; }
 </style>
 
 <div class="wrap">
@@ -818,12 +822,12 @@ body:not(.free) .meter .tray { height: 50px; } body:not(.free) .meter .pick svg.
       <div class="fx" id="fx"></div>
     </div>
     <div class="fightbar">
-      <button id="autoArrange">Auto-arrange</button>
+      <button id="autoArrange">Arrange</button>
       <button class="primary grow" id="fight">Fight</button>
       <div class="speed row" role="group" aria-label="Speed">
+        <button data-speed="0" aria-pressed="false">Manual</button>
         <button data-speed="1" aria-pressed="true">1×</button>
         <button data-speed="2" aria-pressed="false">2×</button>
-        <button data-speed="4" aria-pressed="false">4×</button>
       </div>
     </div>
     <div class="transport" id="transport" hidden>
@@ -1592,9 +1596,9 @@ $('again').onclick = () => fight();
 $('backFormation').onclick = () => go('formation');
 $('backMuster').onclick = () => go('muster');
 $('exitFight').onclick = () => go('formation');
-$('speedCycle').onclick = () => { S.speed = S.speed === 1 ? 2 : S.speed === 2 ? 4 : 1; document.querySelectorAll('[data-speed]').forEach((x) => x.setAttribute('aria-pressed', String(+x.dataset.speed === S.speed))); $('speedCycle').textContent = `${S.speed}×`; };
+$('speedCycle').onclick = () => { S.speed = S.speed === 1 ? 2 : 1; S.manual = false; document.querySelectorAll('[data-speed]').forEach((x) => x.setAttribute('aria-pressed', String(+x.dataset.speed === S.speed))); $('speedCycle').textContent = `${S.speed}×`; };
 document.querySelectorAll('[data-speed]').forEach((b) => b.onclick = () => {
-  S.speed = +b.dataset.speed;
+  S.manual = b.dataset.speed === '0'; S.speed = +b.dataset.speed || 1;   // Manual: the fight starts paused and you step it turn by turn
   document.querySelectorAll('[data-speed]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
 });
 
@@ -2164,7 +2168,8 @@ fight = ((orig) => function () {
     $('spot').innerHTML = `<span></span><div class="mid"><div class="act dim">${arenaNow().name}</div></div><span></span>`; }
   else $('spot').innerHTML = '';
   // Let the announcement land before the first move.
-  if (hideRival()) { pause(); const tok = P.token, wait = liftVeil(); setTimeout(() => { if (P.token === tok && S.step === 'fight') playLoop(false); }, wait); }
+  if (hideRival()) { pause(); const tok = P.token, wait = liftVeil(); setTimeout(() => { if (P.token === tok && S.step === 'fight' && !S.manual) playLoop(false); }, wait); }
+  else if (S.manual) pause();
 })(fight);
 renderFormation = ((orig) => function () {
   orig();
@@ -2438,10 +2443,11 @@ renderMeter = ((orig) => function () {
   orig(); if (FREE) return;
   const e = $('meter').querySelector('.empty'); if (e) e.textContent = 'Tap + on a fighter to put him in the squad.';
   { const sp = spent(S.mine), n = Math.ceil(S.bill / 5), w = 16, over = sp > S.bill; let g = '';
-    for (let i = 0; i < n; i++) { const x = i * w, on = (k) => (i * 5 + k < sp ? (over ? 'ov' : 'on') : '');
-      for (let k = 0; k < 4; k++) g += `<path class="${on(k)}" d="M${x + 2.5 + k * 2.6} ${2 + (k % 2) * .6}l${k % 2 ? -.4 : .5} ${9.4}"/>`;
-      g += `<path class="${on(4)}" d="M${x + .6} ${9.6}L${x + 12.6} ${4}"/>`; }
-    $('meter').querySelector('.bar').outerHTML = `<svg class="tally" viewBox="0 0 ${n * w - 3} 14" preserveAspectRatio="xMinYMid meet" style="max-width:${n * 30}px" aria-hidden="true">${g}</svg>`; }
+    const per = Math.min(n, 20), rows = Math.ceil(n / per);   // twenty bundles to a row, so big bills stay readable
+    for (let i = 0; i < n; i++) { const x = (i % per) * w, y = Math.floor(i / per) * 15, on = (k) => (i * 5 + k < sp ? (over ? 'ov' : 'on') : '');
+      for (let k = 0; k < 4; k++) g += `<path class="${on(k)}" d="M${x + 2.5 + k * 2.6} ${y + 2 + (k % 2) * .6}l${k % 2 ? -.4 : .5} ${9.4}"/>`;
+      g += `<path class="${on(4)}" d="M${x + .6} ${y + 9.6}L${x + 12.6} ${y + 4}"/>`; }
+    $('meter').querySelector('.bar').outerHTML = `<svg class="tally" viewBox="0 0 ${per * w - 3} ${rows * 15 - 1}" preserveAspectRatio="xMinYMid meet" style="max-width:${per * 30}px;height:${rows * 20}px" aria-hidden="true">${g}</svg>`; }
   $('meter').querySelector('.top').insertAdjacentHTML('beforeend', `<button class="primary" id="toForm2" ${$('toFormation').disabled ? 'disabled' : ''}>Formation ›</button>`);
   $('toForm2').onclick = () => go('formation');
   // In the school the tray is the squad at a glance, on one line that never changes height: tap a piece to send him back. His kit is on his roster row.
