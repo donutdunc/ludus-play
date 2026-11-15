@@ -853,6 +853,24 @@ html.held, html.held body { overflow: hidden; } .edit, .sheet, .drill { overscro
 .frow.slim .pk b { font-weight: 500; color: var(--ink-2); }
 .fig.port .pin { place-items: center; padding: 2px 0 3px; overflow: hidden; } .fig.port .pin svg { width: auto !important; height: 30px !important; max-width: 24px; }
 .fig.port .pin { width: 34px; height: 50px; } .fig.port .pin svg { height: 41px !important; max-width: 28px; }
+
+/* Fight bar: portrait and piece share one frame (face on the outside, piece on the inner panel, one health bar under both), set close to the edges and centred. */
+[data-look="lino"] body.fighting .spot { grid-template-columns: 86px minmax(0, 1fr) 86px; padding-left: 4px; padding-right: 4px; align-items: center; cursor: pointer; }
+[data-look="lino"] .spot .fig { align-self: center; }
+.fig.port:not(.noart).mine { padding-right: 28px; } .fig.port:not(.noart).theirs { padding-left: 28px; }
+.fig.port .pin { top: 0; bottom: 7px; height: auto; width: 28px; border: 0; outline: 0; border-radius: 0; padding: 0; background: rgba(20,17,14,.55); }
+.fig.port.mine .pin { left: auto; right: 0; border-left: 2px solid #f6f1e4; } .fig.port.theirs .pin { right: auto; left: 0; border-right: 2px solid #14110e; }
+.fig.port .pin svg { height: 44px !important; max-width: 24px; }
+.spot .more { display: none; } .spot.more .more { display: inline; }
+@media (max-height: 760px) { [data-look="lino"] body.fighting .spot { grid-template-columns: 68px minmax(0, 1fr) 68px; } .fig.port:not(.noart).mine { padding-right: 22px; } .fig.port:not(.noart).theirs { padding-left: 22px; } .fig.port .pin { width: 22px; } .fig.port .pin svg { height: 32px !important; max-width: 19px; } }
+/* Settled: the piece sits in a corner tab cut into the portrait's own frame (lower inner corner), so it reads as one object and the face stays whole. */
+[data-look="lino"] body.fighting .spot { grid-template-columns: 66px minmax(0, 1fr) 66px; -webkit-tap-highlight-color: transparent; }
+.fig.port:not(.noart).mine { padding-right: 0; } .fig.port:not(.noart).theirs { padding-left: 0; }
+.fig.port .pin { top: auto; bottom: 7px; width: 24px; height: 36px; background: rgba(20,17,14,.78); }
+.fig.port.mine .pin { border-left: 2px solid #f6f1e4; border-top: 2px solid #f6f1e4; border-radius: 4px 0 0 0; } .fig.port.theirs .pin { border-right: 2px solid #8a7d6a; border-top: 2px solid #8a7d6a; border-radius: 0 4px 0 0; }
+.fig.port .pin svg { height: 30px !important; max-width: 20px; }
+@media (max-height: 760px) { [data-look="lino"] body.fighting .spot { grid-template-columns: 48px minmax(0, 1fr) 48px; } .fig.port .pin { width: 18px; height: 26px; } .fig.port .pin svg { height: 22px !important; max-width: 15px; } }
+.fig.port.theirs .pin { background: rgba(214,190,146,.92); border-color: #14110e; }
 </style>
 
 <div class="wrap">
@@ -2155,7 +2173,7 @@ function face(uid, hpShown) {
 }
 const spotName = (uid) => { const st = P.state.get(uid); return st ? st.name : ''; };
 let spotNow = { a: null, t: null };
-function spot(a, t, big, small, tone, why) {
+function spot(a, t, big, small, tone, why, more) {
   spotNow = { a, t };
   // Sides are locked: yours on the left, theirs on the right, always. The arrow says who is acting on whom.
   const sideOf = (u) => (u != null ? P.state.get(u)?.side : null), pair = t != null && t !== a, sa = sideOf(a), st = pair ? sideOf(t) : null;
@@ -2165,7 +2183,7 @@ function spot(a, t, big, small, tone, why) {
   const slot = (u) => (u != null ? face(pair && !cross ? t : u, u !== a) : '<span></span>');
   $('spot').innerHTML = `${slot(L)}
     <div class="mid${why ? ' two' : ''}"><div class="who">${who}</div>
-      <div class="act ${tone ?? ''}">${big ?? ''}</div><div class="sm">${small ?? ''}</div>${why ? `<div class="sm why">${why}</div>` : ''}</div>
+      <div class="act ${tone ?? ''}">${big ?? ''}</div><div class="sm">${small ?? ''}${more ? `<span class="more">${small ? ' · ' : ''}${more}</span>` : ''}</div>${why ? `<div class="sm why">${why}</div>` : ''}</div>
     ${slot(R)}`;
 }
 /** Why a move fired, how long its effect lasts, and when it can fire again. */
@@ -2189,8 +2207,8 @@ function freshWhy(aid, tid) { const st = P.state.get(aid); if (!st?.fresh || st.
 function spotEvent(e) {
   switch (e.kind) {
     case 'intent': spotNow = { a: e.aid, t: e.tid }; return;   // shown when he moves or swings, not as an empty line
-    case 'attack': return spot(e.aid, e.tid, e.outcome === 'miss' ? 'Miss' : `${e.amount}${e.outcome === 'crit' ? ' crit' : ''}`, `${e.label}${typeof e.chance === 'number' ? ` · ${e.chance}% to hit` : ''}${e.outcome === 'block' ? ' · blocked' : ''}`, e.outcome === 'miss' ? 'dim' : e.outcome === 'crit' ? 'crit' : 'hit', freshWhy(e.aid, e.tid));
-    case 'active': { const w = whyOf(e); return spot(e.aid, spotNow.a === e.aid ? spotNow.t : null, e.label, [e.summary, w.lasts && `for ${w.lasts}`].filter(Boolean).join(' '), 'trick', w.why); }
+    case 'attack': return spot(e.aid, e.tid, e.outcome === 'miss' ? 'Miss' : `${e.amount}${e.outcome === 'crit' ? ' crit' : ''}`, e.outcome === 'block' ? 'Blocked' : '', e.outcome === 'miss' ? 'dim' : e.outcome === 'crit' ? 'crit' : 'hit', freshWhy(e.aid, e.tid), `${e.label}${typeof e.chance === 'number' ? ` · ${e.chance}% to hit` : ''}`);
+    case 'active': { const w = whyOf(e); return spot(e.aid, spotNow.a === e.aid ? spotNow.t : null, e.label, [e.summary, w.lasts && `for ${w.lasts}`].filter(Boolean).join(' '), 'trick', '', w.why); }
     case 'death': return spot(e.aid ?? spotNow.a, e.tid, 'Down', `${spotName(e.tid)} falls`, 'crit');
     case 'heal': return spot(e.aid ?? e.tid, e.tid, `+${e.amount}`, 'patched up', 'heal');
     case 'stunned': return spot(e.tid, null, 'Stunned', 'loses the turn', 'dim');
@@ -3235,6 +3253,15 @@ redraw = ((orig) => function (uid) {
   document.addEventListener('touchmove', (ev) => { if (open() && !pops.some((el) => !el.hidden && el.contains(ev.target))) ev.preventDefault(); }, { passive: false });
   sync();
 })();
+
+// The fight bar says who, what and how much. Tap it for the working: the weapon, the odds, why a move fired.
+$('spot').addEventListener('click', (ev) => { if (ev.target.closest('button') || document.body.classList.contains('forming')) return; $('spot').classList.toggle('more'); });
+// An aim line follows the man: when he walks, it is redrawn from where he now stands.
+apply = ((orig) => function (e, anim) {
+  const out = orig(e, anim);
+  if (anim && e.kind === 'move') { document.querySelectorAll('.aim:not(.drillaim)').forEach((x) => x.remove()); const st = P.state.get(e.aid), tg = st?.tgt != null ? P.state.get(st.tgt) : null; if (tg?.alive && e.note !== 'falls back') aimLine(posOf(e.aid), posOf(st.tgt), st.side); }
+  return out;
+})(apply);
 </script>
 
 <script>if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));</script>
