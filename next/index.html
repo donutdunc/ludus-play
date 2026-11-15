@@ -687,6 +687,10 @@ body:not(.free) #toFormation { display: none; }
 [data-look="lino"] .spot .mid { max-height: 100%; overflow: hidden; } [data-look="lino"] .spot .fig { align-self: end; max-height: 100%; }
 [data-look="lino"] .spot .mid.two .sm { -webkit-line-clamp: 1; height: 1.2em; }
 @media (max-height: 760px) { [data-look="lino"] .spot .mid.two .sm.why { display: none; } }
+/* After a fight: the bar says who won, one card says what you got. No second banner, no tester note box in the school. */
+body:not(.free) #banner, body:not(.free) #noteBox { display: none !important; }
+#spoils .gains { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 3px; font: 500 14px/1.35 var(--f-ui); color: var(--ink-2); } #spoils .gains b { color: var(--gold); font-weight: 600; }
+#spoils p.hh { border-left-width: 2px; }
 </style>
 
 <div class="wrap">
@@ -2584,13 +2588,12 @@ function fightDone(res) {
     saveG();
     const opened = openArenas().filter((x) => !openBefore.includes(x.id)).map((x) => x.name);
     const afford = inSight('calls') ? callsReady() : [], nx = beatNow(), again = !won && onBeat;
-    P.spoils = `<div class="big">${won ? 'Victory' : res.winner === null ? 'A draw' : 'Defeat'}: +${rw.denarii} denarii${rw.renown ? `, +${rw.renown} renown` : ''}</div>
-      <p>${won ? (before ? `Another win at ${a.name}. You beat ${who}.` : `Your first win at ${a.name} pays the full purse. You beat ${who}.`) : `${who} had your measure. A few coins for showing up${again ? '.' : ': change the squad or the formation and go again.'}`}</p>
-      ${again && b0.hint ? `<p class="hh"><b>The herald</b>${b0.hint}</p>` : ''}
-      ${done.map((b) => `<p class="bd">✓ ${b.title}</p>`).join('')}
-      ${joined.map(({ id, brought }) => { const x = E.DOCTORE_BY_ID[id]; return `<p><b style="color:var(--gold)">${x.name} now works for you.</b> ${E.FACTIONS[x.faction].name}: ${x.twist.name}. With the contract come ${brought.map((f) => f.name).join(', ')}. Every doctore keeps a squad of their own: choose who runs a fight at the top of the muster.</p>`; }).join('')}
-      ${opened.length ? `<p><b style="color:var(--gold)">${opened.join(' and ')} ${opened.length > 1 ? 'are' : 'is'} now open.</b></p>` : ''}
-      ${nx && done.length ? `<p class="nx"><b>Next</b>${nx.goal}</p>` : !nx && afford.length && !again ? `<p>You can sound a ${afford.join(' or a ')}.</p>` : ''}
+    // One compact card. The bar above already says who won; this says what you got, what arrived, and what is next.
+    const gains = [...joined.map(({ id, brought }) => `<li><b>${E.DOCTORE_BY_ID[id].name} joins</b> with ${brought.map((f) => f.name).join(', ')}</li>`), ...opened.map((n) => `<li><b>${n}</b> opens</li>`)];
+    P.spoils = `<div class="big">+${rw.denarii} denarii${rw.renown ? ` · +${rw.renown} renown` : ''}</div>
+      ${again && b0.hint ? `<p class="hh">${b0.hint}</p>` : !won && !again ? '<p>Change the squad or the formation and go again.</p>' : ''}
+      ${gains.length ? `<ul class="gains">${gains.join('')}</ul>` : ''}
+      ${nx && done.length ? `<p class="nx"><b>Next</b>${nx.goal}</p>` : !nx && afford.length && won ? `<p>You can sound a ${afford.join(' or a ')}.</p>` : ''}
       <div class="row">${again ? '<button class="primary grow" id="tryAgain">Change the squad</button>' : ''}<button class="${again ? '' : 'primary '}grow" id="toSchool">Back to the school</button></div>`;
   }
   $('spoils').innerHTML = P.spoils; $('spoils').hidden = false;
@@ -2598,7 +2601,7 @@ function fightDone(res) {
   if ($('tryAgain')) $('tryAgain').onclick = () => enterArena(arenaNow().id);
   renderHud();
   // The result sits below the board. Once the last blow has landed, bring it up: the purse, the herald's word and the way back are all on it.
-  if (fresh) { const tok = P.token; setTimeout(() => { if (P.token !== tok || S.step !== 'fight' || S.mode !== 'done') return; window.scrollTo({ top: window.scrollY + $('banner').getBoundingClientRect().top - 84, behavior: SAND.calm ? 'auto' : 'smooth' }); }, 900); }
+  if (fresh) { const tok = P.token; setTimeout(() => { if (P.token !== tok || S.step !== 'fight' || S.mode !== 'done') return; window.scrollTo({ top: window.scrollY + $('spoils').getBoundingClientRect().top - 96, behavior: SAND.calm ? 'auto' : 'smooth' }); }, 900); }
 }
 
 // ---------- Feedback ----------
