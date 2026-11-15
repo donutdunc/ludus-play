@@ -669,6 +669,12 @@ body:not(.free) #after .primary { background: var(--stone-2); color: var(--ink);
 [data-look="lino"] .spot .who, [data-look="lino"] .spot .act { min-height: 1.1em; }
 @media (max-height: 760px) { [data-look="lino"] body.fighting .spot { height: 58px; } [data-look="lino"] .spot .sm { -webkit-line-clamp: 1; height: 1.2em; } }
 .chron li { grid-template-columns: minmax(0, 1fr); }
+/* The fight bar: who acts on whom, as one clear arrow between two fixed sides. */
+.spot .who .dir { margin: 0 8px; font-size: 17px; line-height: 1; color: #8a1a12 !important; vertical-align: -1px; }
+/* The prep steps, minimal: a way back and two tabs. The Fight button under the board is the only way in. */
+.steps { grid-template-columns: auto 1fr 1fr; } .steps button small { display: none; } .steps button { min-height: 36px; flex-direction: row; font-size: 14px; }
+#stepFight { display: none; } #stepSchool::before { content: '‹'; margin-right: 6px; font-size: 18px; line-height: 1; } #stepSchool { padding: 0 14px; color: var(--ink-2); }
+body.free .steps { grid-template-columns: 1fr 1fr; } body.free #stepSchool { display: none; }
 </style>
 
 <div class="wrap">
@@ -1961,10 +1967,16 @@ const spotName = (uid) => { const st = P.state.get(uid); return st ? st.name : '
 let spotNow = { a: null, t: null };
 function spot(a, t, big, small, tone, why) {
   spotNow = { a, t };
-  $('spot').innerHTML = `${a != null ? face(a, false) : '<span></span>'}
-    <div class="mid ${t != null && t !== a ? '' : 'solo'}"><div class="who"><b>${a != null ? spotName(a) : ''}</b>${t != null && t !== a ? `<span>▸</span><b>${spotName(t)}</b>` : ''}</div>
+  // Sides are locked: yours on the left, theirs on the right, always. The arrow says who is acting on whom.
+  const sideOf = (u) => (u != null ? P.state.get(u)?.side : null), pair = t != null && t !== a, sa = sideOf(a), st = pair ? sideOf(t) : null;
+  const L = sa === 0 ? a : st === 0 ? t : null, R = sa === 1 ? a : st === 1 ? t : null, cross = pair && sa !== st;
+  const who = cross ? `<b>${spotName(L)}</b><span class="dir">${sa === 0 ? '▸' : '◂'}</span><b>${spotName(R)}</b>`
+    : `<b>${a != null ? spotName(a) : ''}</b>${pair ? `<span class="dir">▸</span><b>${spotName(t)}</b>` : ''}`;
+  const slot = (u) => (u != null ? face(pair && !cross ? t : u, u !== a) : '<span></span>');
+  $('spot').innerHTML = `${slot(L)}
+    <div class="mid"><div class="who">${who}</div>
       <div class="act ${tone ?? ''}">${big ?? ''}</div><div class="sm">${small ?? ''}</div>${why ? `<div class="sm why">${why}</div>` : ''}</div>
-    ${t != null && t !== a ? face(t, true) : ''}`;
+    ${slot(R)}`;
 }
 /** Why a move fired, how long its effect lasts, and when it can fire again. */
 function whyOf(e) {
