@@ -774,6 +774,12 @@ body.forming .fightbar { display: flex; } body.forming #card { display: none; }
 #spoils .hh.nc-talk { background: none; border: 0; padding: 0; margin: 4px 0; }
 #spoils .hh.nc-talk p { color: #2a2118; font: 500 15px/1.38 var(--f-ui); } .nc-talk .sig { width: 52px; height: 52px; border-radius: 50%; box-shadow: 0 0 0 1px #14110e, 0 0 0 3px #5a3a1c; background: var(--stone-3); display: grid; place-items: center; } .nc-talk .sig svg { width: 30px; height: 30px; }
 #crumb div.arena-h { display: flex; flex-direction: row; justify-content: space-between; align-items: center; gap: 10px; margin: 0; min-width: 0; } #crumb div.arena-h b { font: 20px/1.1 var(--f-display); font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; } #crumb div.arena-h span { font: 600 13px var(--f-ui); color: var(--ink-3); white-space: nowrap; } #crumb div.arena-h em { font-style: normal; color: var(--gold); font-size: 16px; }
+/* Formation: the card of a tapped piece lies over the empty far half of the board. */
+body.forming #card.over { display: flex; position: absolute; z-index: 20; box-sizing: border-box; overflow: auto; margin: 0; border: 1px solid var(--gold); box-shadow: 0 10px 28px rgba(0,0,0,.6); }
+#cardShut { position: absolute; top: 8px; right: 8px; width: 34px; height: 34px; min-height: 0; padding: 0; font: 600 20px/1 var(--f-ui); z-index: 1; } #card.over .head { padding-right: 40px; }
+/* Leave room for the status bar when sizing the board, so the buttons under it are not pushed off the screen. */
+[data-look="lino"] body.fighting .board { width: min(100%, calc((100dvh - 250px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) * 0.5952)); }
+@media (max-height: 760px) { [data-look="lino"] body.fighting .board { width: min(100%, calc((100dvh - 174px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) * 0.5952)); } }
 </style>
 
 <div class="wrap">
@@ -2265,10 +2271,20 @@ go = ((orig) => function (step) {
   document.body.classList.toggle('forming', forming); if (forming) { document.body.classList.add('fighting'); formBar(); }
   renderCrumb();
 })(go);
+// On the formation screen a tapped piece's card lies over the far half of the board, which is empty until the gates open,
+// so your own pieces stay in view and in reach underneath it.
+renderCard = ((orig) => function () {
+  orig(); const card = $('card'), on = document.body.classList.contains('forming') && !!S.sel;
+  card.classList.toggle('over', on); if (!on) { card.style.cssText = ''; return; }
+  const r = $('board').getBoundingClientRect();
+  card.style.cssText = `top:${r.top + window.scrollY + 6}px;left:${r.left + 6}px;width:${r.width - 12}px;max-height:${Math.round(r.height * 0.62)}px`;
+  card.insertAdjacentHTML('afterbegin', '<button id="cardShut" aria-label="Close the card">×</button>');
+  $('cardShut').onclick = () => { S.sel = null; renderFormation(); };
+})(renderCard);
 /** Formation's top bar: the fight's bar, in the fight's place, holding the way back and what to do here. */
 function formBar() {
   const a = arenaNow(), purse = E.reward(a.id, true, (G.arenaWins[a.id] ?? 0) > 0).denarii;
-  $('spot').innerHTML = `<button id="formBack" aria-label="Back to the squad">‹</button><div class="mid"><div class="who"><b>Purse ${purse}</b></div><div class="act dim">Set your formation</div><div class="sm">Drag a piece to move it. Tap it for its card.</div></div><span></span>`;
+  $('spot').innerHTML = `<button id="formBack" aria-label="Back to the squad">‹</button><div class="mid"><div class="who"><b>Purse ${purse}</b></div><div class="act dim">Formation</div><div class="sm">Drag a piece to move it. Tap it for its card.</div></div><span></span>`;
   $('formBack').onclick = () => go('muster');
 }
 function newSchool() {
