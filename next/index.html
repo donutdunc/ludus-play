@@ -808,6 +808,11 @@ img.dface, .sig[data-fam] { background: var(--fam-bg, var(--stone-3)) !important
 .sig[data-fam] { background: var(--stone-3) !important; }
 /* The pinned piece sits on the outer corner, behind the shoulder, now that every face looks toward the middle of the bar. */
 .fig.port.mine .pin { left: -9px; right: auto; } .fig.port.theirs .pin { right: -9px; left: auto; }
+/* The bill card, a little tighter: the squad line is exactly as tall as a piece and its price. */
+body:not(.free) .meter { gap: 4px; padding: 8px 12px 6px; } body:not(.free) .meter .tray { height: 44px; } body:not(.free) .meter .tray .empty { align-self: center; }
+body:not(.free) .meter .pick svg.stand.icon { width: 23px; } body:not(.free) .meter .pick { gap: 0; padding: 0; }
+/* The legend under the board explained more than the board needs. Not in the school game. */
+body:not(.free) #arena details { display: none; }
 </style>
 
 <div class="wrap">
