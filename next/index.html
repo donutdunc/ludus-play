@@ -744,6 +744,7 @@ body:not(.free):not(.fighting) #caption, body:not(.free) .ranklab, body:not(.fre
   background: linear-gradient(90deg, rgba(20,14,8,.55), rgba(20,14,8,0) 22px), repeating-linear-gradient(93deg, rgba(91,70,48,.11) 0 1px, rgba(255,246,220,.05) 1px 2px, transparent 2px 9px), linear-gradient(#cdb48a, #c2a77a); }
 .dsq .yp { flex: 0 1 30px; min-width: 0; margin: 0; line-height: 0; position: relative; } .dsq .yp svg.stand.icon { width: 30px; height: auto; } .dsq.n8 .yp svg.stand.icon, .dsq.n9 .yp svg.stand.icon, .dsq.n10 .yp svg.stand.icon { width: 24px; }
 .drow { grid-template-columns: 44px 100px minmax(0, 1fr); } .dwho b { font-size: 16px; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.1; }
+.frow.slim .pk { font-size: 13px; } .frow.slim .pk i { font-style: normal; color: var(--gold); }
 </style>
 
 <div class="wrap">
@@ -2515,11 +2516,14 @@ renderRoster = ((orig) => function () {
     const u = unitOf(f), c = cost(u), r = E.resolveUnit(u, E.doctoreEffectsFor(S.mine, E.UNITS[f.template]));
     const inSquad = S.mine.units.some((x) => x.fid === f.id);
     const cant = !inSquad && (c > left || (E.fieldable(S.myDoc, f.template) === 'neutral' && neutralsIn >= 3));
-    // One short row: who he is, the kit he is wearing and what that kit is for, two numbers, his price. The rest is on his sheet.
-    const lo = E.loadoutOf(f), role = E.BUILDS[lo.template]?.find((b) => b.id === lo.build)?.role ?? '';
+    // One short row: who he is, his loadout (what he carries, what he can do, how heavy his armor is), two numbers, his price. The rest is on his sheet.
+    const it = r.items ?? {}, wpn = `${it.main?.name ?? r.weapon.name}${it.off?.category === 'shield' ? ' & shield' : ''}${r.weapon.range > 1 ? ` (reach ${r.weapon.range})` : ''}`;
+    const own = E.resolveUnit(u, []);   // his own loadout, without what the doctore lends him
+    const can = [...own.traits.map((t) => E.TRAITS[t]?.name), ...own.actives.map((a) => E.ACTIVE_DEF[a]?.name), ...Object.keys(own.skills ?? {}).filter((k) => own.skills[k] > 0).map((k) => E.SKILLS[k]?.name)].filter(Boolean);
+    const loadout = `<b>${wpn}</b>${can.map((c) => ` · <i>${c}</i>`).join('')} · ${(E.GRADES[u.grade ?? 'light']?.name ?? 'Light').toLowerCase()} armor`;
     const head = fams.length > 1 && rosterTab === 'all' && famOf(f) !== lastFam ? `<h3 class="rfam">${E.FACTIONS[famOf(f)]?.name ?? 'Others'}</h3>` : ''; lastFam = famOf(f);
     return `${head}<div class="piece frow slim ${inSquad ? 'in' : ''}"><div class="ph">${tokenSvg(lookOf(u), { side: 0, bare: true })}
-      <button class="info" data-f="${f.id}"><span class="pn">${f.name}<small>${E.UNITS[f.template].name} ${'★'.repeat(M(f).stars)}</small></span><span class="pk"><b>${lo.name}</b>${role ? ` · ${role}` : ''}</span></button>
+      <button class="info" data-f="${f.id}"><span class="pn">${f.name}<small>${E.UNITS[f.template].name} ${'★'.repeat(M(f).stars)}</small></span><span class="pk">${loadout}</span></button>
       <span class="mini"><span><b>${Math.round(r.stats.hp)}</b>HP</span><span><b>${Math.round(r.stats.atk + r.weapon.damage)}</b>DMG</span></span>
       <span class="bc" style="${cant ? 'opacity:.5' : ''}">${c}</span>
       <button class="add" data-toggle="${f.id}" ${cant ? 'disabled' : ''} aria-pressed="${inSquad}" aria-label="${inSquad ? 'Take' : 'Put'} ${f.name} ${inSquad ? 'out of' : 'in'} the squad">${inSquad ? '✓' : '+'}</button></div></div>`;
