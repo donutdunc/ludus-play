@@ -1919,7 +1919,7 @@ function setLook(id) {
 // ---------- HUD, screens ----------
 function renderHud() {
   const l = LOOKS.find((x) => x[0] === lookNow);
-  $('hud').innerHTML = `${G ? `<span class="coin">${G.denarii}<small>DEN</small></span>${inSight('glory') && SC() ? `<span class="coin">${G.renown}<small>REN</small></span>` : ''}` : ''}<button id="fbOpen">Feedback</button>`;
+  $('hud').innerHTML = `${G ? `<span class="coin">${G.denarii}<small>DEN</small></span><span class="coin">${G.renown}<small>REN</small></span>` : ''}<button id="fbOpen">Feedback</button>`;
   $('fbOpen').onclick = openFeedback;
 }
 function show(name) {
@@ -2256,8 +2256,7 @@ function renderNext() {
 function renderSchool() {
   const w = winsOf();
   $('schoolCard').innerHTML = `<div class="kick">Day ${G.day ?? 1} · ${standing()}</div>
-    <div class="hrow"><div><div class="sn">Your school</div><div class="st">${G.fights ? `${w} win${w === 1 ? '' : 's'} from ${G.fights} fight${G.fights === 1 ? '' : 's'}` : 'No fights yet'}</div></div>
-      <div class="hstats"><div><b>${G.denarii}</b><span>Denarii</span></div><div><b>${G.renown}</b><span>Renown</span></div><div><b>${G.fighters.length}</b><span>Fighters</span></div></div></div>${yardHtml()}`;
+    <div class="hrow"><div><div class="sn">Your school</div><div class="st">${G.fights ? `${w} win${w === 1 ? '' : 's'} from ${G.fights} fight${G.fights === 1 ? '' : 's'}` : 'No fights yet'}</div></div></div>${yardHtml()}`;
   $('schoolCard').querySelectorAll('[data-f]').forEach((el) => el.onclick = () => openFighter(el.dataset.f));
   renderNext();
   // Where to fight: the arenas that are open, newest first, and one line about the next. Never the whole road.
