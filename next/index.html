@@ -682,6 +682,11 @@ body.free .steps { grid-template-columns: 1fr 1fr; } body.free #stepSchool { dis
 .docbox .tw { align-self: flex-start; min-height: 0; padding: 0; border: 0; background: none; font: 600 12px var(--f-ui); color: var(--gold); }
 body:not(.free) #toFormation { display: none; }
 .meter .top { align-items: center; } #toForm2 { min-height: 38px; padding: 0 14px; font-size: 15px; margin-left: auto; }
+/* The bar's one row is exactly the bar: text can never push the portraits down. With a reason line, each small line gets one row. */
+[data-look="lino"] body.fighting .spot { grid-template-rows: minmax(0, 1fr); }
+[data-look="lino"] .spot .mid { max-height: 100%; overflow: hidden; } [data-look="lino"] .spot .fig { align-self: end; max-height: 100%; }
+[data-look="lino"] .spot .mid.two .sm { -webkit-line-clamp: 1; height: 1.2em; }
+@media (max-height: 760px) { [data-look="lino"] .spot .mid.two .sm.why { display: none; } }
 </style>
 
 <div class="wrap">
@@ -1981,7 +1986,7 @@ function spot(a, t, big, small, tone, why) {
     : `<b>${a != null ? spotName(a) : ''}</b>${pair ? `<span class="dir">▸</span><b>${spotName(t)}</b>` : ''}`;
   const slot = (u) => (u != null ? face(pair && !cross ? t : u, u !== a) : '<span></span>');
   $('spot').innerHTML = `${slot(L)}
-    <div class="mid"><div class="who">${who}</div>
+    <div class="mid${why ? ' two' : ''}"><div class="who">${who}</div>
       <div class="act ${tone ?? ''}">${big ?? ''}</div><div class="sm">${small ?? ''}</div>${why ? `<div class="sm why">${why}</div>` : ''}</div>
     ${slot(R)}`;
 }
