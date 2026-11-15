@@ -675,6 +675,13 @@ body:not(.free) #after .primary { background: var(--stone-2); color: var(--ink);
 .steps { grid-template-columns: auto 1fr 1fr; } .steps button small { display: none; } .steps button { min-height: 36px; flex-direction: row; font-size: 14px; }
 #stepFight { display: none; } #stepSchool::before { content: '‹'; margin-right: 6px; font-size: 18px; line-height: 1; } #stepSchool { padding: 0 14px; color: var(--ink-2); }
 body.free .steps { grid-template-columns: 1fr 1fr; } body.free #stepSchool { display: none; }
+/* Muster: the doctore's box is one tight block (who runs it, and what he says about this fight); the bill card holds the way forward. */
+.docbox { gap: 4px; padding: 6px 10px 8px; } .docsel { min-height: 36px; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 8px; } .docsel svg { width: 26px; height: 26px; }
+.docsel span { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; } .docsel b { display: inline; font-size: 16px; }
+.docbox .twist { display: flex; flex-direction: column; gap: 4px; min-height: 0; } .docbox .docsay { font: 500 14.5px/1.35 var(--f-ui); color: var(--ink); border-left: 2px solid var(--gold); padding-left: 8px; }
+.docbox .tw { align-self: flex-start; min-height: 0; padding: 0; border: 0; background: none; font: 600 12px var(--f-ui); color: var(--gold); }
+body:not(.free) #toFormation { display: none; }
+.meter .top { align-items: center; } #toForm2 { min-height: 38px; padding: 0 14px; font-size: 15px; margin-left: auto; }
 </style>
 
 <div class="wrap">
@@ -2135,9 +2142,9 @@ renderMuster = ((orig) => function (full) {
   if (hideRival()) renderDocRow();
   if (hideRival()) { const a = arenaNow(), purse = E.reward(a.id, true, (G.arenaWins[a.id] ?? 0) > 0).denarii;
     const b = beatNow(), mine = b?.fight?.arena === a.id ? b : null, lost = mine ? SC().lost[mine.id] ?? 0 : 0;
-    $('arenaTop').innerHTML = `<button class="arena-h" id="arenaInfo"><b>${a.name}</b><span>Purse <em>${purse}</em> · ⓘ</span></button>${mine ? `<button class="brief${lost ? ' long' : ''}" id="briefInfo"><b>The herald${lost ? ', after that' : ''}</b><span>${lost ? mine.hint : mine.brief}</span><i>ⓘ</i></button>` : ''}`;
+    $('arenaTop').innerHTML = `<button class="arena-h" id="arenaInfo"><b>${a.name}</b><span>Purse <em>${purse}</em> · ⓘ</span></button>`;
     $('arenaInfo').onclick = () => explain('Arena', a.name, `${a.line} The bill here is ${a.bill}: that is the most your squad may cost. A win pays ${purse} denarii${(G.arenaWins[a.id] ?? 0) > 0 ? ' (less than your first win here did)' : ''}. ${mine ? '' : 'You will not know who you face until the gates open.'}`);
-    if (mine) $('briefInfo').onclick = () => explain('The herald', mine.title, `${mine.say}${lost ? ` ${mine.hint}` : ''}`); }
+  }
 })(renderMuster);
 $('stepSchool').onclick = () => show('school');
 function newSchool() {
@@ -2367,11 +2374,21 @@ save = ((orig) => function () { orig(); if (!FREE && G) { stashSquad(); saveG();
 const squadOf = (id) => ((G.squads ?? {})[id] ?? []).map((m) => fighterById(m.fid)).filter(Boolean);
 function renderDocRow() {
   const d = E.DOCTORE_BY_ID[G.doctore], lock = E.scriptDoctore(SC(), S.arena) === G.doctore, many = G.doctores.length > 1 && !lock;
-  $('docRow').innerHTML = `<label class="docsel">${docSigil(d)}<span><b>${d.name}</b><small>${E.FACTIONS[d.faction].name}${lock ? ' · runs this fight' : many ? ' · keeps a squad of their own' : ''}</small></span>${many ? '<i>▾</i>' : ''}
+  $('docRow').innerHTML = `<label class="docsel">${docSigil(d)}<span><b>${d.name}</b><small>${E.FACTIONS[d.faction].name}${lock ? ' · runs this fight' : ''}</small></span>${many ? '<i>▾</i>' : ''}
     <select aria-label="Doctore" ${many ? '' : 'disabled'}>${G.doctores.map((id) => { const x = E.DOCTORE_BY_ID[id]; return `<option value="${id}" ${id === G.doctore ? 'selected' : ''}>${x.name} · ${E.FACTIONS[x.faction].name}</option>`; }).join('')}</select></label>`;
   $('docRow').querySelector('select').onchange = (e) => { putInCharge(e.target.value); renderMuster(); };
-  $('docTwist').innerHTML = `<b>${d.twist.name}</b> · ${d.twist.line}`;
+  // Advice about the squad comes from the man who runs it. With a scripted fight here he says the one thing that matters; otherwise the box shows his twist.
+  const b = beatNow(), mine = b?.fight?.arena === S.arena ? b : null, lost = mine ? SC().lost[mine.id] ?? 0 : 0;
+  $('docTwist').innerHTML = `<span class="${mine ? 'docsay' : ''}">${mine ? (lost ? mine.hint : mine.brief) : `<b>${d.twist.name}</b> · ${d.twist.line}`}</span>${mine ? `<button class="tw" id="twInfo" aria-label="What ${d.twist.name} does">${d.twist.name} ⓘ</button>` : ''}`;
+  if ($('twInfo')) $('twInfo').onclick = () => explain(d.name, d.twist.name, d.twist.line);
 }
+// The bill card carries the way forward, so nothing floats over the roster.
+renderMeter = ((orig) => function () {
+  orig(); if (FREE) return;
+  const e = $('meter').querySelector('.empty'); if (e) e.textContent = 'Tap + on a fighter to put him in the squad.';
+  $('meter').querySelector('.top').insertAdjacentHTML('beforeend', `<button class="primary" id="toForm2" ${$('toFormation').disabled ? 'disabled' : ''}>Formation ›</button>`);
+  $('toForm2').onclick = () => go('formation');
+})(renderMeter);
 function renderRosterScreen() {
   const rumour = nextDoctore();
   $('docList').innerHTML = E.DOCTORE_UNLOCKS.filter((u) => G.doctores.includes(u.id)).map((u) => { const x = E.DOCTORE_BY_ID[u.id], sq = squadOf(u.id);
