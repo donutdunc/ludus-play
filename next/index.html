@@ -703,6 +703,12 @@ body:not(.free) #banner, body:not(.free) #noteBox { display: none !important; }
 .doors button { height: 44px; min-height: 0; position: relative; font: 600 15px var(--f-ui); }
 .doors button em { position: absolute; top: 8px; right: 10px; width: 8px; height: 8px; border-radius: 50%; background: var(--gold); }
 .home .yard { cursor: pointer; }
+/* Muster roster: family tabs once there is more than one family, and family headers under All. */
+.rtabs { display: flex; gap: 6px; height: 40px; overflow-x: auto; scrollbar-width: none; } .rtabs::-webkit-scrollbar { display: none; }
+.rtabs button { flex: 0 0 auto; min-height: 0; height: 38px; padding: 0 12px; font: 600 14px var(--f-ui); white-space: nowrap; }
+.rtabs button small { margin-left: 6px; font: 600 12px var(--f-ui); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.rtabs button[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); background: var(--stone-3); }
+h3.rfam { margin: 6px 0 -2px; font: 600 11px var(--f-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
 </style>
 
 <div class="wrap">
@@ -2418,25 +2424,37 @@ const fighterLine = (f) => { const u = E.fighterUnit(f), r = E.resolveUnit(u); r
 /** The bill split: the body alone (unarmed, light), and what his kit adds. */
 const costSplit = (u) => { const total = cost(u), body = Math.min(total, E.billOf({ template: u.template, grade: 'light' }).total); return total > body ? `<small>body ${body}<br>kit ${total - body}</small>` : ''; };
 
+let rosterTab = 'all';
+const famOf = (f) => E.UNITS[f.template].faction ?? 'none';
 renderRoster = ((orig) => function () {
   if (FREE) return orig();
   const left = S.bill - spent(S.mine);
-  const mine = G.fighters.filter(canField).sort((a, b) => M(a).stars - M(b).stars || M(a).lean.localeCompare(M(b).lean) || a.name.localeCompare(b.name));
+  const home = E.DOCTORE_BY_ID[S.myDoc ?? G.doctore]?.faction;
+  // Families in a fixed order: the doctore's own first. One family needs no tabs; a second brings them.
+  const fams = [...new Set(G.fighters.filter(canField).map(famOf))].sort((a, b) => (b === home) - (a === home) || a.localeCompare(b));
+  if (!fams.includes(rosterTab) && rosterTab !== 'squad') rosterTab = 'all';
+  const inSq = (f) => S.mine.units.some((x) => x.fid === f.id);
+  const all = G.fighters.filter(canField), mine = all.filter((f) => rosterTab === 'all' || (rosterTab === 'squad' ? inSq(f) : famOf(f) === rosterTab)).sort((a, b) => fams.indexOf(famOf(a)) - fams.indexOf(famOf(b)) || M(a).stars - M(b).stars || M(a).lean.localeCompare(M(b).lean) || a.name.localeCompare(b.name));
   const out = G.fighters.filter((f) => !canField(f));
   const neutralsIn = S.mine.units.filter((u) => E.fieldable(S.myDoc, u.template) === 'neutral').length;
-  $('rosterNote').textContent = `${mine.length} fighter${mine.length === 1 ? '' : 's'}`;
-  $('roster').innerHTML = mine.map((f) => {
+  $('rosterNote').textContent = `${all.length} fighter${all.length === 1 ? '' : 's'}`;
+  const tab = (id, label, n) => `<button data-rtab="${id}" aria-pressed="${rosterTab === id}">${label}<small>${n}</small></button>`;
+  const tabs = fams.length > 1 ? `<div class="rtabs">${tab('all', 'All', all.length)}${fams.map((k) => tab(k, E.FACTIONS[k]?.name ?? 'Others', all.filter((f) => famOf(f) === k).length)).join('')}${tab('squad', 'In squad', S.mine.units.length)}</div>` : '';
+  let lastFam = null;
+  $('roster').innerHTML = tabs + (mine.length ? '' : `<p class="hint" style="margin:0">${rosterTab === 'squad' ? 'Nobody in the squad yet.' : 'Nobody here.'}</p>`) + mine.map((f) => {
     const u = unitOf(f), c = cost(u), r = E.resolveUnit(u, E.doctoreEffectsFor(S.mine, E.UNITS[f.template]));
     const inSquad = S.mine.units.some((x) => x.fid === f.id);
     const cant = !inSquad && (c > left || (E.fieldable(S.myDoc, f.template) === 'neutral' && neutralsIn >= 3));
     // One short row: who he is, the kit he is wearing and what that kit is for, two numbers, his price. The rest is on his sheet.
     const lo = E.loadoutOf(f), role = E.BUILDS[lo.template]?.find((b) => b.id === lo.build)?.role ?? '';
-    return `<div class="piece frow slim ${inSquad ? 'in' : ''}"><div class="ph">${tokenSvg(lookOf(u), { side: 0, bare: true })}
+    const head = fams.length > 1 && rosterTab === 'all' && famOf(f) !== lastFam ? `<h3 class="rfam">${E.FACTIONS[famOf(f)]?.name ?? 'Others'}</h3>` : ''; lastFam = famOf(f);
+    return `${head}<div class="piece frow slim ${inSquad ? 'in' : ''}"><div class="ph">${tokenSvg(lookOf(u), { side: 0, bare: true })}
       <button class="info" data-f="${f.id}"><span class="pn">${f.name}<small>${E.UNITS[f.template].name} ${'★'.repeat(M(f).stars)}</small></span><span class="pk"><b>${lo.name}</b>${role ? ` · ${role}` : ''}</span></button>
       <span class="mini"><span><b>${Math.round(r.stats.hp)}</b>HP</span><span><b>${Math.round(r.stats.atk + r.weapon.damage)}</b>DMG</span></span>
       <span class="bc" style="${cant ? 'opacity:.5' : ''}">${c}</span>
       <button class="add" data-toggle="${f.id}" ${cant ? 'disabled' : ''} aria-pressed="${inSquad}" aria-label="${inSquad ? 'Take' : 'Put'} ${f.name} ${inSquad ? 'out of' : 'in'} the squad">${inSquad ? '✓' : '+'}</button></div></div>`;
   }).join('') + (out.length ? `<p class="hint" style="margin:0">Sitting out under ${E.DOCTORE_BY_ID[G.doctore].name}: ${out.map((f) => f.name).join(', ')}.</p>` : '');
+  $('roster').querySelectorAll('[data-rtab]').forEach((el) => el.onclick = () => { rosterTab = el.dataset.rtab; renderRoster(); });
   $('roster').querySelectorAll('[data-toggle]').forEach((el) => el.onclick = () => { toggleSquad(el.dataset.toggle); renderMuster(false); });
   $('roster').querySelectorAll('[data-f]').forEach((el) => el.onclick = () => openFighter(el.dataset.f));
 })(renderRoster);
