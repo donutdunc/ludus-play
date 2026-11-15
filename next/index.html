@@ -780,6 +780,16 @@ body.forming #card.over { display: flex; position: absolute; z-index: 20; box-si
 /* Leave room for the status bar when sizing the board, so the buttons under it are not pushed off the screen. */
 [data-look="lino"] body.fighting .board { width: min(100%, calc((100dvh - 250px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) * 0.5952)); }
 @media (max-height: 760px) { [data-look="lino"] body.fighting .board { width: min(100%, calc((100dvh - 174px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) * 0.5952)); } }
+/* The lintel (see app.js). Its depth is the status bar plus the reach of the phone's blur. */
+:root { --lintel: calc(var(--inset, env(safe-area-inset-top, 0px)) + 22px); }
+body::before { height: var(--lintel); border-bottom: 1px solid var(--line); box-sizing: border-box; }
+body { padding-top: 26px; } html body .meter, body.fighting .spot, body.fighting .caption { top: calc(var(--lintel) + 4px) !important; }
+#toast { top: calc(var(--lintel) + 6px); }
+[data-look="lino"] body.fighting .board { width: min(100%, calc((100dvh - 276px - var(--inset, 0px)) * 0.5952)); }
+@media (max-height: 760px) { [data-look="lino"] body.fighting .board { width: min(100%, calc((100dvh - 200px - var(--inset, 0px)) * 0.5952)); } }
+/* After a fight in the school there is one way on. No replay row, no empty card box. */
+body:not(.free) #after, body:not(.free).fighting:not(.forming) #card { display: none !important; }
+.spot .sm.won { color: #6b4a12; font-weight: 700; font-size: 14px; }
 </style>
 
 <div class="wrap">
@@ -1553,7 +1563,7 @@ function setFightUi() {
   $('noteBox').hidden = !inFight;
   if (!(inFight && S.mode === 'done')) $('report').hidden = true;
   if (inFight && P.res) {
-    $('playPause').innerHTML = `${P.playing ? 'Pause' : 'Play'}<small>${turnNo()}/${P.turnStarts.length}</small>`;
+    $('playPause').innerHTML = `${P.playing ? 'Pause' : 'Play'}<small>${S.mode === 'done' ? `${turnNo()}/${P.turnStarts.length}` : `turn ${turnNo()}`}</small>`;
     $('playPause').disabled = !P.playing && P.cursor >= P.res.events.length;
     $('stepFwd').disabled = P.cursor >= P.res.events.length;
     $('stepBack').disabled = P.cursor === 0;
@@ -2116,7 +2126,7 @@ function spotEvent(e) {
 }
 function spotEnd() {
   const res = P.res, alive = (side) => res.combatants.filter((c) => c.side === side && c.alive).length;
-  $('spot').innerHTML = `<span></span><div class="mid"><div class="who"><b>${FREE ? '' : S.opponent?.name ?? ''}</b></div><div class="act ${res.winner === 0 ? 'heal' : 'crit'}">${res.winner === 0 ? 'Victory' : res.winner === null ? 'A draw' : 'Defeat'}</div><div class="sm">${alive(0)} of yours standing, ${alive(1)} of theirs</div></div><span></span>`;
+  $('spot').innerHTML = `<span></span><div class="mid"><div class="who"><b>${FREE ? '' : S.opponent?.name ?? ''}</b></div><div class="act ${res.winner === 0 ? 'heal' : 'crit'}">${res.winner === 0 ? 'Victory' : res.winner === null ? 'A draw' : 'Defeat'}</div><div class="sm${!FREE && P.rw ? ' won' : ''}">${!FREE && P.rw ? `+${P.rw.denarii} denarii${P.rw.renown ? ` · +${P.rw.renown} renown` : ''}` : `${alive(0)} of yours standing, ${alive(1)} of theirs`}</div></div><span></span>`;
 }
 // Formation: drag one of your pieces to a tile in your zone. Dropping on another of yours swaps them. A tap still opens its card.
 function dragify() {
@@ -2768,8 +2778,8 @@ function fightDone(res) {
     const afford = inSight('calls') ? callsReady() : [], nx = beatNow(), again = !won && onBeat;
     // One compact card. The bar above already says who won; this says what you got, what arrived, and what is next.
     const gains = [...joined.map(({ id, brought }) => `<li class="joins">${id === 'magnus' && ART.npcs?.mentor ? `<img src="${ART.npcs.mentor}" alt="">` : `<span class="sig">${docSigil(E.DOCTORE_BY_ID[id])}</span>`}<span><b>${E.DOCTORE_BY_ID[id].name} joins</b> with ${brought.map((f) => f.name).join(', ')}<span class="sq">${brought.map((f) => tokenSvg(lookOf(unitOf(f)), { side: 0, bare: true })).join('')}</span></span></li>`), ...opened.map((n) => `<li><b>${n}</b> opens</li>`)];
-    P.spoils = `<div class="big">+${rw.denarii} denarii${rw.renown ? ` · +${rw.renown} renown` : ''}</div>
-      ${!won ? lossRead(again ? b0 : null) : ''}
+    P.rw = rw;
+    P.spoils = `      ${!won ? lossRead(again ? b0 : null) : ''}
       ${gains.length ? `<ul class="gains">${gains.join('')}</ul>` : ''}
       ${nx && done.length ? `<p class="nx"><b>Next</b>${nx.goal}</p>` : !nx && afford.length && won ? `<p>You can sound a ${afford.join(' or a ')}.</p>` : ''}
       <div class="row">${again ? '<button class="primary grow" id="tryAgain">Change the squad</button>' : ''}<button class="${again ? '' : 'primary '}grow" id="toSchool">Back to the school</button></div>`;
@@ -3112,6 +3122,17 @@ if (!G) newSchool();
 S.myDoc = G.doctore; S.mine.doctore = G.doctore; if ((G.squads ?? {})[G.doctore]) loadSquad(); else syncSquad();
 if (location.hash === '#battle' || /\/battle\/?$/.test(location.pathname)) freeBattle(); else { draftRival(); show('school'); }
 window.addEventListener('hashchange', () => { if (location.hash === '#battle' && !FREE) freeBattle(); });
+// ---------- The lintel: one solid strip at the top of every screen ----------
+// The phone lays a blur over the page under the clock, and it reaches a little below the status bar. A solid strip under it gives
+// the blur nothing to smear, and gives every screen the same top edge. Anything that sticks to the top sticks under the strip.
+(function lintel() {
+  const probe = document.createElement('div'); probe.style.cssText = 'position:fixed;top:env(safe-area-inset-top,0px);left:0;width:1px;height:1px;visibility:hidden';
+  document.body.appendChild(probe);
+  const set = () => { const b = document.body, pad = parseFloat(getComputedStyle(b).paddingTop) || 0;
+    const inset = Math.max(0, probe.getBoundingClientRect().top, b.getBoundingClientRect().top + window.scrollY + pad - 26);   // 26 is the page's own top padding
+    document.documentElement.style.setProperty('--inset', `${Math.round(inset)}px`); };
+  set(); window.addEventListener('resize', set); window.addEventListener('orientationchange', set);
+})();
 </script>
 
 <script>if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));</script>
