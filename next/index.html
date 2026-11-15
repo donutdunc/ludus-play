@@ -651,7 +651,7 @@ body:not(.free) #after .primary { background: var(--stone-2); color: var(--ink);
 #veil.lift[data-kind="shadow"] .vbg { opacity: 0; }
 #veil.lift[data-kind="gate"] .vbg { transform: translateY(-108%); }
 #veil.lift[data-kind="dust"] .vbg { opacity: 0; transform: scale(1.25) translateX(6%); filter: blur(10px); }
-#veil .vtx { position: absolute; left: 6%; right: 6%; top: 0; height: 81%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; transition: opacity .5s ease-in .8s; }
+#veil .vtx { position: absolute; left: 3%; right: 3%; top: 0; height: 58%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; transition: opacity .5s ease-in .8s; }
 #veil .vtx b { font: 400 34px/1.05 var(--f-display); letter-spacing: .06em; color: #f1e2bd; text-shadow: 0 2px 0 #0d0a07, 0 0 22px rgba(0,0,0,.9); }
 #veil .vtx span { font: 500 14px/1.3 var(--f-ui); color: #cdbb97; max-width: 30ch; text-shadow: 0 1px 0 #0d0a07, 0 0 10px rgba(0,0,0,.9); }
 #veil .vtx i { font: 600 11px var(--f-ui); font-style: normal; letter-spacing: .2em; text-transform: uppercase; color: var(--gold); text-shadow: 0 1px 0 #0d0a07; }
@@ -659,6 +659,7 @@ body:not(.free) #after .primary { background: var(--stone-2); color: var(--ink);
 #veil.named .vtx b { animation: vname .5s ease-out; } #veil.lift .vtx { opacity: 0; }
 @keyframes vname { from { transform: scale(.9); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { #veil .vbg, #veil .vtx { transition: none; } #veil.named .vtx b { animation: none; } }
+#veil .vtx b { white-space: nowrap; line-height: 40px !important; } #veil .vtx span { min-height: 2.6em; }
 </style>
 
 <div class="wrap">
@@ -2072,7 +2073,8 @@ fight = ((orig) => function () {
   }
   orig();
   if (hideRival()) { const d = E.DOCTORE_BY_ID[S.theirDoc]; say(`Out of the far gate: <b>${S.opponent.name}</b> · ${E.FACTIONS[d.faction].name}, ${d.twist.name}`);
-    $('spot').innerHTML = `<span></span><div class="mid"><div class="who"><b>Out of the far gate</b></div><div class="act trick">${S.opponent.name}</div><div class="sm">${E.FACTIONS[d.faction].name} · ${d.twist.name}</div></div><span></span>`; }
+    // The board itself announces the opponent; the bar above only says where you are until the first move fills it.
+    $('spot').innerHTML = `<span></span><div class="mid"><div class="act dim">${arenaNow().name}</div></div><span></span>`; }
   else $('spot').innerHTML = '';
   // Let the announcement land before the first move.
   if (hideRival()) { pause(); const tok = P.token, wait = liftVeil(); setTimeout(() => { if (P.token === tok && S.step === 'fight') playLoop(false); }, wait); }
@@ -2090,13 +2092,15 @@ function renderVeil() {
   const v = veilEl(), on = S.step === 'formation' && hideRival();
   v.hidden = !on; v.className = ''; if (!on) return;
   const a = arenaNow(); v.dataset.kind = VEIL_KIND[a.id] ?? 'shadow';
-  v.querySelector('.vtx').innerHTML = `<b>${a.name}</b><span>${a.line}</span>`;
+  v.querySelector('.vtx').innerHTML = `<i>Tonight</i>${veilName(a.name)}<span>${a.line}</span>`;
 }
+/** One line, whatever the length: the name is sized to the board so it never wraps into the pieces. */
+const veilName = (name) => `<b style="font-size:${Math.min(34, Math.round(455 / name.length))}px">${name}</b>`;
 /** The reveal: the opponent's name over the far side, then whatever hid them lifts. Returns how long it takes. */
 function liftVeil() {
   const v = veilEl(), a = arenaNow(), d = E.DOCTORE_BY_ID[S.theirDoc], calm = SAND.calm;
   v.dataset.kind = VEIL_KIND[a.id] ?? 'shadow'; v.className = ''; v.hidden = false;
-  v.querySelector('.vtx').innerHTML = `<i>Out of the far gate</i><b>${S.opponent.name}</b><span>${E.FACTIONS[d.faction].name} · ${d.twist.name}</span>`;
+  v.querySelector('.vtx').innerHTML = `<i>Out of the far gate</i>${veilName(S.opponent.name)}<span>${E.FACTIONS[d.faction].name} · ${d.twist.name}</span>`;
   void v.offsetWidth; v.classList.add('named');
   const tok = P.token, hold = calm ? 900 : 1100, lift = calm ? 0 : 1300;
   setTimeout(() => { if (P.token !== tok) { v.hidden = true; return; } v.classList.add('lift'); sfxPlay('reveal', .5, (r, t) => { sndThud(r, t, { gain: .5, f: 180 }); sndNoise(r, t + .05, { dur: .9, f: 900, f1: 300, q: .6, gain: .1 }); }); }, hold);
