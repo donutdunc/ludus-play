@@ -636,24 +636,50 @@ body:not(.free) #after .primary { background: var(--stone-2); color: var(--ink);
 .frow.slim .mini { display: grid; grid-template-columns: auto auto; gap: 1px 3px; align-items: baseline; justify-items: end; font: 600 10px/1.15 var(--f-ui); letter-spacing: .08em; color: var(--ink-3); font-variant-numeric: tabular-nums; }
 .frow.slim .mini b { font: 700 15px/1.1 var(--f-ui); letter-spacing: 0; color: var(--ink); margin-right: 3px; }
 .frow.slim .ph .add { min-height: 40px; width: 42px; }
-/* The far side of the board before the gates open, and the reveal. */
+/* The far side of the board before the gates open. */
 #veil { position: absolute; left: 0; right: 0; top: 0; height: 41%; z-index: 40; pointer-events: none; overflow: hidden; }
-#veil .vbg { position: absolute; inset: 0; transition: opacity 1.3s ease-in, transform 1.3s cubic-bezier(.5,0,.8,.4), filter 1.3s ease-in; }
+#veil .vbg { position: absolute; inset: 0; }
 #veil[data-kind="shadow"] .vbg { background: radial-gradient(120% 60% at 12% 0%, rgba(226,160,60,.16), transparent 60%), linear-gradient(rgba(10,7,4,.95) 0 72%, rgba(10,7,4,0)); }
 #veil[data-kind="gate"] .vbg { bottom: 19%; background: repeating-linear-gradient(90deg, #17120d 0 9px, rgba(23,18,13,.82) 9px 30px), linear-gradient(#17120d 0 12%, transparent 12% 46%, #17120d 46% 54%, transparent 54% 92%, #17120d 92%); box-shadow: 0 6px 14px rgba(0,0,0,.5); }
 #veil[data-kind="dust"] .vbg { background: linear-gradient(rgba(214,186,128,.97) 0 66%, rgba(214,186,128,0)); filter: blur(0); }
-#veil.lift[data-kind="shadow"] .vbg { opacity: 0; }
-#veil.lift[data-kind="gate"] .vbg { transform: translateY(-108%); }
-#veil.lift[data-kind="dust"] .vbg { opacity: 0; transform: scale(1.25) translateX(6%); filter: blur(10px); }
-#veil .vtx { position: absolute; left: 3%; right: 3%; top: 0; height: 58%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; transition: opacity .5s ease-in .8s; }
-#veil .vtx b { font: 400 34px/1.05 var(--f-display); letter-spacing: .06em; color: #f1e2bd; text-shadow: 0 2px 0 #0d0a07, 0 0 22px rgba(0,0,0,.9); }
-#veil .vtx span { font: 500 14px/1.3 var(--f-ui); color: #cdbb97; max-width: 30ch; text-shadow: 0 1px 0 #0d0a07, 0 0 10px rgba(0,0,0,.9); }
+#veil .vtx { position: absolute; left: 3%; right: 3%; top: 0; height: 58%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; }
+#veil .vtx b { font: 400 34px/40px var(--f-display); letter-spacing: .06em; white-space: nowrap; color: #f1e2bd; text-shadow: 0 2px 0 #0d0a07, 0 0 22px rgba(0,0,0,.9); }
+#veil .vtx span { font: 500 14px/1.3 var(--f-ui); color: #cdbb97; max-width: 30ch; min-height: 2.6em; text-shadow: 0 1px 0 #0d0a07, 0 0 10px rgba(0,0,0,.9); }
 #veil .vtx i { font: 600 11px var(--f-ui); font-style: normal; letter-spacing: .2em; text-transform: uppercase; color: var(--gold); text-shadow: 0 1px 0 #0d0a07; }
 #veil[data-kind="dust"] .vtx b { color: #2a1c10; text-shadow: 0 1px 0 rgba(255,244,214,.6); } #veil[data-kind="dust"] .vtx span { color: #4a3520; text-shadow: none; } #veil[data-kind="dust"] .vtx i { color: #7c1d17; text-shadow: none; }
-#veil.named .vtx b { animation: vname .5s ease-out; } #veil.lift .vtx { opacity: 0; }
-@keyframes vname { from { transform: scale(.9); opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { #veil .vbg, #veil .vtx { transition: none; } #veil.named .vtx b { animation: none; } }
-#veil .vtx b { white-space: nowrap; line-height: 40px !important; } #veil .vtx span { min-height: 2.6em; }
+/* The reveal (reveal() in app.js keeps the time).
+   1. The name lands: it comes down onto the dark from large, with the herald's drum.
+   2. The dark is thrown back: it dips, then goes up and out through the gate, and light breaks from the gate's mouth as it goes.
+      The table takes the jolt, and the same dark comes off the bar above, a moment later, so it reads as one sweep up the screen.
+   3. The opponents are pushed out of the gate (app.js), under the edge of the board, each on its own furrow. */
+#veil.named .vtx i { animation: vfade .25s ease-out both; }
+#veil.named .vtx b { animation: vname .36s cubic-bezier(.2,1.35,.35,1) both; }
+#veil.named .vtx span { animation: vfade .3s ease-out .3s both; }
+@keyframes vname { from { transform: scale(1.5); opacity: 0; } } @keyframes vfade { from { opacity: 0; } }
+#veil.lift .vtx { opacity: 0; transform: translateY(-16px); transition: opacity .2s ease-in, transform .26s ease-in; }
+#veil.lift[data-kind="shadow"] .vbg, #veil.lift[data-kind="gate"] .vbg { transform-origin: 50% 0; animation: vlift .5s cubic-bezier(.55,0,.25,1) forwards; }
+@keyframes vlift { 14% { transform: scaleY(1.04); } 100% { transform: translateY(-118%); } }
+#veil.lift::after { content: ''; position: absolute; inset: 0; background: linear-gradient(rgba(255,232,176,.42) 0 55%, rgba(255,232,176,0)); animation: vflash .24s ease-out forwards; }
+@keyframes vflash { to { opacity: 0; } }
+#veil.lift[data-kind="dust"] .vbg { opacity: 0; transform: scale(1.25) translateX(6%); filter: blur(10px); transition: opacity .6s ease-in, transform .6s cubic-bezier(.5,0,.8,.4), filter .6s ease-in; }
+#veil .vfl { position: absolute; left: 50%; top: 0; width: 170%; aspect-ratio: 1; border-radius: 50%; transform: translate(-50%, -50%) scale(.15); opacity: 0; background: radial-gradient(closest-side, rgba(255,236,180,.95), rgba(255,200,104,.6) 38%, rgba(255,170,60,0) 72%); }
+#veil.lift .vfl { animation: vflare .8s ease-out forwards; }
+@keyframes vflare { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.15); } 16% { opacity: 1; transform: translate(-50%, -50%) scale(.6); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1.15); } }
+body.fighting .board.jolt, body.fighting .spot.jolt { animation: jolt .28s ease-out; }
+@keyframes jolt { 0% { transform: none; } 18% { transform: translate(0, 4px); } 42% { transform: translate(-1px, -2px); } 66% { transform: translate(1px, 1px); } 100% { transform: none; } }
+/* Until they are pushed out, the opponents are behind the gate: nothing of them shows past the edge of the board. */
+[data-look="lino"] .board.revealing .tokens { clip-path: inset(0); }
+/* The bar above the board is the lintel over the gate while the far side is dark: a dark plaque over it carries the name of the place.
+   When the dark is thrown back the plaque goes up off the bar too, a moment after the board's, and under it is who came out. */
+.spot .shade { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; pointer-events: none; background: radial-gradient(80% 130% at 50% 135%, rgba(226,160,60,.2), transparent 62%), #0f0b08; }
+.spot .shade b { font: 400 22px/1.1 var(--f-display); letter-spacing: .08em; color: #e9cd84; text-shadow: 0 1px 0 #000, 0 0 14px rgba(0,0,0,.8); white-space: nowrap; animation: vfade .25s ease-out both; }
+.spot.lit .shade { transform: translateY(-104%); transition: transform .3s cubic-bezier(.55,0,.25,1) .14s; }
+.spot .who.kick { font: 600 11px/1.5 var(--f-ui); letter-spacing: .2em; text-transform: uppercase; } [data-look="lino"] .spot .who.kick { color: #7a5520; }
+@media (prefers-reduced-motion: reduce) {
+  #veil.named .vtx i, #veil.named .vtx b, #veil.named .vtx span, #veil.lift .vfl, #veil.lift::after, .spot .shade b, body.fighting .board.jolt, body.fighting .spot.jolt { animation: none; } #veil.lift::after { opacity: 0; }
+  #veil.lift .vbg { animation: none !important; transform: none !important; filter: none !important; opacity: 0; transition: opacity .3s ease-in !important; } #veil.lift .vtx { transform: none; }
+  .spot.lit .shade { transform: none; opacity: 0; transition: opacity .3s ease-in; }
+}
 /* A stat tile never changes height: the change a kit makes sits in its corner. */
 .fstats .stat i { position: absolute; top: 3px; right: 5px; margin: 0; }
 .frow.slim .mini span { display: contents; } .frow.slim .mini b { margin-right: 0; }
@@ -2168,13 +2194,13 @@ function face(uid, hpShown) {
     ${hpShown ? `<i><b style="width:${(hp * 100).toFixed(0)}%"></b></i>` : ''}</div>`;
 }
 const spotName = (uid) => { const st = P.state.get(uid); return st ? st.name : ''; };
-let spotNow = { a: null, t: null };
-function spot(a, t, big, small, tone, why, more) {
+let spotNow = { a: null, t: null }, spotLast = null;
+function spot(a, t, big, small, tone, why, more, title) {
   spotNow = { a, t };
   // Sides are locked: yours on the left, theirs on the right, always. The arrow says who is acting on whom.
   const sideOf = (u) => (u != null ? P.state.get(u)?.side : null), pair = t != null && t !== a, sa = sideOf(a), st = pair ? sideOf(t) : null;
   const L = sa === 0 ? a : st === 0 ? t : null, R = sa === 1 ? a : st === 1 ? t : null, cross = pair && sa !== st;
-  const who = cross ? `<b>${spotName(L)}</b><span class="dir">${sa === 0 ? '▸' : '◂'}</span><b>${spotName(R)}</b>`
+  const who = title ? `<b>${title}</b>` : cross ? `<b>${spotName(L)}</b><span class="dir">${sa === 0 ? '▸' : '◂'}</span><b>${spotName(R)}</b>`
     : `<b>${a != null ? spotName(a) : ''}</b>${pair ? `<span class="dir">▸</span><b>${spotName(t)}</b>` : ''}`;
   const slot = (u) => (u != null ? face(pair && !cross ? t : u, u !== a) : '<span></span>');
   $('spot').innerHTML = `${slot(L)}
@@ -2200,18 +2226,38 @@ renderReport = ((orig) => function () {
 })(renderReport);
 /** The reason for a target, said once: on the first move or swing after he picks someone new. */
 function freshWhy(aid, tid) { const st = P.state.get(aid); if (!st?.fresh || st.tgt !== tid || !st.why) return ''; st.fresh = false; return `Picked: ${st.why.split(' · ')[0]}`; }
-function spotEvent(e) {
+const DOT_NAME = { bleed: 'Bleeding', burn: 'Burning', poison: 'Poison', thorns: 'Thorns' };
+/** A reaction the engine reports as a sentence ("goes berserk as Nib falls"), as a headline and the rest. */
+function trigWords(note) {
+  for (const [re, head] of [[/^goes berserk (.*)$/, 'Berserk'], [/^swears vengeance (.*)$/, 'Vengeance'], [/^drops (.*)$/, 'Dropped'], [/^shrugs off (.*)$/, 'Shrugs it off'], [/^grows restless: (.*)$/, 'Restless']]) { const m = re.exec(note ?? ''); if (m) return [head, m[1]]; }
+  const w = String(note ?? '').split(' '); return [w.slice(0, 2).join(' ').replace(/^./, (c) => c.toUpperCase()), w.slice(2).join(' ')];
+}
+/** Reactions that fire together (everyone who swears vengeance for the same man) are one line and one beat, not one each. */
+const sameTrig = (x, e) => x?.kind === 'trigger' && x.note === e.note;
+function trigGroup(e) {
+  const ev = P.res.events, i = ev.indexOf(e), skip = (k, d) => { while (ev[k] && (ev[k].kind === 'status' || ev[k].kind === 'expire')) k += d; return k; };
+  let a = i, b = i; for (let k = skip(a - 1, -1); sameTrig(ev[k], e); k = skip(k - 1, -1)) a = k; for (let k = skip(b + 1, 1); sameTrig(ev[k], e); k = skip(k + 1, 1)) b = k;
+  return ev.slice(a, b + 1).filter((x) => x.kind === 'trigger');
+}
+/** What the bar says about an event: the arguments for spot(), or nothing for an event that has no line of its own. */
+function spotArgs(e) {
   switch (e.kind) {
-    case 'intent': spotNow = { a: e.aid, t: e.tid }; return;   // shown when he moves or swings, not as an empty line
-    case 'attack': return spot(e.aid, e.tid, e.outcome === 'miss' ? 'Miss' : `${e.amount}${e.outcome === 'crit' ? ' crit' : ''}`, e.outcome === 'block' ? 'Blocked' : '', e.outcome === 'miss' ? 'dim' : e.outcome === 'crit' ? 'crit' : 'hit', freshWhy(e.aid, e.tid), `${e.label}${typeof e.chance === 'number' ? ` · ${e.chance}% to hit` : ''}`);
-    case 'active': { const w = whyOf(e); return spot(e.aid, spotNow.a === e.aid ? spotNow.t : null, e.label, [e.summary, w.lasts && `for ${w.lasts}`].filter(Boolean).join(' '), 'trick', '', w.why); }
-    case 'death': return spot(e.aid ?? spotNow.a, e.tid, 'Down', `${spotName(e.tid)} falls`, 'crit');
-    case 'heal': return spot(e.aid ?? e.tid, e.tid, `+${e.amount}`, 'patched up', 'heal');
-    case 'stunned': return spot(e.tid, null, 'Stunned', 'loses the turn', 'dim');
-    case 'move': { const tg = P.state.get(e.aid)?.tgt ?? (spotNow.a === e.aid ? spotNow.t : null); return spot(e.aid, e.note === 'falls back' ? null : tg, e.note || 'approaches', e.note === 'falls back' ? '' : freshWhy(e.aid, tg), 'dim'); }
-    default: return;
+    case 'intent': spotNow = { a: e.aid, t: e.tid }; return null;   // shown when he moves or swings, not as an empty line
+    case 'attack': return [e.aid, e.tid, e.outcome === 'miss' ? 'Miss' : `${e.amount}${e.outcome === 'crit' ? ' crit' : ''}`, e.outcome === 'block' ? 'Blocked' : '', e.outcome === 'miss' ? 'dim' : e.outcome === 'crit' ? 'crit' : 'hit', freshWhy(e.aid, e.tid), `${e.label}${typeof e.chance === 'number' ? ` · ${e.chance}% to hit` : ''}`];
+    case 'active': { const w = whyOf(e); return [e.aid, spotNow.a === e.aid ? spotNow.t : null, e.label, [e.summary, w.lasts && `for ${w.lasts}`].filter(Boolean).join(' '), 'trick', '', w.why]; }
+    case 'death': return [e.aid ?? spotNow.a, e.tid, 'Down', `${spotName(e.tid)} falls${e.note ? ` ${e.note}` : ''}`, 'crit'];
+    case 'heal': return [e.aid ?? e.tid, e.tid, `+${e.amount}`, 'patched up', 'heal'];
+    case 'stunned': return [e.tid, null, 'Stunned', 'loses the turn', 'dim'];
+    case 'move': { const tg = P.state.get(e.aid)?.tgt ?? (spotNow.a === e.aid ? spotNow.t : null); return [e.aid, e.note === 'falls back' ? null : tg, e.note || 'approaches', e.note === 'falls back' ? '' : freshWhy(e.aid, tg), 'dim']; }
+    case 'dot': return [e.tid, null, `${e.amount}`, DOT_NAME[e.note] ?? e.note ?? '', 'hit'];
+    case 'flee': return [e.aid, null, 'Flees', e.note ?? '', 'dim'];
+    case 'trigger': { const [head, rest] = trigWords(e.note), g = trigGroup(e), names = g.map((x) => (x.aid != null ? spotName(x.aid) : x.actor));
+      return [g[0].aid ?? null, null, head, rest, 'trick', '', '', g.length > 2 ? `${names[0]} and ${g.length - 1} more` : g.length === 2 ? `${names[0]} and ${names[1]}` : e.aid == null ? e.actor : undefined]; }
+    default: return null;
   }
 }
+/** Say it on the bar. Quiet (a rewind rebuilding the board): only remember it, so the bar can show the last thing said once the board is rebuilt. */
+function spotEvent(e, quiet) { const a = spotArgs(e); if (!a) return; spotLast = a; if (quiet) spotNow = { a: a[0], t: a[1] }; else spot(...a); }
 function spotEnd() {
   const res = P.res, alive = (side) => res.combatants.filter((c) => c.side === side && c.alive).length;
   $('spot').innerHTML = `<div class="mid all"><div class="who"><b>${FREE ? '' : S.opponent?.name ?? ''}</b></div><div class="act ${res.winner === 0 ? 'heal' : 'crit'}">${res.winner === 0 ? 'Victory' : res.winner === null ? 'A draw' : 'Defeat'}</div><div class="sm${!FREE && P.rw ? ' won' : ''}">${!FREE && P.rw ? `+${P.rw.denarii} denarii${P.rw.renown ? ` · +${P.rw.renown} renown` : ''}` : `${alive(0)} of yours standing, ${alive(1)} of theirs`}</div></div>`;
@@ -2254,8 +2300,12 @@ function dragify() {
 }
 // Nearer rows draw over farther ones; the fallen lie under everyone.
 place = ((orig) => function (el, row, col) { orig(el, row, col); el.style.zIndex = el.classList.contains('dead') ? 0 : row + 1; })(place);
-apply = ((orig) => function (e, anim) { if (e.kind === 'intent') { const st = P.state.get(e.aid); if (st) { st.fresh = st.tgt !== e.tid; st.tgt = e.tid; st.why = e.note ?? ''; } } const d = orig(e, anim); if (anim) spotEvent(e); return d; })(apply);
-resetState = ((orig) => function () { orig(); for (const st of P.state.values()) { st.tgt = null; st.why = ''; st.fresh = false; } })(resetState);
+// P.aim is who the man whose turn it is has picked this turn (nobody, until he picks).
+apply = ((orig) => function (e, anim) {
+  if (e.kind === 'turn') P.aim = null;
+  else if (e.kind === 'intent') { P.aim = { a: e.aid, t: e.tid }; const st = P.state.get(e.aid); if (st) { st.fresh = st.tgt !== e.tid; st.tgt = e.tid; st.why = e.note ?? ''; } }
+  const d = orig(e, anim); spotEvent(e, !anim); return d; })(apply);
+resetState = ((orig) => function () { orig(); P.aim = null; spotLast = null; spotNow = { a: null, t: null }; for (const st of P.state.values()) { st.tgt = null; st.why = ''; st.fresh = false; } })(resetState);
 
 // ---------- Drill-down: tap a piece in a fight to pause and read it: who it is going for, who is on it, what is on it. ----------
 document.body.insertAdjacentHTML('beforeend', '<section id="drill" class="drill" hidden aria-live="polite"></section>');
@@ -2297,8 +2347,6 @@ $('tokens').addEventListener('click', (ev) => {
 }, true);
 setFightUi = ((orig) => function () { orig(); if (drillUid != null) { if (P.playing || S.step !== 'fight') closeDrill(); else renderDrill(); } })(setFightUi);
 
-stepBack = ((orig) => function () { orig(); const next = P.res.events[P.cursor]; if (next?.kind === 'turn') spot(next.aid, null, 'about to act', 'rewound', 'dim'); })(stepBack);
-$('stepBack').onclick = () => stepBack();
 fight = ((orig) => function () {
   if (hideRival()) {
     // The gates open: only now is the opponent drawn.
@@ -2310,13 +2358,9 @@ fight = ((orig) => function () {
     S.theirs = o.team; S.theirDoc = o.team.doctore; S.opponent = { name: o.name, rivalId: o.rivalId };
   }
   orig();
-  if (hideRival()) { const d = E.DOCTORE_BY_ID[S.theirDoc]; say(`Out of the far gate: <b>${S.opponent.name}</b> · ${E.FACTIONS[d.faction].name}, ${d.twist.name}`);
-    // The board itself announces the opponent; the bar above only says where you are until the first move fills it.
-    $('spot').innerHTML = `<span></span><div class="mid"><div class="act dim">${arenaNow().name}</div></div><span></span>`; }
-  else $('spot').innerHTML = '';
-  // Let the announcement land before the first move.
-  if (hideRival()) { pause(); const tok = P.token, wait = liftVeil(); setTimeout(() => { if (P.token === tok && S.step === 'fight' && !S.manual) playLoop(false); }, wait); }
-  else if (S.manual) pause();
+  // The reveal comes before the first move, and starts the fight when it is over (see reveal()).
+  if (hideRival()) { const d = E.DOCTORE_BY_ID[S.theirDoc]; say(`Out of the far gate: <b>${S.opponent.name}</b> · ${E.FACTIONS[d.faction].name}, ${d.twist.name}`); pause(); reveal(); }
+  else { $('spot').innerHTML = ''; if (S.manual) pause(); }
 })(fight);
 renderFormation = ((orig) => function () {
   orig();
@@ -2326,7 +2370,7 @@ renderFormation = ((orig) => function () {
 })(renderFormation);
 // ---------- The far side: until the gates open it is the arena's name over whatever hides the other gate. Lifting it is the start of the fight. ----------
 const VEIL_KIND = { dregs: 'shadow', cellar: 'shadow', proving: 'gate', provincial: 'dust' };
-function veilEl() { let v = $('veil'); if (!v) { v = document.createElement('div'); v.id = 'veil'; v.innerHTML = '<div class="vbg"></div><div class="vtx"></div>'; $('board').appendChild(v); } return v; }
+function veilEl() { let v = $('veil'); if (!v) { v = document.createElement('div'); v.id = 'veil'; v.innerHTML = '<div class="vbg"></div><div class="vfl"></div><div class="vtx"></div>'; $('board').appendChild(v); } return v; }
 function renderVeil() {
   const v = veilEl(), on = S.step === 'formation' && hideRival();
   v.hidden = !on; v.className = ''; if (!on) return;
@@ -2335,16 +2379,66 @@ function renderVeil() {
 }
 /** One line, whatever the length: the name is sized to the board so it never wraps into the pieces. */
 const veilName = (name) => `<b style="font-size:${Math.min(34, Math.round(455 / name.length))}px">${name}</b>`;
-/** The reveal: the opponent's name over the far side, then whatever hid them lifts. Returns how long it takes. */
-function liftVeil() {
-  const v = veilEl(), a = arenaNow(), d = E.DOCTORE_BY_ID[S.theirDoc], calm = SAND.calm;
-  v.dataset.kind = VEIL_KIND[a.id] ?? 'shadow'; v.className = ''; v.hidden = false;
+// ---------- The reveal ----------
+// Until the gates open the far side is dark, and the bar above it is the lintel over the gate: dark too, carrying the name of the place.
+// The reveal is one blow. The name of who is coming lands on the dark; then the dark is thrown back off the sand and off the lintel together,
+// the table takes the jolt, and the opponents are pushed out of the far gate one after another, each ploughing its own furrow to where it will stand.
+// By then their name has gone up into the bar, which holds it until the first move.
+const GATE = { col: 3.5, row: -1 };   // the mouth of the far gate, just off the top of the board, in tiles
+let REVEAL = null;
+const foePlate = () => { const d = E.DOCTORE_BY_ID[S.theirDoc]; return `<div class="mid all"><div class="who kick">Out of the far gate</div><div class="act" style="font-size:${Math.min(22, Math.round(560 / S.opponent.name.length))}px">${S.opponent.name}</div><div class="sm">${E.FACTIONS[d.faction].name} · ${d.twist.name}</div></div>`; };
+function reveal() {
+  const v = veilEl(), a = arenaNow(), d = E.DOCTORE_BY_ID[S.theirDoc], calm = SAND.calm, bar = $('spot'), board = $('board'), kind = VEIL_KIND[a.id] ?? 'shadow';
+  const R = REVEAL = { res: P.res, timers: [], foes: [...P.state.entries()].filter(([, st]) => st.side === 1).map(([uid]) => uid) };
+  const at = (ms, fn) => R.timers.push(setTimeout(() => { if (REVEAL === R) fn(); }, ms));
+  const begin = () => { revealEnd(); if (S.step === 'fight' && !S.manual) playLoop(false); };
+  // The bar already holds who is coming; over it lies the dark plaque with the name of the place, which goes up with the dark.
+  bar.classList.remove('more', 'lit'); bar.classList.add('lintel'); bar.innerHTML = `${foePlate()}<div class="shade"><b>${a.name}</b></div>`;
+  v.dataset.kind = kind; v.className = ''; v.hidden = false;
   v.querySelector('.vtx').innerHTML = `<i>Out of the far gate</i>${veilName(S.opponent.name)}<span>${E.FACTIONS[d.faction].name} · ${d.twist.name}</span>`;
   void v.offsetWidth; v.classList.add('named');
-  const tok = P.token, hold = calm ? 900 : 1100, lift = calm ? 0 : 1300;
-  setTimeout(() => { if (P.token !== tok) { v.hidden = true; return; } v.classList.add('lift'); sfxPlay('reveal', .5, (r, t) => { sndThud(r, t, { gain: .5, f: 180 }); sndNoise(r, t + .05, { dur: .9, f: 900, f1: 300, q: .6, gain: .1 }); }); }, hold);
-  setTimeout(() => { v.hidden = true; v.className = ''; }, hold + lift + 250);
-  return hold + lift;
+  sfxPlay('herald', .5, (r, t) => { sndThud(r, t + .06, { gain: .5, f: 210 }); sndNoise(r, t + .06, { type: 'lowpass', f: 700, q: .4, dur: .3, gain: .14 }); });
+  if (!calm) {   // they wait behind the gate, unseen
+    board.classList.add('revealing');
+    for (const uid of R.foes) { const el = P.els.get(uid); el.style.transition = 'none'; el.style.opacity = '0'; place(el, GATE.row, GATE.col); }
+    void board.offsetWidth; for (const uid of R.foes) P.els.get(uid).style.transition = '';
+  }
+  at(calm ? 900 : 1050, () => {
+    v.classList.add('lift'); bar.classList.add('lit');
+    sfxPlay('reveal', .5, (r, t) => {
+      sndThud(r, t, { gain: .8, f: 230 }); sndThud(r, t + .035, { gain: .5, f: 150 });                      // the bar is thrown
+      sndNoise(r, t, { type: 'lowpass', f: 900, q: .5, dur: .35, gain: .2 });                                 // the weight of the gate
+      sndNoise(r, t + .03, { dur: .5, f: 500, f1: 2600, q: .7, curve: SND_BELL, gain: .1, top: 6500 });       // the air let in
+      if (kind === 'gate') sndNoise(r, t + .05, { buf: 'grit', f: 3000, q: .6, dur: .45, gain: .26, top: 6500 });   // the chain of the portcullis
+    });
+    if (calm) return at(350, begin);
+    at(50, () => { board.classList.add('jolt'); bar.classList.add('jolt'); });
+    // The ones going furthest come out first, so nobody is pushed through a man already standing.
+    const order = R.foes.slice().sort((x, y) => posOf(y).row - posOf(x).row || Math.abs(posOf(x).col - GATE.col) - Math.abs(posOf(y).col - GATE.col));
+    const gap = Math.min(110, 640 / Math.max(1, order.length - 1)); let end = 0;
+    order.forEach((uid, k) => { const to = posOf(uid), ms = Math.round(Math.min(620, 300 + 70 * Math.hypot(to.col - GATE.col, to.row - GATE.row))), t0 = 150 + k * gap;
+      end = Math.max(end, t0 + ms); at(t0, () => pushOut(R, uid, to, ms, Math.min(1.1, 1.6 / Math.sqrt(order.length)))); });
+    at(end + 280, begin);
+  });
+}
+/** One opponent is pushed out of the gate to his tile: the same push, lean, furrow and scrape as any move in the fight. */
+function pushOut(R, uid, to, ms, loud) {
+  const el = P.els.get(uid); if (!el) return;
+  const dc = to.col - GATE.col, dr = to.row - GATE.row, len = Math.hypot(dc * SAND.tw, dr * SAND.th) || 1, ux = dc * SAND.tw / len, uy = dr * SAND.th / len, lk = P.state.get(uid).look;
+  el.style.setProperty('--slide', `${ms}ms`); el.style.setProperty('--lean', `${Math.sign(dc) * 6}deg`); el.classList.add('plough'); el.style.opacity = ''; place(el, to.row, to.col);
+  sandAdd(SAND.pre, { t: 'track', a: [GATE.col, GATE.row], b: [to.col, to.row] }, ms);
+  sfxPlay(`out${uid}`, 0, (r, t) => sndScrape(r, t, { dur: ms / 1000, weight: sfxWeight(lk), pan: sfxAcross(to.col), gain: loud }));
+  R.timers.push(setTimeout(() => { if (REVEAL !== R) return; el.classList.remove('plough');
+    if (SAND.w) { const B = sandPt([to.col, to.row]); sandPuff([B[0] + ux * SAND_FOOT[2] * SAND.tw * .9, B[1] + uy * SAND_FOOT[3] * SAND.tw * .9], ux, uy, 5); } }, ms));
+}
+/** The reveal is over, or is cut short (a tap on Play or a step, a rewind, leaving the fight): everything is where it would have ended up. */
+function revealEnd(cut) {
+  const R = REVEAL; if (!R) return; REVEAL = null; R.timers.forEach(clearTimeout);
+  const v = veilEl(), bar = $('spot'), board = $('board');
+  v.hidden = true; v.className = ''; board.classList.remove('revealing', 'jolt'); bar.classList.remove('lintel', 'lit', 'jolt'); bar.querySelector('.shade')?.remove();
+  if (P.res !== R.res) return;
+  for (const uid of R.foes) { const el = P.els.get(uid); if (!el) continue; el.classList.remove('plough'); el.style.opacity = '';
+    if (cut) { el.style.transition = 'none'; redraw(uid); void el.offsetWidth; el.style.transition = ''; } }
 }
 renderMuster = ((orig) => function (full) {
   if (hideRival()) { const lock = E.scriptDoctore(SC(), S.arena); if (lock && lock !== G.doctore && G.doctores.includes(lock)) putInCharge(lock); }
@@ -2366,6 +2460,7 @@ function renderCrumb() {
   $('crumbBack').onclick = () => (S.step === 'formation' ? go('muster') : show('school'));
 }
 go = ((orig) => function (step) {
+  revealEnd(true);
   orig(step); const forming = !FREE && S.step === 'formation';
   document.body.classList.toggle('forming', forming); if (forming) { document.body.classList.add('fighting'); formBar(); }
   renderCrumb();
@@ -3068,7 +3163,6 @@ apply = ((orig) => function (e, anim) {
   return d;
 })(apply);
 setupFight = ((orig) => function (res) { SAND.marks = []; SAND.turn = 0; SAND.run++; orig(res); sandPaint(); })(setupFight);
-stepBack = ((orig) => function () { SAND.marks = []; SAND.turn = 0; SAND.run++; orig(); sandPaint(); })(stepBack);
 go = ((orig) => function (step) { if (step === 'formation' && S.step !== 'formation') sandRake(); orig(step); })(go);
 // Formation: any of your pieces that changes tile was pushed there. Auto-arrange is a fresh set-up on raked sand.
 renderFormation = ((orig) => function () {
@@ -3258,6 +3352,69 @@ apply = ((orig) => function (e, anim) {
   if (anim && e.kind === 'move') { document.querySelectorAll('.aim:not(.drillaim)').forEach((x) => x.remove()); const st = P.state.get(e.aid), tg = st?.tgt != null ? P.state.get(st.tgt) : null; if (tg?.alive && e.note !== 'falls back') aimLine(posOf(e.aid), posOf(st.tgt), st.side); }
   return out;
 })(apply);
+
+// ---------- Playback, one beat at a time ----------
+// A beat is one thing the bar can say (a move, a blow, a trick, a fall, a wound that bleeds) together with what leads into it
+// (whose turn it is, who he has picked) and what follows from it (the statuses it lays on).
+// Stepping forward plays one beat and stops. Stepping back shows the beat before, as it was: the board, the aim and the bar all say the same thing.
+// So the bar never says somebody is "about to act": it says what has just happened on the board you are looking at.
+const BEAT_HEAD = new Set(['move', 'attack', 'active', 'death', 'heal', 'stunned', 'dot', 'trigger', 'flee']), BEAT_TAIL = new Set(['status', 'expire']);
+/** Where stepping stops: the index just past the end of each beat. */
+function beatStops(ev) {
+  const stops = []; let i = 0;
+  while (i < ev.length) {
+    while (i < ev.length && !BEAT_HEAD.has(ev[i].kind)) i++; if (i >= ev.length) break;
+    const head = ev[i++];
+    // A man walking several tiles is one beat, not one a tile. So is everyone reacting to the same thing at once.
+    while (i < ev.length && (BEAT_TAIL.has(ev[i].kind) || (head.kind === 'move' && ev[i].kind === 'move' && ev[i].aid === head.aid && !ev[i].note === !head.note) || (head.kind === 'trigger' && sameTrig(ev[i], head)))) i++;
+    stops.push(i);
+  }
+  if (stops[stops.length - 1] !== ev.length) stops.push(ev.length);
+  return stops;
+}
+setupFight = ((orig) => function (res) { orig(res); P.stops = beatStops(res.events); })(setupFight);
+/** Play on from here: to the end, or (a step) to the end of the next beat. A step moves through the lead-in briskly and does not wait after its last event. */
+playLoop = async function (step) {
+  revealEnd(true);
+  const tok = ++P.token; P.playing = true; S.mode = 'playing'; $('banner').hidden = true; setFightUi();
+  const ev = P.res.events, until = step ? P.stops.find((x) => x > P.cursor) ?? ev.length : ev.length; let played = false;
+  while (P.cursor < until) {
+    const e = ev[P.cursor++], d = apply(e, true), lead = !BEAT_HEAD.has(e.kind) && !BEAT_TAIL.has(e.kind); played = true;
+    if (e.kind === 'turn') setFightUi();
+    const more = e.kind === 'trigger' && sameTrig(ev[P.cursor], e);   // the same reaction from the next man: one line on the bar, so no wait between them
+    if (d && !(step && P.cursor >= until)) await sleep((more ? 30 : step && lead ? d * .45 : d) * BASE / S.speed);
+    if (tok !== P.token) return;
+  }
+  P.playing = false;
+  // A step that lands on the last beat stops there, so the last blow can be read; the next step or Play closes the fight.
+  if (P.cursor >= ev.length && !(step && played)) finish(); else setFightUi();
+};
+/** Back one beat. The board is rebuilt up to the end of the beat before, and the bar says what that beat was. */
+stepBack = function () {
+  revealEnd(true); pause();
+  // Back to the end of the beat before the last thing the bar said. (Paused part-way into the next man's turn, that is still the beat on show.)
+  const ev = P.res.events, base = ev[0]?.kind === 'turn' ? 1 : 0; let h = P.cursor - 1; while (h >= 0 && !BEAT_HEAD.has(ev[h].kind)) h--;
+  let k = P.stops.length - 1; while (k >= 0 && P.stops[k] > h) k--;
+  const target = k >= 0 ? Math.max(base, P.stops[k]) : base;
+  SAND.marks = []; SAND.turn = 0; SAND.run++;
+  resetState(); clearFx();
+  for (let i = 0; i < target; i++) apply(ev[i], false);
+  P.cursor = target;
+  for (const uid of P.state.keys()) redraw(uid);
+  sandPaint();
+  if (spotLast) spot(...spotLast); else $('spot').innerHTML = FREE ? '' : foePlate();
+  // Whose turn it is, and who he has picked this turn, drawn as they were.
+  if (P.acting != null && P.state.get(P.acting)?.alive) { P.els.get(P.acting)?.classList.add('acting');
+    const aim = P.aim; if (aim && P.state.get(aim.a)?.alive && P.state.get(aim.t)) { aimLine(posOf(aim.a), posOf(aim.t), P.state.get(aim.a).side); P.els.get(aim.t)?.classList.add('aimed'); } }
+  else P.acting = null;
+  say('Rewound.', true);
+  $('banner').hidden = true; S.mode = 'playing'; setFightUi(); renderCard();
+};
+$('stepBack').onclick = () => stepBack();
+$('stepFwd').onclick = () => { pause(); playLoop(true); };
+$('stepBack').setAttribute('aria-label', 'Back one step'); $('stepFwd').setAttribute('aria-label', 'Forward one step');
+// After a step onto the last beat the fight is not closed yet: Play and the step forward stay live until it is.
+setFightUi = ((orig) => function () { orig(); if (S.step !== 'fight' || !P.res) return; const open = S.mode !== 'done'; if (open && !P.playing) $('playPause').disabled = false; if (open) $('stepFwd').disabled = false; })(setFightUi);
 </script>
 
 <script>if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));</script>
