@@ -635,11 +635,11 @@ body.drilling #noteBox, body.drilling #report { display: none !important; }
 body:not(.free) #after .primary { background: var(--stone-2); color: var(--ink); border-color: var(--line); }
 
 /* Muster rows, slim: name and kind, the kit and what it is for, two numbers, the price. */
-.piece.frow.slim { padding: 5px 8px; } .frow.slim .ph { grid-template-columns: 30px minmax(0, 1fr) 38px 42px; gap: 8px; }
+.piece.frow.slim { padding: 5px 8px; } .frow.slim .ph { grid-template-columns: 30px minmax(0, 1fr) auto 38px 42px; gap: 8px; align-items: center; }
 .frow.slim .ph svg.stand.icon { width: 28px; }
 .frow.slim .pn { flex-wrap: nowrap; white-space: nowrap; } .frow.slim .pn small { font: 500 12px var(--f-ui); color: var(--ink-3); letter-spacing: .02em; overflow: hidden; text-overflow: ellipsis; }
 .frow.slim .pk { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink-3); margin-top: 2px; } .frow.slim .pk b { color: var(--ink); font-weight: 600; }
-.frow.slim .mini { display: flex; gap: 10px; margin-left: auto; align-items: baseline; font: 600 10px/1.15 var(--f-ui); letter-spacing: .08em; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.frow.slim .mini { display: grid; grid-template-columns: auto auto; gap: 1px 3px; align-items: baseline; justify-items: end; font: 600 10px/1.15 var(--f-ui); letter-spacing: .08em; color: var(--ink-3); font-variant-numeric: tabular-nums; }
 .frow.slim .mini b { font: 700 15px/1.1 var(--f-ui); letter-spacing: 0; color: var(--ink); margin-right: 3px; }
 .frow.slim .ph .add { min-height: 40px; width: 42px; }
 /* The far side of the board before the gates open, and the reveal. */
@@ -662,6 +662,12 @@ body:not(.free) #after .primary { background: var(--stone-2); color: var(--ink);
 #veil .vtx b { white-space: nowrap; line-height: 40px !important; } #veil .vtx span { min-height: 2.6em; }
 /* A stat tile never changes height: the change a kit makes sits in its corner. */
 .fstats .stat i { position: absolute; top: 3px; right: 5px; margin: 0; }
+.frow.slim .mini span { display: contents; } .frow.slim .mini b { margin-right: 0; }
+/* The bar over the fight is one size, always: two lines of small print are reserved and longer text is cut, never grown into. */
+[data-look="lino"] body.fighting .spot { height: 86px; min-height: 0; overflow: hidden; }
+[data-look="lino"] .spot .sm { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; height: 2.4em; min-height: 0; }
+[data-look="lino"] .spot .who, [data-look="lino"] .spot .act { min-height: 1.1em; }
+@media (max-height: 760px) { [data-look="lino"] body.fighting .spot { height: 58px; } [data-look="lino"] .spot .sm { -webkit-line-clamp: 1; height: 1.2em; } }
 </style>
 
 <div class="wrap">
@@ -2389,7 +2395,8 @@ renderRoster = ((orig) => function () {
     // One short row: who he is, the kit he is wearing and what that kit is for, two numbers, his price. The rest is on his sheet.
     const lo = E.loadoutOf(f), role = E.BUILDS[lo.template]?.find((b) => b.id === lo.build)?.role ?? '';
     return `<div class="piece frow slim ${inSquad ? 'in' : ''}"><div class="ph">${tokenSvg(lookOf(u), { side: 0, bare: true })}
-      <button class="info" data-f="${f.id}"><span class="pn"><em class="pdot" style="background:${paintOf(f)}"></em>${f.name}<small>${E.UNITS[f.template].name} ${'★'.repeat(M(f).stars)}</small><span class="mini"><span><b>${Math.round(r.stats.hp)}</b>HP</span><span><b>${Math.round(r.stats.atk + r.weapon.damage)}</b>DMG</span></span></span><span class="pk"><b>${lo.name}</b>${role ? ` · ${role}` : ''}</span></button>
+      <button class="info" data-f="${f.id}"><span class="pn">${f.name}<small>${E.UNITS[f.template].name} ${'★'.repeat(M(f).stars)}</small></span><span class="pk"><b>${lo.name}</b>${role ? ` · ${role}` : ''}</span></button>
+      <span class="mini"><span><b>${Math.round(r.stats.hp)}</b>HP</span><span><b>${Math.round(r.stats.atk + r.weapon.damage)}</b>DMG</span></span>
       <span class="bc" style="${cant ? 'opacity:.5' : ''}">${c}</span>
       <button class="add" data-toggle="${f.id}" ${cant ? 'disabled' : ''} aria-pressed="${inSquad}" aria-label="${inSquad ? 'Take' : 'Put'} ${f.name} ${inSquad ? 'out of' : 'in'} the squad">${inSquad ? '✓' : '+'}</button></div></div>`;
   }).join('') + (out.length ? `<p class="hint" style="margin:0">Sitting out under ${E.DOCTORE_BY_ID[G.doctore].name}: ${out.map((f) => f.name).join(', ')}.</p>` : '');
