@@ -2916,6 +2916,13 @@ $('transport').insertAdjacentHTML('beforeend', '<button class="sndbtn" type="but
 // A board, not a document: no pinch or double-tap zoom (two quick taps on a step button used to zoom the page and leave it scrolling sideways).
 { const vp = document.querySelector('meta[name="viewport"]'); if (vp && !/maximum-scale/.test(vp.content)) vp.content += ', maximum-scale=1, user-scalable=no'; }
 
+// Away from the game, nothing plays: the fight pauses where it is and the sound stops. Coming back restores the sound; the fight waits for Play.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { if (S.step === 'fight' && P.playing) pause(); SFX.drag = null; try { SFX.rig?.ac.suspend?.(); } catch (e) { /* already quiet */ } }
+  else if (SFX.on) { try { SFX.rig?.ac.resume?.(); } catch (e) { /* the next tap wakes it */ } }
+});
+window.addEventListener('pagehide', () => { try { SFX.rig?.ac.suspend?.(); } catch (e) { /* gone anyway */ } });
+
 // Arena thumbnails: the same floors the fights are played on, registered once so the cards do not carry the pictures.
 { const st = document.createElement('style'); st.textContent = Object.entries(ART.floors ?? {}).map(([id, uri]) => `.athumb[data-a="${id}"]{background-image:url(${uri})}`).join(''); document.head.appendChild(st); }
 
