@@ -762,6 +762,10 @@ body.fighting #crumb { display: none; } #arenaTop:empty { display: none !importa
 #spoils .gains li.joins > img, #spoils .gains li.joins > .sig { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; object-position: top; box-shadow: 0 0 0 1px #14110e, 0 0 0 3px #5a3a1c; background: var(--stone-3); display: grid; place-items: center; } #spoils .gains li.joins > .sig svg { width: 30px; height: 30px; }
 #spoils .gains .sq { display: flex; gap: 4px; margin-top: 4px; } #spoils .gains .sq svg.stand.icon { width: 28px; height: auto; }
 #spoils .gains .sq svg { width: 28px !important; height: auto !important; }
+/* Fight bar faces: one frame for everyone; the piece is pinned to the corner of a portrait, or stands in for a missing one. */
+.fig.port .pin { position: absolute; bottom: 4px; width: 24px; line-height: 0; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); } .fig.port.mine .pin { right: -9px; } .fig.port.theirs .pin { left: -9px; }
+.fig.port .pin svg { width: 24px !important; height: auto !important; }
+.fig.port .stand-in { position: absolute; inset: 0 0 7px; display: grid; place-items: center; background: linear-gradient(#c39a55, #e3c27c); } .fig.port .stand-in svg { width: 70% !important; height: auto !important; }
 </style>
 
 <div class="wrap">
@@ -2041,7 +2045,10 @@ function face(uid, hpShown) {
   // Counters: the close-up is the same piece on the same sand, with its painted face where it has one.
   if (lookNow === 'lino') {
     const art = ART.portraits[st.look.tid] ?? ART.portraits[ART.alias[st.look.tid]], hp = Math.max(0, Math.min(1, st.hp / st.maxHp));
-    return `<div class="fig ${art ? 'port' : ''} ${st.side === 0 ? 'mine' : 'theirs'} ${st.alive ? '' : 'down'}">${art ? `<img src="${art}" alt=""><i><b style="width:${(hp * 100).toFixed(0)}%"></b></i>` : tokenStand(st.look, { side: st.side, hp, big: true })}</div>`;
+    // The bar is where a piece becomes a person: always the same portrait frame, with his piece pinned to its corner so you can find him on the sand.
+    // Where a fighter has no painting yet, his piece stands in the frame alone.
+    const pc = tokenSvg(st.look, { side: st.side, bare: true });
+    return `<div class="fig port ${art ? '' : 'noart'} ${st.side === 0 ? 'mine' : 'theirs'} ${st.alive ? '' : 'down'}">${art ? `<img src="${art}" alt=""><span class="pin">${pc}</span>` : `<span class="stand-in">${pc}</span>`}<i><b style="width:${(hp * 100).toFixed(0)}%"></b></i></div>`;
   }
   const art = ART.portraits[st.look.tid] ?? ART.portraits[ART.alias[st.look.tid]];
   const hp = Math.max(0, Math.min(1, st.hp / st.maxHp));
