@@ -2442,12 +2442,14 @@ function renderDocRow() {
 renderMeter = ((orig) => function () {
   orig(); if (FREE) return;
   const e = $('meter').querySelector('.empty'); if (e) e.textContent = 'Tap + on a fighter to put him in the squad.';
-  { const sp = spent(S.mine), n = Math.ceil(S.bill / 5), w = 16, over = sp > S.bill; let g = '';
-    const per = Math.min(n, 20), rows = Math.ceil(n / per);   // twenty bundles to a row, so big bills stay readable
-    for (let i = 0; i < n; i++) { const x = (i % per) * w, y = Math.floor(i / per) * 15, on = (k) => (i * 5 + k < sp ? (over ? 'ov' : 'on') : '');
-      for (let k = 0; k < 4; k++) g += `<path class="${on(k)}" d="M${x + 2.5 + k * 2.6} ${y + 2 + (k % 2) * .6}l${k % 2 ? -.4 : .5} ${9.4}"/>`;
-      g += `<path class="${on(4)}" d="M${x + .6} ${y + 9.6}L${x + 12.6} ${y + 4}"/>`; }
-    $('meter').querySelector('.bar').outerHTML = `<svg class="tally" viewBox="0 0 ${per * w - 3} ${rows * 15 - 1}" preserveAspectRatio="xMinYMid meet" style="max-width:${per * 30}px;height:${rows * 20}px" aria-hidden="true">${g}</svg>`; }
+  { // The bill in chalk, always on one line. Up to 100: a stroke a point, a slash through every fifth, the whole bill laid out and filling in.
+    // Past 100 that will not fit, so five bundles are tied into a sheaf (a boxed bundle, worth 25): what is spent is chalked first, what is left follows faint.
+    const sp = spent(S.mine), over = sp > S.bill; let g = '', x = 0;
+    const bundle = (cls, k = 5) => { for (let i = 0; i < Math.min(k, 4); i++) g += `<path class="${cls}" d="M${x + 2.5 + i * 2.6} ${2.4 + (i % 2) * .6}l${i % 2 ? -.4 : .5} 9"/>`; if (k >= 5) g += `<path class="${cls}" d="M${x + .6} 9.6L${x + 12.6} 4.2"/>`; };
+    if (S.bill <= 100) { const n = Math.ceil(S.bill / 5); for (let i = 0; i < n; i++) { for (let k = 0; k < 5; k++) { const cls = i * 5 + k < sp ? (over ? 'ov' : 'on') : ''; if (k < 4) g += `<path class="${cls}" d="M${x + 2.5 + k * 2.6} ${2.4 + (k % 2) * .6}l${k % 2 ? -.4 : .5} 9"/>`; else g += `<path class="${cls}" d="M${x + .6} 9.6L${x + 12.6} 4.2"/>`; } x += 16; } }
+    else { const run = (v, cls) => { for (let i = 0; i < Math.floor(v / 25); i++) { g += `<path class="${cls}" d="M${x + .2} ${.8}h14.2l.3 12.4h-14.6z"/>`; x += 1; bundle(cls); x += 17; } for (let i = 0; i < Math.floor(v % 25 / 5); i++) { bundle(cls); x += 15; } if (v % 5) { bundle(cls, v % 5); x += 3 + (v % 5) * 2.6; } };
+      run(sp, over ? 'ov' : 'on'); if (!over) { x += 3; run(S.bill - sp, ''); } }
+    $('meter').querySelector('.bar').outerHTML = `<svg class="tally" viewBox="0 0 ${S.bill <= 100 ? x - 3 : Math.max(x - 3, 317)} 14" preserveAspectRatio="xMinYMid meet" style="max-width:${S.bill <= 100 ? Math.ceil(S.bill / 5) * 30 + 'px' : 'none'}" aria-hidden="true">${g}</svg>`; }
   $('meter').querySelector('.top').insertAdjacentHTML('beforeend', `<button class="primary" id="toForm2" ${$('toFormation').disabled ? 'disabled' : ''}>Formation ›</button>`);
   $('toForm2').onclick = () => go('formation');
   // In the school the tray is the squad at a glance, on one line that never changes height: tap a piece to send him back. His kit is on his roster row.
