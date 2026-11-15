@@ -734,6 +734,16 @@ body:not(.free) .meter .tray { height: 50px; } body:not(.free) .meter .pick svg.
 body:not(.free):not(.fighting) #caption, body:not(.free) .ranklab, body:not(.free) .midlab { display: none !important; }
 .fightbar .speed button { white-space: nowrap; }
 .fightbar { flex-wrap: nowrap; } .fightbar .speed { flex-wrap: nowrap; flex: 0 0 auto; gap: 6px; } .fightbar .speed button { padding: 0 10px; min-width: 0; } .fightbar #autoArrange { white-space: nowrap; flex: 0 0 auto; padding: 0 12px; }
+/* School banner: one row per doctore, his face and the squad he fields. */
+.home { padding: 0; gap: 0; } .drows { display: flex; flex-direction: column; }
+.drow { appearance: none; display: grid; grid-template-columns: 44px 92px minmax(0, 1fr); gap: 10px; align-items: center; height: 62px; min-height: 0; padding: 0 0 0 10px; border: 0; border-radius: 0; background: none; text-align: left; color: inherit; }
+.drow + .drow { border-top: 1px solid #0d0b09; }
+.drow > img, .drow > .sig { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; object-position: top; box-shadow: 0 0 0 1px #14110e, 0 0 0 3px #5a3a1c; background: var(--stone-3); display: grid; place-items: center; } .drow > .sig svg { width: 26px; height: 26px; }
+.dwho { display: flex; flex-direction: column; min-width: 0; } .dwho b { font: 17px/1.15 var(--f-display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .dwho small { font: 600 10px var(--f-ui); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); white-space: nowrap; }
+.dsq { align-self: stretch; display: flex; align-items: flex-end; justify-content: flex-start; padding: 0 8px 7px 12px; overflow: hidden;
+  background: linear-gradient(90deg, rgba(20,14,8,.55), rgba(20,14,8,0) 22px), repeating-linear-gradient(93deg, rgba(91,70,48,.11) 0 1px, rgba(255,246,220,.05) 1px 2px, transparent 2px 9px), linear-gradient(#cdb48a, #c2a77a); }
+.dsq .yp { flex: 0 1 30px; min-width: 0; margin: 0; line-height: 0; position: relative; } .dsq .yp svg.stand.icon { width: 30px; height: auto; } .dsq.n8 .yp svg.stand.icon, .dsq.n9 .yp svg.stand.icon, .dsq.n10 .yp svg.stand.icon { width: 24px; }
+.drow { grid-template-columns: 44px 100px minmax(0, 1fr); } .dwho b { font-size: 16px; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.1; }
 </style>
 
 <div class="wrap">
@@ -2282,12 +2292,15 @@ const callsReady = () => Object.entries(E.CALLS).filter(([id, c]) => (id !== 'gl
 const canDrill = () => G.fighters.filter((f) => E.trainsAt(f) && E.TRAIN_STATS.some((st) => E.canStartTraining(f, st, G.denarii)));
 let yardNew = new Set();
 /** The yard: every fighter the school owns, as his piece, standing on the school's own sand. One group per family; it fills as the school grows. */
+/** The school at a glance: each doctore and the squad he fields. A handful of rows however large the roster grows; a new doctore is a new row. */
 function yardHtml() {
-  const fams = ['riffraff', 'warren', 'legion'].map((fam) => G.fighters.filter((f) => M(f).faction === fam).sort((a, b) => M(a).stars - M(b).stars || a.name.localeCompare(b.name))).filter((r) => r.length);
-  const n = G.fighters.length, size = n <= 10 ? 'l' : n <= 22 ? 'm' : 's';
-  const piece = (f) => { const tr = G.training?.fid === f.id, nw = yardNew.has(f.id);
-    return `<button class="yp${nw ? ' new' : ''}${tr ? ' busy' : ''}" data-f="${f.id}" role="listitem" aria-label="${f.name}, ${E.UNITS[f.template].name}${tr ? ', in training' : ''}${nw ? ', new' : ''}">${tokenSvg(lookOf(unitOf(f)), { side: 0, bare: true })}</button>`; };
-  return `<div class="yard ${size}" role="list" aria-label="Your fighters, in the yard">${fams.map((r) => `<div class="yfam">${r.map(piece).join('')}</div>`).join('')}</div>`;
+  const row = (id) => { const d = E.DOCTORE_BY_ID[id], saved = squadOf(id);
+    // Until he has mustered once, he is shown with his own kind.
+    const sq = (saved.length ? saved : G.fighters.filter((f) => M(f).faction === d.faction)).slice(0, 10);
+    const face = id === 'magnus' && ART.npcs?.mentor ? `<img src="${ART.npcs.mentor}" alt="">` : `<span class="sig">${docSigil(d)}</span>`;
+    const piece = (f) => { const tr = G.training?.fid === f.id, nw = yardNew.has(f.id); return `<span class="yp${nw ? ' new' : ''}${tr ? ' busy' : ''}">${tokenSvg(lookOf(unitOf(f)), { side: 0, bare: true })}</span>`; };
+    return `<button class="drow" data-doc="${id}" aria-label="${d.name}, ${E.FACTIONS[d.faction].name}: ${sq.map((f) => f.name).join(', ')}">${face}<span class="dwho"><b>${d.name}</b><small>${E.FACTIONS[d.faction].name}</small></span><span class="dsq n${Math.min(10, Math.max(6, sq.length))}">${sq.map(piece).join('')}</span></button>`; };
+  return `<div class="drows" role="list" aria-label="Your doctores and their squads">${E.DOCTORE_UNLOCKS.filter((u) => G.doctores.includes(u.id)).map((u) => row(u.id)).join('')}</div>`;
 }
 /** Once the first day is over the herald points at the most useful thing the school can do now. The first is his; the rest are asides. */
 function suggestions() {
@@ -2343,7 +2356,7 @@ function renderNext() {
 }
 function renderSchool() {
   const w = winsOf();
-  $('schoolCard').innerHTML = `    <div class="hrow"><div><div class="sn">Your school</div></div></div>${yardHtml()}`;
+  $('schoolCard').innerHTML = yardHtml();
   $('schoolCard').querySelectorAll('[data-f]').forEach((el) => el.onclick = () => openFighter(el.dataset.f));
   renderNext();
   // Where to fight: the arenas that are open, newest first, and one line about the next. Never the whole road.
@@ -2357,7 +2370,7 @@ function renderSchool() {
   // Two doors, no commentary: the pieces in the yard are the roster, and the calls appear once they have arrived. The strip keeps its height either way.
   $('rooms').innerHTML = `<button id="toRoster">Roster${yardNew.size ? '<em></em>' : ''}</button>${inSight('calls') ? `<button id="toHall">The calls${callsReady().length ? '<em></em>' : ''}</button>` : ''}`;
   $('toRoster').onclick = () => show('rosterScr'); if ($('toHall')) $('toHall').onclick = () => show('hall');
-  const yd = $('schoolCard').querySelector('.yard'); if (yd) yd.onclick = () => show('rosterScr');
+  $('schoolCard').querySelectorAll('.drow').forEach((el) => el.onclick = () => show('rosterScr'));
   $('looks').innerHTML = LOOKS.map((l) => `<button data-look-id="${l[0]}" aria-pressed="${l[0] === lookNow}">${l[1]}<small>${l[2]}</small></button>`).join('');
   $('looks').querySelectorAll('[data-look-id]').forEach((el) => el.onclick = () => setLook(el.dataset.lookId));
   renderTesters();
