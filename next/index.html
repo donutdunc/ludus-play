@@ -1074,6 +1074,10 @@ body.athome header { display: none; }
 .dcard .dface { width: 44px; height: 44px; grid-row: span 3; border-radius: 50%; object-fit: cover; object-position: top; box-shadow: 0 0 0 1px #14110e, 0 0 0 3px #5a3a1c; }
 .docbox:has(#docPort) #docRow .docsel { grid-template-columns: minmax(0, 1fr) auto; }
 .cico.ren { width: 19px; height: 19px; vertical-align: -4px; margin-right: 3px; }
+/* The portrait keeps its shape: a card beside his words, never stretched to their height. */
+.docbox:has(#docPort) { grid-template-columns: 44px minmax(0, 1fr); } .docbox.says:has(#docPort) { grid-template-columns: 60px minmax(0, 1fr); }
+#docPort, .docbox:not(.says) #docPort { align-self: start; width: 44px; height: 44px; min-height: 0; } .docbox.says #docPort { width: 60px; height: 76px; }
+#docPort img { transform: none; object-position: 50% 15%; }
 </style>
 
 <div class="wrap">
@@ -3109,7 +3113,7 @@ renderMeter = ((orig) => function () {
     else { const run = (v, cls) => { for (let i = 0; i < Math.floor(v / 25); i++) { g += `<path class="${cls}" d="M${x + .2} ${.8}h14.2l.3 12.4h-14.6z"/>`; x += 1; bundle(cls); x += 17; } for (let i = 0; i < Math.floor(v % 25 / 5); i++) { bundle(cls); x += 15; } if (v % 5) { bundle(cls, v % 5); x += 3 + (v % 5) * 2.6; } };
       run(sp, over ? 'ov' : 'on'); if (!over) { x += 3; run(S.bill - sp, ''); } }
     $('meter').querySelector('.bar').outerHTML = `<svg class="tally" viewBox="0 0 ${S.bill <= 100 ? x - 3 : Math.max(x - 3, 317)} 14" preserveAspectRatio="xMinYMid meet" style="max-width:${S.bill <= 100 ? Math.ceil(S.bill / 5) * 30 + 'px' : 'none'}" aria-hidden="true">${g}</svg>`; }
-  $('meter').querySelector('.top').insertAdjacentHTML('beforeend', `<button class="primary" id="toForm2" ${$('toFormation').disabled ? 'disabled' : ''}>Formation ›</button>`);
+  $('meter').querySelector('.top').insertAdjacentHTML('beforeend', `<button class="primary" id="toForm2" ${$('toFormation').disabled ? 'disabled' : ''}>Line them up ›</button>`);
   $('toForm2').onclick = () => go('formation');
   // In the school the tray is the squad at a glance, on one line that never changes height: tap a piece to send him back. His kit is on his roster row.
   $('meter').querySelectorAll('[data-m]').forEach((el) => { el.setAttribute('aria-label', `Take ${S.mine.units[+el.dataset.m].name} out of the squad`); el.onclick = () => { S.mine.units.splice(+el.dataset.m, 1); renderMuster(false); }; });
