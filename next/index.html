@@ -2367,8 +2367,13 @@ function setPiece(u, deadMat, side = 0, board = false) {
   // Riff-Raff wear that survives at board size: a piece broken out of the outline (a different place on each fellow), a twine mend, and scuffs for the close look.
   let wear = '', wearHead = '', mask = '';
   if (worn && !standIn) {
-    const fl = (x0, sgn) => [`${x0 - 4 * sgn},133 ${x0 - 4 * sgn},119 ${x0 + 7 * sgn},122 ${x0 + 4 * sgn},133`, `M${x0 + 3 * sgn},121.5 L${x0 + 7 * sgn},122 L${x0 + 4.5 * sgn},130`];
-    const cl = (x0, sgn) => [`${x0 - 4 * sgn},72 ${x0 + 6 * sgn},75 ${x0 + 4 * sgn},81 ${x0 + 8 * sgn},88 ${x0 - 4 * sgn},89`, `M${x0 + 4 * sgn},76 L${x0 + 4 * sgn},81 L${x0 + 7 * sgn},86`];
+    const fl0 = (x0, sgn) => [`${x0 - 4 * sgn},133 ${x0 - 4 * sgn},119 ${x0 + 7 * sgn},122 ${x0 + 4 * sgn},133`, `M${x0 + 3 * sgn},121.5 L${x0 + 7 * sgn},122 L${x0 + 4.5 * sgn},130`];
+    const cl0 = (x0, sgn) => [`${x0 - 4 * sgn},72 ${x0 + 6 * sgn},75 ${x0 + 4 * sgn},81 ${x0 + 8 * sgn},88 ${x0 - 4 * sgn},89`, `M${x0 + 4 * sgn},76 L${x0 + 4 * sgn},81 L${x0 + 7 * sgn},86`];
+    // Each fellow's own flaw, cut to be seen from across the yard: a foot broken off the base, a bite out of the waist, a chip out of the head. (The collar ear is for the specialists, whose heads are not round.)
+    const P = (x0, sgn, pts) => pts.map(([dx, y]) => `${x0 + dx * sgn},${y}`).join(' '), Lp = (x0, sgn, pts) => 'M' + pts.map(([dx, y]) => `${x0 + dx * sgn},${y}`).join(' L');
+    const fl = (x0, sgn) => [P(x0, sgn, [[-5, 116], [7.5, 119.2], [12, 121], [10.5, 125], [15, 126.5], [13.5, 132], [-5, 132]]), Lp(x0, sgn, [[8, 119.6], [12, 121], [10.5, 125], [15, 126.5], [13.7, 129.6]])];
+    const ws = (x0, sgn) => [P(x0, sgn, [[-6, 94], [4, 95.6], [9, 99], [6.5, 103], [10.5, 106], [7.5, 110], [1, 113.2], [-6, 115]]), Lp(x0, sgn, [[4.6, 96.3], [9, 99], [6.5, 103], [10.5, 106], [7.5, 110], [1.8, 112.6]])];   // a bite out of the waist
+    const cl = (x0, sgn) => [P(x0, sgn, [[-5, 74.5], [7, 74.5], [7, 77], [9.5, 79.5], [6.5, 81], [8.5, 85], [-5, 85]]), Lp(x0, sgn, [[7, 77.4], [9.5, 79.5], [6.5, 81], [8.3, 83.2]])];
     // The head's break is a real chip out of the round: three faces deep, starting and ending just inside the rim.
     const hd = lean === 'base' ? ['54.5,40 72,40 70,56 65.6,54.9 61,55.4 60.2,51 56.3,49.8 55.1,44.2', 'M55.4,44.8 L56.3,49.8 L60.2,51 L61,55.4 L65,54.9'] : cl(50 + C, -1);
     // Each break is cut half as big again as it was first drawn, about its own middle, so it reads as a chip and not a nick. It grows from the middle of its mouth, so the break line still starts and ends on the piece's edge.
@@ -2376,9 +2381,9 @@ function setPiece(u, deadMat, side = 0, board = false) {
       // Deeper, not wider: every point keeps its place along the mouth of the break and moves k times as far from it.
       const mv = (x, y) => { const t = (x - ax) * dx + (y - ay) * dy, n = -(x - ax) * dy + (y - ay) * dx; return `${(ax + dx * t - dy * n * k).toFixed(1)},${(ay + dy * t + dx * n * k).toFixed(1)}`; };
       return [poly.split(' ').map((q) => mv(...q.split(',').map(Number))).join(' '), line.replace(/(-?[\d.]+),(-?[\d.]+)/g, (_, x, y) => mv(+x, +y))]; };
-    const bites = [fl(50 - F, 1), hd, cl(50 - C, 1), fl(50 + F, -1)].map((q) => (q === hd && lean === 'base' ? q : grow(q))), bite = bites[v % 4], id = `bm${++clipN}`;
+    const bites = [fl(50 - F, 1), hd, ws(50 - S - 6, 1), fl(50 + F, -1)], bite = bites[v % 4], id = `bm${++clipN}`;
     // Most have been knocked about twice: a second, smaller break somewhere else on the piece.
-    const b2 = take === 'real' && rnd() < .65 ? grow([fl(50 - F, 1), hd, cl(50 - C, 1), fl(50 + F, -1)][(v + 1 + Math.floor(rnd() * 3)) % 4], 1.2) : null;
+    const b2 = take === 'real' && rnd() < .65 ? grow([fl0(50 - F, 1), cl0(50 + C, -1), cl0(50 - C, 1), fl0(50 + F, -1)][(v + 1 + Math.floor(rnd() * 3)) % 4], 1.2) : null;
     mask = `<mask id="${id}" maskUnits="userSpaceOnUse" x="-20" y="-20" width="140" height="180"><rect x="-20" y="-20" width="140" height="180" fill="#fff"/><polygon points="${bite[0]}" fill="#000"/>${b2 ? `<polygon points="${b2[0]}" fill="#000"/>` : ''}</mask>`;
     const biteLine = `<path d="${bite[1]}" fill="none" stroke="#150c06" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
     if (v % 4 === 1 && lean === 'base') wearHead = biteLine; else wear += biteLine;
@@ -2386,7 +2391,7 @@ function setPiece(u, deadMat, side = 0, board = false) {
     // Cracks: a dark hairline running in from an edge, with a kink in it.
     for (let k = 0, n = take === 'real' ? 1 + Math.floor(rnd() * 2) : 0; k < n; k++) { const sg = rnd() < .5 ? -1 : 1, x = 50 + sg * (S - 1), y = 100 + rnd() * 22, l1 = 3 + rnd() * 4, l2 = 3 + rnd() * 4, d1 = rnd() * 5 - 1, d2 = rnd() * 6 - 3;
       wear += `<path d="M${x.toFixed(1)},${y.toFixed(1)} l${(-sg * l1).toFixed(1)},${d1.toFixed(1)} l${(-sg * l2).toFixed(1)},${d2.toFixed(1)}" fill="none" stroke="rgba(21,12,6,.8)" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round"/>`; }
-    if (take === 'real' && (u.adorn || !u.court) && (v % 2 === 0 || rnd() < .35)) { const y = 99 + Math.floor(rnd() * 9), hw = S + 4; wear += `<rect x="${50 - hw}" y="${y}" width="${hw * 2}" height="6.5" rx="2" fill="${dark ? '#b9a27c' : '#3b2a18'}" stroke="#150c06" stroke-width="1.4"/>` + cut(Array.from({ length: Math.round(hw / 2) }, (_, k) => `M${50 - hw + 2 + k * 4},${y + 5.5} l2.4,-4.5`).join(' '), 1, dark ? 'rgba(30,16,6,.5)' : 'rgba(255,232,196,.4)'); }
+    if (take === 'real' && (u.adorn || !u.court) && v % 4 !== 2 && (v % 2 === 0 || rnd() < .35)) { const y = 99 + Math.floor(rnd() * 9), hw = S + 4; wear += `<rect x="${50 - hw}" y="${y}" width="${hw * 2}" height="6.5" rx="2" fill="${dark ? '#b9a27c' : '#3b2a18'}" stroke="#150c06" stroke-width="1.4"/>` + cut(Array.from({ length: Math.round(hw / 2) }, (_, k) => `M${50 - hw + 2 + k * 4},${y + 5.5} l2.4,-4.5`).join(' '), 1, dark ? 'rgba(30,16,6,.5)' : 'rgba(255,232,196,.4)'); }
     for (let k = 0, n = take === 'real' ? 3 + Math.floor(rnd() * 4) : 0; k < n; k++) { const x = 50 + (rnd() * 2 - 1) * (S - 2), y = 108 + rnd() * 14, a = rnd() * 2.4 - 1.2, l = 4 + rnd() * 5; wear += `<path d="M${x.toFixed(1)},${y.toFixed(1)} l${(Math.sin(a) * l).toFixed(1)},${(Math.cos(a) * l).toFixed(1)}" stroke="rgba(255,240,205,.5)" stroke-width="1.1" stroke-linecap="round"/>`; }
     mask = take === 'crude' ? '' : [mask, id]; if (take === 'crude') wear = wearHead = '';
   }
