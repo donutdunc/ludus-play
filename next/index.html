@@ -1106,6 +1106,12 @@ body.forming .fightbar { display: grid; grid-template-columns: auto minmax(0, 1f
 .hp.hot::after { content: ''; position: absolute; left: 50%; top: 22%; width: 0; height: 0; margin-left: -8px; border: 8px solid transparent; border-top: 11px solid var(--gold); border-bottom: 0; filter: drop-shadow(0 0 0 #14110e) drop-shadow(0 1.5px 0 #14110e) drop-shadow(0 -1px 0 #14110e) drop-shadow(1px 0 0 #14110e) drop-shadow(-1px 0 0 #14110e); animation: hotmark 1.4s ease-in-out infinite; background: none; box-shadow: none; border-radius: 0; transform: none; bottom: auto; aspect-ratio: auto; z-index: 2; }
 @keyframes hotring { 50% { box-shadow: 0 0 0 2.5px var(--gold), 0 0 5px 1px rgba(226,181,62,.5); } } @keyframes hotmark { 50% { transform: translateY(-5px); } }
 @media (prefers-reduced-motion: reduce) { .hp.hot::before, .hp.hot::after { animation: none; } }
+
+/* The gate, shut: the plate is dull and says so, and pressing it knocks the bar instead. */
+.hplq .foot.shut { background: radial-gradient(circle 2.5px at 12px 50%, #2e2717 55%, transparent 60%), radial-gradient(circle 2.5px at calc(100% - 12px) 50%, #2e2717 55%, transparent 60%), linear-gradient(#5d5136, #4b4029); color: #cdbd92; text-shadow: 0 1px 0 rgba(0,0,0,.5); box-shadow: inset 0 1px 0 rgba(255,246,210,.12); }
+.hplq .foot.shut::after { content: none; }
+.hsay.nudge { animation: nudge .45s ease-out; } @keyframes nudge { 20% { transform: translateX(-5px); } 45% { transform: translateX(5px); } 70% { transform: translateX(-3px); } }
+@media (prefers-reduced-motion: reduce) { .hsay.nudge { animation: none; outline: 3px solid var(--gold); } }
 </style>
 
 <div class="wrap">
@@ -2988,13 +2994,13 @@ function gateHtml(at) {
   const open = openArenas(), b = beatNow(), beatA = b?.fight?.arena;
   if (!open.some((a) => a.id === HOME.arena)) HOME.arena = (open.some((a) => a.id === beatA) ? beatA : open[open.length - 1].id);
   const i = open.findIndex((a) => a.id === HOME.arena), a = open[i], n = G.arenaWins[a.id] ?? 0, purse = E.reward(a.id, true, n > 0).denarii;
-  const hot = at.k === 'gate' && (!at.id || at.id === a.id), newest = i === open.length - 1;
+  const hot = at.k === 'gate' && (!at.id || at.id === a.id), newest = i === open.length - 1, shut = !!b && !b.fight;   // during the first day the gate waits for the step in hand
   const u = G.under, ua = u && E.LADDER_ARENAS.find((x) => x.id === u.arena), nb = u && E.nextBout(u), hotU = at.k === 'under';
   const under = underOpen() ? `<button class="hunder${hotU ? ' hot' : ''}" id="homeUnder">${u ? `${docFace(u.doctore)}<i>Undercard</i><b>${ua.name}</b><em>${u.wins} of ${u.ran}</em><span class="hchip${u.purse ? ' go' : ''}">${u.purse ? `Collect ${u.purse}` : nb ? `<span id="underClock">${clock(nb - Date.now())}</span>` : 'Card full'}</span>`
     : `<i>Undercard</i><em>Nobody posted</em><span class="hchip${hotU ? ' go' : ''}">Post a squad</span>`}</button>` : '';
-  return `${under}<div class="hplaques one">${i > 0 ? '<button class="hstep l" id="gatePrev" aria-label="An earlier pit">‹</button>' : ''}${!newest ? '<button class="hstep r" id="gateNext" aria-label="A later pit">›</button>' : ''}
-    <button class="hplq" id="homeGo" aria-label="Fight at ${lcThe(a.name)}"><span class="art" style="background-image:url(${ART.floors?.[a.id] ?? ''})"></span><i class="pin a"></i><i class="pin b"></i>
-      <span class="k">${newest || a.id === beatA ? 'Tonight' : 'An earlier pit'}</span><b style="font-size:${Math.min(22, Math.floor(($('homeBoard').clientWidth - (open.length > 1 ? 100 : 40)) / (a.name.length * .66)))}px">${a.name}</b><em>${a.line}</em><span class="foot${hot ? ' hot' : ''}">Fight</span></button></div>`;
+  return `${under}<div class="hplaques one">${i > 0 && !shut ? '<button class="hstep l" id="gatePrev" aria-label="An earlier pit">‹</button>' : ''}${!newest && !shut ? '<button class="hstep r" id="gateNext" aria-label="A later pit">›</button>' : ''}
+    <button class="hplq" id="homeGo" aria-label="${shut ? 'The gate is shut until this step is done' : `Fight at ${lcThe(a.name)}`}"><span class="art" style="background-image:url(${ART.floors?.[a.id] ?? ''})"></span><i class="pin a"></i><i class="pin b"></i>
+      <span class="k">${newest || a.id === beatA ? 'Tonight' : 'An earlier pit'}</span><b style="font-size:${Math.min(22, Math.floor(($('homeBoard').clientWidth - (open.length > 1 ? 100 : 40)) / (a.name.length * .66)))}px">${a.name}</b><em>${a.line}</em><span class="foot${hot ? ' hot' : ''}${shut ? ' shut' : ''}">${shut ? 'Not yet' : 'Fight'}</span></button></div>`;
 }
 function renderSchool() {
   settlePassive();
@@ -3020,7 +3026,8 @@ function renderSchool() {
   $('homeYard').querySelectorAll('[data-doc]').forEach((el) => el.onclick = () => show('rosterScr'));
   if ($('homePost')) $('homePost').onclick = () => { const f = G.training ? fighterById(G.training.fid) : canDrill()[0]; if (f) openFighter(f.id); else show('rosterScr'); };
   $('homeGate').innerHTML = gateHtml(at);
-  $('homeGo').onclick = () => enterArena(HOME.arena);
+  // While a step of the first day is waiting, the gate is shut: pressing it sends the eye back to the bar.
+  $('homeGo').onclick = () => { const bn = beatNow(); if (bn && !bn.fight) { const say = $('nextGo'); say.classList.remove('nudge'); void say.offsetWidth; say.classList.add('nudge'); return; } enterArena(HOME.arena); };
   const step = (d) => () => { const open = openArenas(), i = open.findIndex((a) => a.id === HOME.arena); HOME.arena = open[Math.max(0, Math.min(open.length - 1, i + d))].id; renderSchool(); };
   if ($('gatePrev')) $('gatePrev').onclick = step(-1); if ($('gateNext')) $('gateNext').onclick = step(1);
   if ($('homeUnder')) $('homeUnder').onclick = openUnder;
@@ -3729,7 +3736,7 @@ window.addEventListener('pagehide', () => { try { SFX.rig?.ac.suspend?.(); } cat
   const sp = document.createElement('button'); sp.id = 'speedPick'; sp.type = 'button'; sp.setAttribute('aria-label', 'Playback speed'); document.querySelector('.fightbar').appendChild(sp);
   const opts = [...document.querySelectorAll('.fightbar [data-speed]')], show = () => { sp.textContent = (opts.find((o) => o.getAttribute('aria-pressed') === 'true') ?? opts[1]).textContent; };
   sp.onclick = () => { const i = opts.findIndex((o) => o.getAttribute('aria-pressed') === 'true'); opts[(i + 1) % opts.length].click(); show(); }; show();
-  document.addEventListener('pointerdown', (ev) => { const b = ev.target.closest?.('.plate, .hplq'); if (b && !b.disabled) sfxPlay('ui', .05, (r, t) => sndClack(r, t, 'wood', { gain: .4 })); }); }
+  document.addEventListener('pointerdown', (ev) => { const b = ev.target.closest?.('.plate, .hplq'); if (b && !b.disabled && !b.querySelector('.foot.shut')) sfxPlay('ui', .05, (r, t) => sndClack(r, t, 'wood', { gain: .4 })); }); }
 
 // ---------- The table: every screen sits on it ----------
 if (ART.floors?.proving) document.documentElement.style.setProperty('--yard', `url(${ART.floors.proving})`);
