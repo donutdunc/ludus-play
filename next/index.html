@@ -1217,6 +1217,11 @@ button.docsel { background: none; border: 0; padding: 0; text-align: left; color
 /* Sweep, 16 Nov: holding the page still under a sheet must not make the body its own scroller, or everything sticky drops by the notch. */
 html.held body { overflow: clip; }
 #gatePrev, #gateNext { min-width: 40px; }
+
+/* The step this room was for is done: the way back is the thing waiting for you. */
+#navBack.due { color: #2a1c08; background: linear-gradient(#f0cf63, #c9972b); border-color: #7a5a14; box-shadow: 0 0 0 3px rgba(240,207,99,.25); animation: duePulse 1.6s ease-in-out 3; }
+@keyframes duePulse { 50% { box-shadow: 0 0 0 7px rgba(240,207,99,.12); } }
+@media (prefers-reduced-motion: reduce) { #navBack.due { animation: none; } }
 </style>
 
 <div class="wrap">
@@ -2940,6 +2945,8 @@ function scriptEvent(key) {
   const sc = SC(); if (!sc) return [];
   const done = E.noteKey(sc, key); handOver(done); saveG();
   if (done.length && S.step === 'school') renderSchool();   // at home the bar already says what is next
+  // In a room the way out turns gold: gold means it is waiting for you, and Old Magnus says what is next when you are home.
+  else if (done.length && document.body.classList.contains('inside') && $('navBack')) $('navBack').classList.add('due');
   else if (done.length) { const nx = beatNow(); toast(`✓ ${done.map((b) => b.title).join(' · ')}`, nx ? `Next: ${nx.goal}` : 'That is the first session.'); }
   return done;
 }
