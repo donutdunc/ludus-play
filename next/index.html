@@ -1112,6 +1112,16 @@ body.forming .fightbar { display: grid; grid-template-columns: auto minmax(0, 1f
 .hplq .foot.shut::after { content: none; }
 .hsay.nudge { animation: nudge .45s ease-out; } @keyframes nudge { 20% { transform: translateX(-5px); } 45% { transform: translateX(5px); } 70% { transform: translateX(-3px); } }
 @media (prefers-reduced-motion: reduce) { .hsay.nudge { animation: none; outline: 3px solid var(--gold); } }
+
+/* Muster, tidied: the tools are on the bill card, his words run the full width under his name, and the plate has ground of its own to stand on. */
+body:not(.free) #muster .row:has(> #draftMe) { display: none; }
+.mtools { margin-left: auto; display: flex; gap: 6px; } .mtools button { min-height: 0; height: 34px; padding: 0 12px; font: 600 14px var(--f-ui); color: var(--ink-2); }
+.docbox.says:has(#docPort) { grid-template-columns: 44px minmax(0, 1fr); } .docbox.says #docPort { width: 44px; height: 44px; }
+.docbox.says:has(#docPort) #docTwist { grid-column: 1 / -1; } .docbox:has(#docPort) #docTwist p { font-size: 14.5px; line-height: 1.28; padding: 7px 12px; }
+.docbox:has(#docPort) #docTwist p::before { left: 15px; top: -7px; border: 7px solid transparent; border-top: 0; border-bottom-color: #e9dcc0; }
+.plate.foot { margin-top: 2px; box-shadow: inset 0 1px 0 rgba(255,246,210,.75), inset 0 -3px 0 rgba(96,66,10,.5), 0 0 0 2px #14110e, 0 34px 0 34px #120d08; }
+.plate.foot:disabled { box-shadow: inset 0 1px 0 rgba(255,246,210,.15), 0 0 0 2px #14110e, 0 34px 0 34px #120d08; }
+.plate.foot::before { content: ''; position: absolute; left: -34px; right: -34px; bottom: 100%; height: 22px; margin-bottom: 2px; background: linear-gradient(transparent, #120d08); pointer-events: none; }
 </style>
 
 <div class="wrap">
@@ -3153,6 +3163,9 @@ renderMeter = ((orig) => function () {
     else { const run = (v, cls) => { for (let i = 0; i < Math.floor(v / 25); i++) { g += `<path class="${cls}" d="M${x + .2} ${.8}h14.2l.3 12.4h-14.6z"/>`; x += 1; bundle(cls); x += 17; } for (let i = 0; i < Math.floor(v % 25 / 5); i++) { bundle(cls); x += 15; } if (v % 5) { bundle(cls, v % 5); x += 3 + (v % 5) * 2.6; } };
       run(sp, over ? 'ov' : 'on'); if (!over) { x += 3; run(S.bill - sp, ''); } }
     $('meter').querySelector('.bar').outerHTML = `<svg class="tally" viewBox="0 0 ${S.bill <= 100 ? x - 3 : Math.max(x - 3, 317)} 14" preserveAspectRatio="xMinYMid meet" style="max-width:${S.bill <= 100 ? Math.ceil(S.bill / 5) * 30 + 'px' : 'none'}" aria-hidden="true">${g}</svg>`; }
+  // Auto and Clear sit on the bill card, where the squad they change is, so the roster below ends on a fighter and the plate.
+  $('meter').querySelector('.top').insertAdjacentHTML('beforeend', '<span class="mtools"><button id="draftMe2">Auto</button><button id="clearMe2">Clear</button></span>');
+  $('draftMe2').onclick = () => $('draftMe').click(); $('clearMe2').onclick = () => $('clearMe').click();
   // The way on is the plate at the foot of the screen, as on every step of the road to a fight. Unready, it is dull and says what is missing.
   { let pl = $('toForm2'); if (!pl) { pl = document.createElement('button'); pl.id = 'toForm2'; pl.className = 'plate foot'; pl.type = 'button'; $('muster').appendChild(pl); pl.onclick = () => go('formation'); }
     const off = $('toFormation').disabled; pl.disabled = off; pl.textContent = off ? (S.mine.units.length ? 'Fix the squad first' : 'Pick your squad') : 'Take the sand'; pl.hidden = FREE; }
