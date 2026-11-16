@@ -1126,6 +1126,18 @@ body:not(.free) #muster .row:has(> #draftMe) { display: none; }
 /* The muster is one screen: no title row over it (the purse and the sound are a step back, at home), and a little less air between its parts. */
 body.mustering header { display: none; }
 body.mustering #muster { gap: 9px !important; } body.mustering .docbox:has(#docPort) #docTwist p { padding: 6px 12px; }
+
+/* ---- After the fight: the result takes the board. The card lies on the far half of the sand, the way on is the plate. ---- */
+.board > #spoils { position: absolute; z-index: 30; left: 10px; right: 10px; top: 10px; max-height: calc(100% - 20px); overflow-y: auto; overscroll-behavior: contain; box-sizing: border-box; box-shadow: 0 10px 26px rgba(0,0,0,.6); animation: spoilsin .45s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes spoilsin { from { opacity: 0; transform: translateY(-14px); } } @media (prefers-reduced-motion: reduce) { .board > #spoils { animation: none; } }
+.board > #spoils.bare { background: none; border: 0; box-shadow: none; padding: 0; left: auto; top: 8px; right: 8px; }
+.board.result > :not(#spoils) { filter: brightness(.84) saturate(.85); transition: filter .5s; }
+body.looking .board > #spoils { display: none; }
+#lookBack { align-self: flex-end; min-height: 0; height: 32px; padding: 0 12px; font: 600 13px var(--f-ui); color: var(--ink-2); background: var(--stone); }
+#resultRow { display: flex; gap: 10px; align-items: center; margin-top: 12px; } #resultRow[hidden] { display: none; }
+#resultRow > button:not(.plate) { height: 44px; min-height: 0; padding: 0 14px; }
+body.resulted:not(.looking) #transport, body.resulted #after, body.resulted:not(.looking) #report { display: none !important; }
+#resultRow .plate { flex: 1 1 auto; }
 </style>
 
 <div class="wrap">
@@ -2415,7 +2427,7 @@ function show(name) {
   S.run++; P.token++; P.playing = false; S.mode = 'idle'; S.step = name; S.sel = null;
   closeEdit(); closeSheet();
   for (const id of ['start', 'school', 'hall', 'rosterScr', 'patronScr', 'muster', 'arena']) $(id).hidden = id !== name;
-  document.body.classList.toggle('athome', name === 'school'); document.body.classList.remove('mustering'); homeSheet(null); if (name === 'school') { HOME.arena = null; $('homeMore').hidden = true; $('homeMoreBtn').setAttribute('aria-expanded', 'false'); }
+  document.body.classList.toggle('athome', name === 'school'); document.body.classList.remove('mustering', 'resulted', 'looking'); $('board').classList.remove('result'); if ($('resultRow')) $('resultRow').hidden = true; homeSheet(null); if (name === 'school') { HOME.arena = null; $('homeMore').hidden = true; $('homeMoreBtn').setAttribute('aria-expanded', 'false'); }
   document.body.classList.remove('fighting', 'forming');
   $('steps').hidden = true;
   if (FREE) { FREE = false; document.body.classList.remove('free'); S.myDoc = G.doctore; S.mine.doctore = G.doctore; try { if (location.hash === '#battle') history.replaceState(null, '', location.pathname.replace(/\/battle\/?$/, '/') + location.search); } catch (e) { /* the address bar is cosmetic */ } }
@@ -2430,7 +2442,7 @@ go = ((orig) => function (step) {
   document.body.classList.remove('athome'); homeSheet(null);
   hideToast(); $('steps').hidden = false; paintFloor(); orig(step); renderHud();
 })(go);
-setFightUi = ((orig) => function () { orig(); $('spoils').hidden = !(S.step === 'fight' && S.mode === 'done'); })(setFightUi);
+setFightUi = ((orig) => function () { orig(); const done = S.step === 'fight' && S.mode === 'done' && !FREE && !!G; $('spoils').hidden = !done; if (!done) { document.body.classList.remove('resulted', 'looking'); $('board').classList.remove('result'); if ($('resultRow')) $('resultRow').hidden = true; } })(setFightUi);
 // When the fight is over nobody is aiming at anybody: the last aim line and its target ring go with the last blow.
 finish = ((orig) => function () { orig(); document.querySelectorAll('.aim').forEach((x) => x.remove()); document.querySelectorAll('.tok.aimed').forEach((x) => x.classList.remove('aimed')); fightDone(P.res); spotEnd(); })(finish);
 
@@ -3417,15 +3429,21 @@ function fightDone(res) {
     P.spoils = `      ${!won ? lossRead(again ? b0 : null) : ''}
       ${gains.length ? `<ul class="gains">${gains.join('')}</ul>` : ''}
       ${nx && done.length ? `<p class="nx"><b>Next</b>${nx.goal}</p>` : !nx && afford.length && won ? `<p>You can sound a ${afford.join(' or a ')}.</p>` : ''}
-      <div class="row">${again ? '<button class="primary grow" id="tryAgain">Change the squad</button>' : ''}<button class="${again ? '' : 'primary '}grow" id="toSchool">Back to the school</button></div>`;
+`.trim();
+    P.again = again;
   }
-  $('spoils').innerHTML = P.spoils; $('spoils').hidden = false;
+  // The fight is over, so the result takes the board: the card lies on the far half of the sand with the board dimmed behind it,
+  // and the way on is the plate, where Open the gates was. Looking back at the fight is a choice made on the card.
+  const sp = $('spoils'), board = $('board'), has = P.spoils.length > 0;
+  let row = $('resultRow'); if (!row) { row = document.createElement('div'); row.id = 'resultRow'; board.after(row); }
+  if (sp.parentElement !== board) board.appendChild(sp);
+  sp.innerHTML = `${P.spoils}<button id="lookBack">Watch it again</button>`; sp.hidden = false; sp.classList.toggle('bare', !has);
+  row.innerHTML = P.again ? '<button id="toSchool">School</button><button class="plate grow" id="tryAgain">Change the squad</button>' : '<button class="plate grow" id="toSchool">Back to the school</button>';
+  row.hidden = false; document.body.classList.add('resulted'); document.body.classList.remove('looking'); board.classList.add('result');
   $('toSchool').onclick = () => show('school');
   if ($('tryAgain')) $('tryAgain').onclick = () => enterArena(arenaNow().id);
+  $('lookBack').onclick = () => { document.body.classList.add('looking'); board.classList.remove('result'); };
   renderHud();
-  // The result sits below the board. Once the last blow has landed, bring it up: the purse, the herald's word and the way back are all on it.
-  // The result sits under the board, where the fight's controls were. The page only moves if the card is too tall to show whole, and then only as far as its foot.
-  if (fresh) { const tok = P.token; setTimeout(() => { if (P.token !== tok || S.step !== 'fight' || S.mode !== 'done') return; const over = $('spoils').getBoundingClientRect().bottom + 16 - window.innerHeight; if (over > 0) window.scrollBy({ top: over, behavior: SAND.calm ? 'auto' : 'smooth' }); }, 700); }
 }
 
 // ---------- Feedback ----------
