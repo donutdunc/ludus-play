@@ -1078,6 +1078,27 @@ body.athome header { display: none; }
 .docbox:has(#docPort) { grid-template-columns: 44px minmax(0, 1fr); } .docbox.says:has(#docPort) { grid-template-columns: 60px minmax(0, 1fr); }
 #docPort, .docbox:not(.says) #docPort { align-self: start; width: 44px; height: 44px; min-height: 0; } .docbox.says #docPort { width: 60px; height: 76px; }
 #docPort img { transform: none; object-position: 50% 15%; }
+
+/* ---- The plate: the way on. Brass, lettered like the plaques, the same on every step of the road to a fight. ---- */
+.plate, .hplq .foot { position: relative; height: 48px; min-height: 0; border: 0; border-radius: 5px; padding: 0 26px; display: flex; align-items: center; justify-content: center; gap: 10px;
+  background: radial-gradient(circle 2.5px at 12px 50%, #7a5a12 55%, transparent 60%), radial-gradient(circle 2.5px at calc(100% - 12px) 50%, #7a5a12 55%, transparent 60%), linear-gradient(#f3d06a, #e2b53e 42%, #c4952a);
+  color: #1b1408; font: 400 19px/1 var(--f-display); letter-spacing: .1em; white-space: nowrap; text-shadow: 0 1px 0 rgba(255,240,190,.55);
+  box-shadow: inset 0 1px 0 rgba(255,246,210,.75), inset 0 -3px 0 rgba(96,66,10,.5), 0 0 0 2px #14110e, 0 6px 14px rgba(0,0,0,.55); }
+.plate::after, .hplq .foot::after { content: '\203A'; font: 700 22px/1 var(--f-ui); margin-top: -3px; text-shadow: none; }
+.plate:active:not(:disabled), .hplq:active .foot.hot { transform: translateY(2px); box-shadow: inset 0 1px 0 rgba(255,246,210,.5), inset 0 -1px 0 rgba(96,66,10,.5), 0 0 0 2px #14110e, 0 2px 5px rgba(0,0,0,.55); }
+.plate:disabled { opacity: 1; background: radial-gradient(circle 2.5px at 12px 50%, #2e2717 55%, transparent 60%), radial-gradient(circle 2.5px at calc(100% - 12px) 50%, #2e2717 55%, transparent 60%), linear-gradient(#6d5f3d, #5a4d30); color: #201a0e; text-shadow: none; box-shadow: inset 0 1px 0 rgba(255,246,210,.15), 0 0 0 2px #14110e; }
+.plate:disabled::after { content: none; }
+.plate.foot { position: sticky; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); z-index: 5; width: 100%; height: 52px; font-size: 21px; } .plate.foot[hidden] { display: none; }
+/* home: the gate's foot is the plate. Lit, it is brass; when the bar points elsewhere it is the same plate in the dark. */
+.hplq .foot { margin: auto -14px 0; height: 44px; border-radius: 0 0 2px 2px; box-shadow: inset 0 1px 0 rgba(255,246,210,.75), inset 0 -3px 0 rgba(96,66,10,.5), 0 -2px 0 #14110e; }
+.hplq .foot:not(.hot) { background: radial-gradient(circle 2.5px at 12px 50%, #c9a24a 55%, transparent 60%), radial-gradient(circle 2.5px at calc(100% - 12px) 50%, #c9a24a 55%, transparent 60%), rgba(0,0,0,.5); color: #e9cd84; text-shadow: 0 1px 0 #000; box-shadow: inset 0 1px 0 rgba(233,205,132,.28); }
+.hplq .foot.hot { background: radial-gradient(circle 2.5px at 12px 50%, #7a5a12 55%, transparent 60%), radial-gradient(circle 2.5px at calc(100% - 12px) 50%, #7a5a12 55%, transparent 60%), linear-gradient(#f3d06a, #e2b53e 42%, #c4952a); font-weight: 400; }
+.hplaques, .hplq { height: 112px; } .hstep { top: 17px; }
+/* formation: the plate between the two small controls */
+body.forming .fightbar { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; } .fightbar .speed { display: none; }
+.fightbar #autoArrange, #speedPick { height: 44px; min-height: 0; padding: 0 12px; white-space: nowrap; } #speedPick { min-width: 64px; }
+#muster .meter .top #toForm2 { display: none; }
+#muster #toForm2.plate { font: 400 21px/1 var(--f-display); letter-spacing: .1em; } #muster #toForm2.plate:disabled { color: #d8c9a0; text-shadow: 0 1px 0 rgba(0,0,0,.5); }
 </style>
 
 <div class="wrap">
@@ -3113,8 +3134,9 @@ renderMeter = ((orig) => function () {
     else { const run = (v, cls) => { for (let i = 0; i < Math.floor(v / 25); i++) { g += `<path class="${cls}" d="M${x + .2} ${.8}h14.2l.3 12.4h-14.6z"/>`; x += 1; bundle(cls); x += 17; } for (let i = 0; i < Math.floor(v % 25 / 5); i++) { bundle(cls); x += 15; } if (v % 5) { bundle(cls, v % 5); x += 3 + (v % 5) * 2.6; } };
       run(sp, over ? 'ov' : 'on'); if (!over) { x += 3; run(S.bill - sp, ''); } }
     $('meter').querySelector('.bar').outerHTML = `<svg class="tally" viewBox="0 0 ${S.bill <= 100 ? x - 3 : Math.max(x - 3, 317)} 14" preserveAspectRatio="xMinYMid meet" style="max-width:${S.bill <= 100 ? Math.ceil(S.bill / 5) * 30 + 'px' : 'none'}" aria-hidden="true">${g}</svg>`; }
-  $('meter').querySelector('.top').insertAdjacentHTML('beforeend', `<button class="primary" id="toForm2" ${$('toFormation').disabled ? 'disabled' : ''}>Take the sand ›</button>`);
-  $('toForm2').onclick = () => go('formation');
+  // The way on is the plate at the foot of the screen, as on every step of the road to a fight. Unready, it is dull and says what is missing.
+  { let pl = $('toForm2'); if (!pl) { pl = document.createElement('button'); pl.id = 'toForm2'; pl.className = 'plate foot'; pl.type = 'button'; $('muster').appendChild(pl); pl.onclick = () => go('formation'); }
+    const off = $('toFormation').disabled; pl.disabled = off; pl.textContent = off ? (S.mine.units.length ? 'Fix the squad first' : 'Pick your squad') : 'Take the sand'; pl.hidden = FREE; }
   // In the school the tray is the squad at a glance, on one line that never changes height: tap a piece to send him back. His kit is on his roster row.
   $('meter').querySelectorAll('[data-m]').forEach((el) => { el.setAttribute('aria-label', `Take ${S.mine.units[+el.dataset.m].name} out of the squad`); el.onclick = () => { S.mine.units.splice(+el.dataset.m, 1); renderMuster(false); }; });
   // The neutral count has its place from the start under a doctore with a family of his own, so it does not pop in.
@@ -3690,6 +3712,14 @@ window.addEventListener('pagehide', () => { try { SFX.rig?.ac.suspend?.(); } cat
 
 // Arena thumbnails: the same floors the fights are played on, registered once so the cards do not carry the pictures.
 { const st = document.createElement('style'); st.textContent = Object.entries(ART.floors ?? {}).map(([id, uri]) => `.athumb[data-a="${id}"]{background-image:url(${uri})}`).join(''); document.head.appendChild(st); }
+
+// ---------- The plate: one object for the way on, at every step of the road to a fight ----------
+// Home says Fight, the muster says Take the sand, formation says Open the gates. Brass, at the foot of the screen, and it knocks when pressed.
+{ const f = $('fight'); f.className = 'plate grow'; f.textContent = 'Open the gates';
+  const sp = document.createElement('button'); sp.id = 'speedPick'; sp.type = 'button'; sp.setAttribute('aria-label', 'Playback speed'); document.querySelector('.fightbar').appendChild(sp);
+  const opts = [...document.querySelectorAll('.fightbar [data-speed]')], show = () => { sp.textContent = (opts.find((o) => o.getAttribute('aria-pressed') === 'true') ?? opts[1]).textContent; };
+  sp.onclick = () => { const i = opts.findIndex((o) => o.getAttribute('aria-pressed') === 'true'); opts[(i + 1) % opts.length].click(); show(); }; show();
+  document.addEventListener('pointerdown', (ev) => { const b = ev.target.closest?.('.plate, .hplq'); if (b && !b.disabled) sfxPlay('ui', .05, (r, t) => sndClack(r, t, 'wood', { gain: .4 })); }); }
 
 // ---------- The table: every screen sits on it ----------
 if (ART.floors?.proving) document.documentElement.style.setProperty('--yard', `url(${ART.floors.proving})`);
