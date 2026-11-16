@@ -1167,6 +1167,17 @@ body.inside header .sndbtn, body.inside #fbOpen { display: none; }
 #fighterList { display: flex; flex-direction: column; gap: 6px; }
 #fighterList .piece.frow.slim { padding: 5px 8px; } #fighterList .frow.slim .ph { grid-template-columns: 30px minmax(0, 1fr) auto; gap: 8px; align-items: center; }
 #fighterList .frow.slim .ph svg { width: 30px; height: auto; } #fighterList .frow.slim .ph svg.stand.icon { width: 28px; }
+
+/* The dark of a cellar is smoke, not a door: two slow drifts of it turn over the far end, and when the lamps are lit it curls away and thins out. */
+#veil[data-kind="shadow"] .vbg::before, #veil[data-kind="shadow"] .vbg::after { content: ''; position: absolute; left: -40%; top: -70%; width: 180%; aspect-ratio: 1; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side at 34% 62%, rgba(6,4,2,.78), transparent 60%), radial-gradient(closest-side at 68% 38%, rgba(150,112,64,.2), transparent 56%), radial-gradient(closest-side at 56% 74%, rgba(6,4,2,.7), transparent 48%), radial-gradient(closest-side at 24% 34%, rgba(170,128,74,.16), transparent 44%), radial-gradient(closest-side at 74% 66%, rgba(6,4,2,.6), transparent 40%);
+  animation: vswirl 19s linear infinite; }
+#veil[data-kind="shadow"] .vbg::after { left: -30%; top: -40%; width: 160%; animation-duration: 29s; animation-direction: reverse; opacity: .9; }
+@keyframes vswirl { to { transform: rotate(360deg); } }
+#veil.lift[data-kind="shadow"] .vbg { animation: vclear .75s ease-in forwards; transform-origin: 50% 30%; }
+#veil.lift[data-kind="shadow"] .vbg::before, #veil.lift[data-kind="shadow"] .vbg::after { animation-duration: 2.2s; }
+@keyframes vclear { 30% { opacity: .9; transform: scale(1.04) rotate(2deg); } 100% { opacity: 0; transform: scale(1.35) rotate(-9deg); filter: blur(8px); } }
+@media (prefers-reduced-motion: reduce) { #veil[data-kind="shadow"] .vbg::before, #veil[data-kind="shadow"] .vbg::after { animation: none; } }
 </style>
 
 <div class="wrap">
@@ -2356,15 +2367,27 @@ function setPiece(u, deadMat, side = 0, board = false) {
   // Riff-Raff wear that survives at board size: a piece broken out of the outline (a different place on each fellow), a twine mend, and scuffs for the close look.
   let wear = '', wearHead = '', mask = '';
   if (worn && !standIn) {
-    const fl = (x0, sgn) => [`${x0 - 4 * sgn},133 ${x0 - 4 * sgn},119 ${x0 + 7 * sgn},122 ${x0 + 4 * sgn},133`, `M${x0 - 1 * sgn},121 L${x0 + 7 * sgn},122 L${x0 + 4.5 * sgn},130`];
+    const fl = (x0, sgn) => [`${x0 - 4 * sgn},133 ${x0 - 4 * sgn},119 ${x0 + 7 * sgn},122 ${x0 + 4 * sgn},133`, `M${x0 + 3 * sgn},121.5 L${x0 + 7 * sgn},122 L${x0 + 4.5 * sgn},130`];
     const cl = (x0, sgn) => [`${x0 - 4 * sgn},72 ${x0 + 6 * sgn},75 ${x0 + 4 * sgn},81 ${x0 + 8 * sgn},88 ${x0 - 4 * sgn},89`, `M${x0 + 4 * sgn},76 L${x0 + 4 * sgn},81 L${x0 + 7 * sgn},86`];
-    const hd = lean === 'base' ? ['57,38 73,42 70,57 63,52 59,46', 'M59,43.5 L59,46 L63,52 L67.5,55.5'] : cl(50 + C, -1);
-    const bite = [fl(50 - F, 1), hd, cl(50 - C, 1), fl(50 + F, -1)][v % 4], id = `bm${++clipN}`;
-    mask = `<mask id="${id}" maskUnits="userSpaceOnUse" x="-20" y="-20" width="140" height="180"><rect x="-20" y="-20" width="140" height="180" fill="#fff"/><polygon points="${bite[0]}" fill="#000"/></mask>`;
+    // The head's break is a real chip out of the round: three faces deep, starting and ending just inside the rim.
+    const hd = lean === 'base' ? ['54.5,40 72,40 70,56 65.6,54.9 61,55.4 60.2,51 56.3,49.8 55.1,44.2', 'M55.4,44.8 L56.3,49.8 L60.2,51 L61,55.4 L65,54.9'] : cl(50 + C, -1);
+    // Each break is cut half as big again as it was first drawn, about its own middle, so it reads as a chip and not a nick. It grows from the middle of its mouth, so the break line still starts and ends on the piece's edge.
+    const grow = ([poly, line], k = 1.7) => { const ends = [...line.matchAll(/(-?[\d.]+),(-?[\d.]+)/g)].map((m) => [+m[1], +m[2]]), [ax, ay] = ends[0], [bx, by] = ends[ends.length - 1], L = Math.hypot(bx - ax, by - ay) || 1, dx = (bx - ax) / L, dy = (by - ay) / L;
+      // Deeper, not wider: every point keeps its place along the mouth of the break and moves k times as far from it.
+      const mv = (x, y) => { const t = (x - ax) * dx + (y - ay) * dy, n = -(x - ax) * dy + (y - ay) * dx; return `${(ax + dx * t - dy * n * k).toFixed(1)},${(ay + dy * t + dx * n * k).toFixed(1)}`; };
+      return [poly.split(' ').map((q) => mv(...q.split(',').map(Number))).join(' '), line.replace(/(-?[\d.]+),(-?[\d.]+)/g, (_, x, y) => mv(+x, +y))]; };
+    const bites = [fl(50 - F, 1), hd, cl(50 - C, 1), fl(50 + F, -1)].map((q) => (q === hd && lean === 'base' ? q : grow(q))), bite = bites[v % 4], id = `bm${++clipN}`;
+    // Most have been knocked about twice: a second, smaller break somewhere else on the piece.
+    const b2 = take === 'real' && rnd() < .65 ? grow([fl(50 - F, 1), hd, cl(50 - C, 1), fl(50 + F, -1)][(v + 1 + Math.floor(rnd() * 3)) % 4], 1.2) : null;
+    mask = `<mask id="${id}" maskUnits="userSpaceOnUse" x="-20" y="-20" width="140" height="180"><rect x="-20" y="-20" width="140" height="180" fill="#fff"/><polygon points="${bite[0]}" fill="#000"/>${b2 ? `<polygon points="${b2[0]}" fill="#000"/>` : ''}</mask>`;
     const biteLine = `<path d="${bite[1]}" fill="none" stroke="#150c06" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
-    if (bite === hd && lean === 'base') wearHead = biteLine; else wear += biteLine;
+    if (v % 4 === 1 && lean === 'base') wearHead = biteLine; else wear += biteLine;
+    if (b2) wear += `<path d="${b2[1]}" fill="none" stroke="#150c06" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>`;
+    // Cracks: a dark hairline running in from an edge, with a kink in it.
+    for (let k = 0, n = take === 'real' ? 1 + Math.floor(rnd() * 2) : 0; k < n; k++) { const sg = rnd() < .5 ? -1 : 1, x = 50 + sg * (S - 1), y = 100 + rnd() * 22, l1 = 3 + rnd() * 4, l2 = 3 + rnd() * 4, d1 = rnd() * 5 - 1, d2 = rnd() * 6 - 3;
+      wear += `<path d="M${x.toFixed(1)},${y.toFixed(1)} l${(-sg * l1).toFixed(1)},${d1.toFixed(1)} l${(-sg * l2).toFixed(1)},${d2.toFixed(1)}" fill="none" stroke="rgba(21,12,6,.8)" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round"/>`; }
     if (take === 'real' && (u.adorn || !u.court) && (v % 2 === 0 || rnd() < .35)) { const y = 99 + Math.floor(rnd() * 9), hw = S + 4; wear += `<rect x="${50 - hw}" y="${y}" width="${hw * 2}" height="6.5" rx="2" fill="${dark ? '#b9a27c' : '#3b2a18'}" stroke="#150c06" stroke-width="1.4"/>` + cut(Array.from({ length: Math.round(hw / 2) }, (_, k) => `M${50 - hw + 2 + k * 4},${y + 5.5} l2.4,-4.5`).join(' '), 1, dark ? 'rgba(30,16,6,.5)' : 'rgba(255,232,196,.4)'); }
-    for (let k = 0, n = take === 'real' ? 2 + Math.floor(rnd() * 3) : 0; k < n; k++) { const x = 50 + (rnd() * 2 - 1) * (S - 2), y = 108 + rnd() * 14, a = rnd() * 2.4 - 1.2, l = 4 + rnd() * 5; wear += `<path d="M${x.toFixed(1)},${y.toFixed(1)} l${(Math.sin(a) * l).toFixed(1)},${(Math.cos(a) * l).toFixed(1)}" stroke="rgba(255,240,205,.5)" stroke-width="1.1" stroke-linecap="round"/>`; }
+    for (let k = 0, n = take === 'real' ? 3 + Math.floor(rnd() * 4) : 0; k < n; k++) { const x = 50 + (rnd() * 2 - 1) * (S - 2), y = 108 + rnd() * 14, a = rnd() * 2.4 - 1.2, l = 4 + rnd() * 5; wear += `<path d="M${x.toFixed(1)},${y.toFixed(1)} l${(Math.sin(a) * l).toFixed(1)},${(Math.cos(a) * l).toFixed(1)}" stroke="rgba(255,240,205,.5)" stroke-width="1.1" stroke-linecap="round"/>`; }
     mask = take === 'crude' ? '' : [mask, id]; if (take === 'crude') wear = wearHead = '';
   }
   const fame = u.fame && !deadMat ? `<path d="M${50 - C - 6},70 q-5,8 0,16 M${50 + C + 6},70 q5,8 0,16" fill="none" stroke="#e6b93c" stroke-width="3" stroke-linecap="round"/>` : '';
@@ -2660,7 +2683,7 @@ fight = ((orig) => function () {
   }
   orig();
   // The reveal comes before the first move, and starts the fight when it is over (see reveal()).
-  if (hideRival()) { const d = E.DOCTORE_BY_ID[S.theirDoc]; say(`Out of the far gate: <b>${S.opponent.name}</b> · ${E.FACTIONS[d.faction].name}, ${d.twist.name}`); pause(); reveal(); }
+  if (hideRival()) { const d = E.DOCTORE_BY_ID[S.theirDoc]; say(`${outOf()}: <b>${S.opponent.name}</b> · ${E.FACTIONS[d.faction].name}, ${d.twist.name}`); pause(); reveal(); }
   else { $('spot').innerHTML = ''; if (S.manual) pause(); }
 })(fight);
 renderFormation = ((orig) => function () {
@@ -2671,13 +2694,18 @@ renderFormation = ((orig) => function () {
 })(renderFormation);
 // ---------- The far side: until the gates open it is the arena's name over whatever hides the other gate. Lifting it is the start of the fight. ----------
 const VEIL_KIND = { dregs: 'shadow', cellar: 'shadow', proving: 'gate', provincial: 'dust' };
+// What hides the far side is the place's own: a cellar has no gate. Each says what it is, and the plate says how it ends.
+const VEIL_SAYS = { shadow: ['The far end is dark', 'Light the lamps'], gate: ['The far gate is shut', 'Open the gates'], dust: ['Dust hangs over the far side', 'Sound the horns'] };
+const outOf = () => ({ shadow: 'Out of the dark', gate: 'Out of the far gate', dust: 'Out of the dust' })[VEIL_KIND[arenaNow().id] ?? 'shadow'];
 function veilEl() { let v = $('veil'); if (!v) { v = document.createElement('div'); v.id = 'veil'; v.innerHTML = '<div class="vbg"></div><div class="vfl"></div><div class="vtx"></div>'; $('board').appendChild(v); } return v; }
 function renderVeil() {
   const v = veilEl(), on = S.step === 'formation' && hideRival();
   v.hidden = !on; v.className = ''; if (!on) return;
   const a = arenaNow(); v.dataset.kind = VEIL_KIND[a.id] ?? 'shadow';
   // The place is named on the plaque above; the dark side only says what to do while it is shut.
-  v.querySelector('.vtx').innerHTML = '<i>The far gate is shut</i><span>Drag a piece to move it. Tap it for its card.</span>';
+  const [says, plate] = VEIL_SAYS[v.dataset.kind];
+  v.querySelector('.vtx').innerHTML = `<i>${says}</i><span>Drag a piece to move it. Tap it for its card.</span>`;
+  $('fight').textContent = plate;
 }
 /** One line, whatever the length: the name is sized to the board so it never wraps into the pieces. */
 const veilName = (name) => `<b style="font-size:${Math.min(34, Math.round(455 / name.length))}px">${name}</b>`;
@@ -2688,7 +2716,7 @@ const veilName = (name) => `<b style="font-size:${Math.min(34, Math.round(455 / 
 // By then their name has gone up into the bar, which holds it until the first move.
 const GATE = { col: 3.5, row: -1 };   // the mouth of the far gate, just off the top of the board, in tiles
 let REVEAL = null;
-const foePlate = () => { const d = E.DOCTORE_BY_ID[S.theirDoc]; return `<div class="mid all"><div class="who kick">Out of the far gate</div><div class="act" style="font-size:${Math.min(22, Math.round(560 / S.opponent.name.length))}px">${S.opponent.name}</div><div class="sm">${E.FACTIONS[d.faction].name} · ${d.twist.name}</div></div>`; };
+const foePlate = () => { const d = E.DOCTORE_BY_ID[S.theirDoc]; return `<div class="mid all"><div class="who kick">${outOf()}</div><div class="act" style="font-size:${Math.min(22, Math.round(560 / S.opponent.name.length))}px">${S.opponent.name}</div><div class="sm">${E.FACTIONS[d.faction].name} · ${d.twist.name}</div></div>`; };
 function reveal() {
   const v = veilEl(), a = arenaNow(), d = E.DOCTORE_BY_ID[S.theirDoc], calm = SAND.calm, bar = $('spot'), board = $('board'), kind = VEIL_KIND[a.id] ?? 'shadow';
   const R = REVEAL = { res: P.res, timers: [], foes: [...P.state.entries()].filter(([, st]) => st.side === 1).map(([uid]) => uid) };
@@ -2697,7 +2725,7 @@ function reveal() {
   // The bar already holds who is coming; over it lies the dark plaque with the name of the place, which goes up with the dark.
   bar.classList.remove('more', 'lit'); bar.classList.add('lintel'); bar.innerHTML = `${foePlate()}<div class="shade held"><i>Tonight</i><b>${a.name}</b><span>${a.line ?? ''}</span></div>`;
   v.dataset.kind = kind; v.className = ''; v.hidden = false;
-  v.querySelector('.vtx').innerHTML = `<i>Out of the far gate</i>${veilName(S.opponent.name)}<span>${E.FACTIONS[d.faction].name} · ${d.twist.name}</span>`;
+  v.querySelector('.vtx').innerHTML = `<i>${outOf()}</i>${veilName(S.opponent.name)}<span>${E.FACTIONS[d.faction].name} · ${d.twist.name}</span>`;
   void v.offsetWidth; v.classList.add('named');
   sfxPlay('herald', .5, (r, t) => { sndThud(r, t + .06, { gain: .5, f: 210 }); sndNoise(r, t + .06, { type: 'lowpass', f: 700, q: .4, dur: .3, gain: .14 }); });
   if (!calm) {   // they wait behind the gate, unseen
