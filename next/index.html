@@ -1138,6 +1138,13 @@ body.looking .board > #spoils { display: none; }
 #resultRow > button:not(.plate) { height: 44px; min-height: 0; padding: 0 14px; }
 body.resulted:not(.looking) #transport, body.resulted #after, body.resulted:not(.looking) #report { display: none !important; }
 #resultRow .plate { flex: 1 1 auto; }
+
+/* A killing blow: one card. The number stays where it landed and Down is stamped under it. */
+[data-look="lino"] .spot .mid.kill .act { font-size: 40px; line-height: 1; animation: none; } [data-look="lino"] .spot .mid.kill .act.crit { font-size: 34px; }
+[data-look="lino"] .spot .mid.kill .sm { -webkit-line-clamp: 1; height: 1.2em; color: #8f1d16; font: 400 15px/1.2 var(--f-display); letter-spacing: .18em; text-transform: uppercase; animation: stampin .22s cubic-bezier(.2,1.6,.4,1); }
+@keyframes stampin { from { opacity: 0; transform: scale(1.7); } }
+@media (max-height: 760px) { [data-look="lino"] body.fighting .spot .mid.kill .act { font-size: 28px; } }
+@media (prefers-reduced-motion: reduce) { [data-look="lino"] .spot .mid.kill .sm { animation: none; } }
 </style>
 
 <div class="wrap">
@@ -2475,10 +2482,10 @@ function spot(a, t, big, small, tone, why, more, title) {
   const L = sa === 0 ? a : st === 0 ? t : null, R = sa === 1 ? a : st === 1 ? t : null, cross = pair && sa !== st;
   const who = title ? `<b>${title}</b>` : cross ? `<b>${spotName(L)}</b><span class="dir">${sa === 0 ? '▸' : '◂'}</span><b>${spotName(R)}</b>`
     : `<b>${a != null ? spotName(a) : ''}</b>${pair ? `<span class="dir">▸</span><b>${spotName(t)}</b>` : ''}`;
-  const blow = tone === 'hit' || tone === 'crit', slot = (u) => (u != null ? face(pair && !cross ? t : u, u !== a, blow && pair && u === t ? tone : null) : '<span></span>');
+  const kill = / kill$/.test(tone ?? ''), t1 = (tone ?? '').split(' ')[0], blow = t1 === 'hit' || t1 === 'crit', slot = (u) => (u != null ? face(pair && !cross ? t : u, u !== a, blow && pair && u === t ? t1 : null) : '<span></span>');
   // A plain blow has the middle to itself, so the number is as big as the bar allows.
   $('spot').innerHTML = `${slot(L)}
-    <div class="mid${why ? ' two' : ''}${blow && !small && !why ? ' big' : ''}"><div class="who">${who}</div>
+    <div class="mid${why ? ' two' : ''}${blow && !small && !why ? ' big' : ''}${kill ? ' kill' : ''}"><div class="who">${who}</div>
       <div class="act ${tone ?? ''}">${big ?? ''}</div><div class="sm">${small ?? ''}${more ? `<span class="more">${small ? ' · ' : ''}${more}</span>` : ''}</div>${why ? `<div class="sm why">${why}</div>` : ''}</div>
     ${slot(R)}`;
 }
@@ -2530,7 +2537,12 @@ function spotArgs(e) {
   }
 }
 /** Say it on the bar. Quiet (a rewind rebuilding the board): only remember it, so the bar can show the last thing said once the board is rebuilt. */
-function spotEvent(e, quiet) { const a = spotArgs(e); if (!a) return; spotLast = a; if (quiet) spotNow = { a: a[0], t: a[1] }; else spot(...a); }
+// A blow that kills is one card: the number lands, then Down is stamped under it. The man falling is not a second card.
+let lastBlow = null;
+function spotEvent(e, quiet) { let a = spotArgs(e); if (!a) return;
+  if (e.kind === 'death' && lastBlow && lastBlow.tid === e.tid) { a = [...lastBlow.a]; a[3] = [a[3], 'Down'].filter(Boolean).join(' · '); a[4] = `${a[4]} kill`; }
+  lastBlow = (e.kind === 'attack' && e.outcome !== 'miss') || e.kind === 'dot' ? { tid: e.tid, a } : null;
+  spotLast = a; if (quiet) spotNow = { a: a[0], t: a[1] }; else spot(...a); }
 function spotEnd() {
   const res = P.res, alive = (side) => res.combatants.filter((c) => c.side === side && c.alive).length;
   $('spot').innerHTML = `<div class="mid all"><div class="who"><b>${FREE ? '' : S.opponent?.name ?? ''}</b></div><div class="act ${res.winner === 0 ? 'heal' : 'crit'}">${res.winner === 0 ? 'Victory' : res.winner === null ? 'A draw' : 'Defeat'}</div><div class="sm${!FREE && P.rw ? ' won' : ''}">${!FREE && P.rw ? `+${P.rw.denarii} denarii${P.rw.renown ? ` · +${P.rw.renown} renown` : ''}` : `${alive(0)} of yours standing, ${alive(1)} of theirs`}</div></div>`;
@@ -3842,7 +3854,7 @@ function beatStops(ev) {
     while (i < ev.length && !BEAT_HEAD.has(ev[i].kind)) i++; if (i >= ev.length) break;
     const head = ev[i++];
     // A man walking several tiles is one beat, not one a tile. So is everyone reacting to the same thing at once.
-    while (i < ev.length && (BEAT_TAIL.has(ev[i].kind) || (head.kind === 'move' && ev[i].kind === 'move' && ev[i].aid === head.aid && !ev[i].note === !head.note) || (head.kind === 'trigger' && sameTrig(ev[i], head)))) i++;
+    while (i < ev.length && (BEAT_TAIL.has(ev[i].kind) || ((head.kind === 'attack' || head.kind === 'dot') && ev[i].kind === 'death' && ev[i].tid === head.tid) || (head.kind === 'move' && ev[i].kind === 'move' && ev[i].aid === head.aid && !ev[i].note === !head.note) || (head.kind === 'trigger' && sameTrig(ev[i], head)))) i++;
     stops.push(i);
   }
   if (stops[stops.length - 1] !== ev.length) stops.push(ev.length);
