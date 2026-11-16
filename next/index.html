@@ -1060,6 +1060,20 @@ body.athome header { display: none; }
 
 .hyard.tight .hrank small { display: none; }
 @media (max-width: 400px) { .hdoor b { font-size: 9px; letter-spacing: 0; } }
+
+/* The purse: a coin and a laurel in place of the letters. */
+.cico { width: 17px; height: 17px; flex: none; vertical-align: -3px; margin-right: 4px; }
+.hud .coin, .hpurse .coin { display: inline-flex; align-items: center; } .hud .coin { margin-right: 4px; }
+.hpurse .coin { font: 600 18px/1 var(--f-ui); color: var(--gold); }
+/* Muster: the doctore is his portrait, once. His name and twist sit beside it, and what he says comes out of it. */
+.docbox:has(#docPort) { display: grid; grid-template-columns: 50px minmax(0, 1fr); gap: 6px 14px; align-items: start; }
+#docPort { grid-row: 1 / span 2; align-self: stretch; height: auto; min-height: 44px; } .docbox:not(.says) #docPort { height: 44px; align-self: start; }
+#docPort .sig { display: grid; place-items: center; width: 100%; height: 100%; }
+.docbox:has(#docPort) #docRow { height: 44px; } .docbox:has(#docPort) #docTwist { display: block; min-height: 0; } .docbox:has(#docPort) #docTwist[hidden] { display: none; }
+.docbox:has(#docPort) #docTwist p::before { left: -7px; top: 18px; margin-top: 0; border-width: 7px; border-left: 0; }
+.dcard .dface { width: 44px; height: 44px; grid-row: span 3; border-radius: 50%; object-fit: cover; object-position: top; box-shadow: 0 0 0 1px #14110e, 0 0 0 3px #5a3a1c; }
+.docbox:has(#docPort) #docRow .docsel { grid-template-columns: minmax(0, 1fr) auto; }
+.cico.ren { width: 19px; height: 19px; vertical-align: -4px; margin-right: 3px; }
 </style>
 
 <div class="wrap">
@@ -1991,6 +2005,11 @@ const artOf = (look) => bustOf(ART.faces?.[look.who]) ?? ART.portraits[look.tid]
 const artOfFighter = (f) => artOf({ who: f.id, tid: M(f).icon });
 /** A doctore's face for a round frame, on his family's colour; his sigil in the same frame until he has been painted. */
 const docFace = (id, grim) => { const d = E.DOCTORE_BY_ID[id], art = (grim && ART.grim?.[id]) || bustOf(ART.docs?.[id]); return art ? `<img class="dface" data-fam="${d.faction}" src="${art}" alt="">` : `<span class="sig" data-fam="${d.faction}">${docSigil(d)}</span>`; };
+// The two things a school counts: a denarius, and a laurel for renown. Drawn once, used wherever a purse is shown.
+const ICON_DEN = '<svg class="cico den" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10.6" r="8" fill="#8a6414"/><circle cx="10" cy="9.6" r="8" fill="#e2b53e" stroke="#5e430c" stroke-width="1.2"/><circle cx="10" cy="9.6" r="5.4" fill="none" stroke="#9a7216" stroke-width="1"/><path d="M8.2 7.2h2.3a2.3 2.4 0 0 1 0 4.8H8.2zM8.2 6.4v6.4" fill="none" stroke="#6e500f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const ICON_REN = (() => { const leaf = (a, flip) => { const r = 7.2, x = 10 + flip * r * Math.sin(a), y = 10.4 + r * Math.cos(a); return `<ellipse cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" rx="1.9" ry="3.5" transform="rotate(${(flip * (-a * 180 / Math.PI - 38)).toFixed(1)} ${x.toFixed(2)} ${y.toFixed(2)})"/>`; };
+  return `<svg class="cico ren" viewBox="0 0 20 20" aria-hidden="true"><g fill="#a9b866" stroke="#3d4a14" stroke-width=".9">${[.35, .95, 1.55, 2.15, 2.7].map((a) => leaf(a, -1) + leaf(a, 1)).join('')}</g></svg>`; })();
+const purseHtml = () => `<span class="coin" aria-label="${G.denarii} denarii">${ICON_DEN}${G.denarii.toLocaleString('en-US')}</span><span class="coin" aria-label="${G.renown} renown">${ICON_REN}${G.renown.toLocaleString('en-US')}</span>`;
 let G = null, lookNow = 'lino', FREE = false;
 const winsOf = () => G?.wins ?? 0;
 const arenaNow = () => E.LADDER_ARENAS.find((a) => a.id === S.arena) ?? E.LADDER_ARENAS[0];
@@ -2337,7 +2356,7 @@ function setLook(id) {
 // ---------- HUD, screens ----------
 function renderHud() {
   const l = LOOKS.find((x) => x[0] === lookNow);
-  $('hud').innerHTML = `${G ? `<span class="coin">${G.denarii}<small>DEN</small></span><span class="coin">${G.renown}<small>REN</small></span>` : ''}<button id="fbOpen">Feedback</button>`;
+  $('hud').innerHTML = `${G ? purseHtml() : ''}<button id="fbOpen">Feedback</button>`;
   $('fbOpen').onclick = openFeedback;
 }
 function show(name) {
@@ -2939,8 +2958,8 @@ function gateHtml(at) {
   const under = underOpen() ? `<button class="hunder${hotU ? ' hot' : ''}" id="homeUnder">${u ? `${docFace(u.doctore)}<i>Undercard</i><b>${ua.name}</b><em>${u.wins} of ${u.ran}</em><span class="hchip${u.purse ? ' go' : ''}">${u.purse ? `Collect ${u.purse}` : nb ? `<span id="underClock">${clock(nb - Date.now())}</span>` : 'Card full'}</span>`
     : `<i>Undercard</i><em>Nobody posted</em><span class="hchip${hotU ? ' go' : ''}">Post a squad</span>`}</button>` : '';
   return `${under}<div class="hplaques one">${i > 0 ? '<button class="hstep l" id="gatePrev" aria-label="An earlier pit">‹</button>' : ''}${!newest ? '<button class="hstep r" id="gateNext" aria-label="A later pit">›</button>' : ''}
-    <button class="hplq" id="homeGo" aria-label="To ${lcThe(a.name)}. Bill ${a.bill}, purse ${purse}."><span class="art" style="background-image:url(${ART.floors?.[a.id] ?? ''})"></span><i class="pin a"></i><i class="pin b"></i>
-      <span class="k">${newest || a.id === beatA ? 'Tonight' : 'An earlier pit'}</span><b style="font-size:${Math.min(22, Math.floor(($('homeBoard').clientWidth - (open.length > 1 ? 100 : 40)) / (a.name.length * .66)))}px">${a.name}</b><em>${a.line}</em><span class="foot${hot ? ' hot' : ''}">Bill ${a.bill} · purse ${purse}</span></button></div>`;
+    <button class="hplq" id="homeGo" aria-label="Fight at ${lcThe(a.name)}"><span class="art" style="background-image:url(${ART.floors?.[a.id] ?? ''})"></span><i class="pin a"></i><i class="pin b"></i>
+      <span class="k">${newest || a.id === beatA ? 'Tonight' : 'An earlier pit'}</span><b style="font-size:${Math.min(22, Math.floor(($('homeBoard').clientWidth - (open.length > 1 ? 100 : 40)) / (a.name.length * .66)))}px">${a.name}</b><em>${a.line}</em><span class="foot${hot ? ' hot' : ''}">Fight</span></button></div>`;
 }
 function renderSchool() {
   settlePassive();
@@ -2950,7 +2969,7 @@ function renderSchool() {
   $('nextGo').onclick = () => v.run();
   // The line always fits its slot: a longer one is set smaller, and the bar never changes height.
   { const say = $('nextGo'), p = say.firstChild; let fs = 15; while (fs > 11.5 && p.scrollHeight > say.clientHeight - 4) { fs -= .5; p.style.fontSize = `${fs}px`; p.style.lineHeight = fs < 13.5 ? '1.2' : '1.26'; } }
-  $('homePurse').innerHTML = `<span>${G.denarii.toLocaleString('en-US')}<small>DEN</small></span><span>${G.renown.toLocaleString('en-US')}<small>REN</small></span>`;
+  $('homePurse').innerHTML = purseHtml();
   // Doors: each is hung when its system arrives, in the order they came, and never moves afterwards.
   const pat = patronOpen() ? patronState() : null, back = errandsBack().length, soon = pat?.out.length ? Math.min(...pat.out.map((e) => e.ends)) : 0;
   const doors = [
@@ -3066,15 +3085,17 @@ save = ((orig) => function () { orig(); if (!FREE && G) { stashSquad(); saveG();
 const squadOf = (id) => ((G.squads ?? {})[id] ?? []).map((m) => fighterById(m.fid)).filter(Boolean);
 function renderDocRow() {
   const d = E.DOCTORE_BY_ID[G.doctore], lock = E.scriptDoctore(SC(), S.arena) === G.doctore, many = G.doctores.length > 1 && !lock;
-  $('docRow').innerHTML = `<label class="docsel">${docSigil(d)}<span><b>${d.name}</b><small>${E.FACTIONS[d.faction].name}</small></span>${many ? '<i>▾</i>' : ''}
+  $('docRow').innerHTML = `<label class="docsel"><span><b>${d.name}</b><small>${E.FACTIONS[d.faction].name}</small></span>${many ? '<i>▾</i>' : ''}
     <select aria-label="Doctore" ${many ? '' : 'disabled'}>${G.doctores.map((id) => { const x = E.DOCTORE_BY_ID[id]; return `<option value="${id}" ${id === G.doctore ? 'selected' : ''}>${x.name} · ${E.FACTIONS[x.faction].name}</option>`; }).join('')}</select></label>`;
   $('docRow').querySelector('select').onchange = (e) => { putInCharge(e.target.value); renderMuster(); };
   // Two things, kept apart: the card says who runs the squad and what his twist is; the speech below it is him talking, with his face on it.
   const b = beatNow(), mine = b?.fight?.arena === S.arena ? b : null, lost = mine ? SC().lost[mine.id] ?? 0 : 0;
   $('docRow').insertAdjacentHTML('beforeend', `<button class="tw" id="twInfo" aria-label="What ${d.twist.name} does">${d.twist.name} ⓘ</button>`);
   $('twInfo').onclick = () => explain(d.name, d.twist.name, d.twist.line);
-  const face = docFace(d.id);
-  $('docTwist').innerHTML = mine ? `${face}<p>${lost ? mine.hint : mine.brief}</p>` : ''; $('docTwist').hidden = !mine;
+  // One face: his portrait stands beside his name, and when he has something to say the bubble comes out of it.
+  let port = $('docPort'); if (!port) { port = document.createElement('span'); port.id = 'docPort'; port.className = 'hcard'; $('docRow').parentElement.prepend(port); }
+  port.innerHTML = docFace(d.id); $('docRow').parentElement.classList.toggle('says', !!mine);
+  $('docTwist').innerHTML = mine ? `<p>${lost ? mine.hint : mine.brief}</p>` : ''; $('docTwist').hidden = !mine;
 }
 // The bill card carries the way forward, so nothing floats over the roster.
 renderMeter = ((orig) => function () {
@@ -3100,7 +3121,7 @@ function renderRosterScreen() {
   const rumour = nextDoctore();
   $('docList').innerHTML = E.DOCTORE_UNLOCKS.filter((u) => G.doctores.includes(u.id)).map((u) => { const x = E.DOCTORE_BY_ID[u.id], sq = squadOf(u.id);
     const n = G.fighters.filter((f) => E.fieldable(u.id, f.template)).length;
-    return `<div class="dcard" style="cursor:default">${docSigil(x)}<span class="dn">${x.name}</span><span class="df">${E.FACTIONS[x.faction].name} · can field ${n} of your fighters</span><span class="dt"><b>${x.twist.name}</b> · ${x.twist.line}</span><span class="ds">${sq.length ? `Squad: ${sq.map((f) => f.name).join(', ')}` : 'No squad saved yet. One is kept the first time you muster under this doctore.'}</span></div>`; }).join('')
+    return `<div class="dcard" style="cursor:default">${docFace(u.id)}<span class="dn">${x.name}</span><span class="df">${E.FACTIONS[x.faction].name} · can field ${n} of your fighters</span><span class="dt"><b>${x.twist.name}</b> · ${x.twist.line}</span><span class="ds">${sq.length ? `Squad: ${sq.map((f) => f.name).join(', ')}` : 'No squad saved yet. One is kept the first time you muster under this doctore.'}</span></div>`; }).join('')
     + (rumour ? `<p class="hint" style="margin:0">Word is another doctore will come asking for work after ${rumour.wins} more win${rumour.wins === 1 ? '' : 's'}.</p>` : '');
   $('fighterNote').textContent = `${G.fighters.length}`;
   const order = (f) => `${M(f).faction}|${M(f).stars}|${M(f).title}|${M(f).lean}|${f.name}`;
