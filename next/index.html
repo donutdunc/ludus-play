@@ -2857,7 +2857,7 @@ function renderCrumb() {
   if (FREE || !S.arena) return;
   let c = $('crumb'); if (!c) { c = document.createElement('div'); c.id = 'crumb'; $('steps').appendChild(c); }
   const a = arenaNow(), purse = E.reward(a.id, true, (G.arenaWins[a.id] ?? 0) > 0).denarii, form = S.step === 'formation';
-  c.innerHTML = `<button id="crumbBack" aria-label="Back to ${form ? 'the squad' : 'the school'}">‹ ${form ? 'Squad' : 'School'}</button><div class="arena-h"><b>${a.name}</b><span>Purse <em>${purse}</em></span></div>`;
+  c.innerHTML = `<button id="crumbBack" aria-label="Back to ${form ? 'the squad' : 'the school'}">‹ ${form ? 'Squad' : 'School'}</button><div class="arena-h"><b>${a.name}</b></div>`;   // the purse is said when it is won, on the result
   $('crumbBack').onclick = () => (S.step === 'formation' ? go('muster') : show('school'));
 }
 go = ((orig) => function (step) {
