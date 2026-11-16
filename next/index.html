@@ -1099,6 +1099,13 @@ body.forming .fightbar { display: grid; grid-template-columns: auto minmax(0, 1f
 .fightbar #autoArrange, #speedPick { height: 44px; min-height: 0; padding: 0 12px; white-space: nowrap; } #speedPick { min-width: 64px; }
 #muster .meter .top #toForm2 { display: none; }
 #muster #toForm2.plate { font: 400 21px/1 var(--f-display); letter-spacing: .1em; } #muster #toForm2.plate:disabled { color: #d8c9a0; text-shadow: 0 1px 0 rgba(0,0,0,.5); }
+
+/* What the bar points at in the yard cannot be missed: a gold ring on the sand under him and a mark over his head. */
+.hp.hot { filter: none; animation: none; }
+.hp.hot::before { content: ''; position: absolute; left: 2%; right: 2%; bottom: -3%; height: 24%; border-radius: 50%; box-shadow: 0 0 0 2.5px var(--gold), 0 0 12px 3px rgba(226,181,62,.85); background: none; width: auto; aspect-ratio: auto; animation: hotring 1.4s ease-in-out infinite; }
+.hp.hot::after { content: ''; position: absolute; left: 50%; top: 22%; width: 0; height: 0; margin-left: -8px; border: 8px solid transparent; border-top: 11px solid var(--gold); border-bottom: 0; filter: drop-shadow(0 0 0 #14110e) drop-shadow(0 1.5px 0 #14110e) drop-shadow(0 -1px 0 #14110e) drop-shadow(1px 0 0 #14110e) drop-shadow(-1px 0 0 #14110e); animation: hotmark 1.4s ease-in-out infinite; background: none; box-shadow: none; border-radius: 0; transform: none; bottom: auto; aspect-ratio: auto; z-index: 2; }
+@keyframes hotring { 50% { box-shadow: 0 0 0 2.5px var(--gold), 0 0 5px 1px rgba(226,181,62,.5); } } @keyframes hotmark { 50% { transform: translateY(-5px); } }
+@media (prefers-reduced-motion: reduce) { .hp.hot::before, .hp.hot::after { animation: none; } }
 </style>
 
 <div class="wrap">
@@ -2586,7 +2593,10 @@ fight = ((orig) => function () {
     // The gates open: only now is the opponent drawn.
     // A showcase's opponent only walks out when its doctore is in charge ("Fight again" skips the muster, where that is settled).
     const lock = E.scriptDoctore(SC(), arenaNow().id), sr = !lock || lock === G.doctore ? E.scriptRival(SC(), arenaNow().id) : null;
-    const o = sr ? { team: E.rivalTeam(sr), name: sr.name, rivalId: sr.id } : E.drawOpponent(arenaNow().id, new E.Rng(Math.floor(Math.random() * 1e9)), G.beaten, G.fights === 0);
+    let o = sr ? { team: E.rivalTeam(sr), name: sr.name, rivalId: sr.id } : E.drawOpponent(arenaNow().id, new E.Rng(Math.floor(Math.random() * 1e9)), G.beaten, G.fights === 0);
+    // A fight taken off the script's path never meets a namesake of someone the script still has in store: the house's full-strength
+    // Yard Dogs walking out before Old Magnus has introduced them reads as the scripted fight, without its advice.
+    if (!sr && beatNow()) { const ahead = new Set(E.SCRIPT.slice(SC().at).map((b) => b.fight && E.rivalById(b.fight.rival)?.name).filter(Boolean)); for (let k = 0; k < 12 && ahead.has(o.name); k++) o = E.drawOpponent(arenaNow().id, new E.Rng(Math.floor(Math.random() * 1e9)), G.beaten, false); }
     for (const u of o.team.units) u._style = styleOf(u).id;
     nameTeam(o.team); E.deploy(o.team).forEach((p, i) => { o.team.units[i].pos = { x: p.x, y: p.y }; });
     S.theirs = o.team; S.theirDoc = o.team.doctore; S.opponent = { name: o.name, rivalId: o.rivalId };
@@ -2990,7 +3000,7 @@ function renderSchool() {
   settlePassive();
   const v = HOME.voice = homeVoice(), at = v.at ?? { k: 'gate' }, b = beatNow();
   const face = v.npc ? (ART.npcs?.[v.npc] ? `<img src="${ART.npcs[v.npc]}" alt="">` : '') : docFace(v.who);
-  $('homeBar').innerHTML = `<span class="hcard">${face}</span><button class="hsay${at.k === 'bar' ? ' hot' : ''}" id="nextGo"><p>${v.text}</p></button>`;
+  $('homeBar').innerHTML = `<span class="hcard">${face}</span><button class="hsay${at.k !== 'gate' ? ' hot' : ''}" id="nextGo"><p>${v.text}</p></button>`;
   $('nextGo').onclick = () => v.run();
   // The line always fits its slot: a longer one is set smaller, and the bar never changes height.
   { const say = $('nextGo'), p = say.firstChild; let fs = 15; while (fs > 11.5 && p.scrollHeight > say.clientHeight - 4) { fs -= .5; p.style.fontSize = `${fs}px`; p.style.lineHeight = fs < 13.5 ? '1.2' : '1.26'; } }
