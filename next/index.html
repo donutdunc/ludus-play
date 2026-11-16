@@ -3168,7 +3168,7 @@ renderMeter = ((orig) => function () {
       run(sp, over ? 'ov' : 'on'); if (!over) { x += 3; run(S.bill - sp, ''); } }
     $('meter').querySelector('.bar').outerHTML = `<svg class="tally" viewBox="0 0 ${S.bill <= 100 ? x - 3 : Math.max(x - 3, 317)} 14" preserveAspectRatio="xMinYMid meet" style="max-width:${S.bill <= 100 ? Math.ceil(S.bill / 5) * 30 + 'px' : 'none'}" aria-hidden="true">${g}</svg>`; }
   // Auto and Clear sit on the bill card, where the squad they change is, so the roster below ends on a fighter and the plate.
-  $('meter').querySelector('.top').insertAdjacentHTML('beforeend', '<span class="mtools"><button id="draftMe2">Auto</button><button id="clearMe2">Clear</button></span>');
+  $('meter').querySelector('.top').insertAdjacentHTML('beforeend', '<span class="mtools"><button id="draftMe2">Auto pick</button><button id="clearMe2">Clear</button></span>');
   $('draftMe2').onclick = () => $('draftMe').click(); $('clearMe2').onclick = () => $('clearMe').click();
   // The way on is the plate at the foot of the screen, as on every step of the road to a fight. Unready, it is dull and says what is missing.
   { let pl = $('toForm2'); if (!pl) { pl = document.createElement('button'); pl.id = 'toForm2'; pl.className = 'plate foot'; pl.type = 'button'; $('muster').appendChild(pl); pl.onclick = () => go('formation'); }
