@@ -1178,6 +1178,11 @@ body.inside header .sndbtn, body.inside #fbOpen { display: none; }
 #veil.lift[data-kind="shadow"] .vbg::before, #veil.lift[data-kind="shadow"] .vbg::after { animation-duration: 2.2s; }
 @keyframes vclear { 30% { opacity: .9; transform: scale(1.04) rotate(2deg); } 100% { opacity: 0; transform: scale(1.35) rotate(-9deg); filter: blur(8px); } }
 @media (prefers-reduced-motion: reduce) { #veil[data-kind="shadow"] .vbg::before, #veil[data-kind="shadow"] .vbg::after { animation: none; } }
+
+/* A few families: each stands centred under its own doctore, as large as the yard allows, the way the first five stood on day one. */
+.hyard.mid .hrank { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; align-content: center; justify-items: center; row-gap: 8px; padding: 0 9px; }
+.hyard.mid .hrank .heads { flex-direction: row; align-items: center; gap: 8px; }
+.hyard.mid .hrank .line { justify-content: center; gap: 0 9px; }
 </style>
 
 <div class="wrap">
@@ -3066,12 +3071,14 @@ function yardHtml(at) {
 function layoutYard() {
   const y = $('homeYard'), ranks = [...y.querySelectorAll('.hrank')], posts = y.querySelector('.hposts'), n = ranks.length;
   const H = y.clientHeight - (posts ? posts.offsetHeight : 0), W = y.clientWidth; if (!n || H <= 0 || W <= 0) return;
-  const hero = y.classList.contains('hero'), far = n > 6, lead = far ? 16 : 0, rankH = Math.floor((H - lead) / n);
-  const gutter = hero ? 0 : far ? 58 : 80, lineW = W - 18 - gutter - (hero ? 10 : 0), cap = hero ? 64 : n === 2 ? 48 : n === 3 ? 40 : 34;
-  const best = (c) => (far ? Math.min(rankH / 1.3, lineW / c - 2) : Math.max(...(hero && c <= 6 ? [1] : [1, 2]).map((L) => Math.min((rankH - 6) / (0.78 + 1.17 * L), lineW / Math.ceil(c / L) - (hero ? 9 : 2)))));
-  const counts = ranks.map((r) => +r.dataset.n).filter(Boolean), s = Math.max(14, Math.floor(Math.min(cap, ...counts.map(best)))), per = Math.max(1, Math.floor(lineW / (s + (hero ? 9 : 2))));
-  y.classList.toggle('far', far); y.classList.toggle('tight', !far && rankH < 64); y.style.paddingTop = `${lead}px`;
-  y.style.setProperty('--s', `${s}px`); y.style.setProperty('--f', `${far ? Math.min(24, rankH - 6) : Math.min(36, Math.max(26, s + 5))}px`); y.style.setProperty('--lw', `${per * (s + (hero ? 9 : 2))}px`);
+  // Three ways to stand: day one (one family, large, alone on the sand), a few families (each centred under its own doctore, as large as fits),
+  // and a full school (ranks with the doctore in a gutter on the left).
+  const hero = y.classList.contains('hero'), far = n > 6, mid = !hero && n <= 3, wide = hero || mid, lead = far ? 16 : 0, rankH = Math.floor((H - lead) / n);
+  const gutter = wide ? 0 : far ? 58 : 80, gap = wide ? 9 : 2, head = mid ? 34 : 0, lineW = W - 18 - gutter - (wide ? 10 : 0), cap = hero ? 64 : mid ? (n === 1 ? 60 : n === 2 ? 56 : 44) : 34;
+  const best = (c) => (far ? Math.min(rankH / 1.3, lineW / c - 2) : Math.max(...(hero && c <= 6 ? [1] : [1, 2]).map((L) => Math.min((rankH - 6 - head) / (0.78 + 1.17 * L), lineW / Math.ceil(c / L) - gap))));
+  const counts = ranks.map((r) => +r.dataset.n).filter(Boolean), s = Math.max(14, Math.floor(Math.min(cap, ...counts.map(best)))), per = Math.max(1, Math.floor(lineW / (s + gap)));
+  y.classList.toggle('far', far); y.classList.toggle('mid', mid); y.classList.toggle('tight', !far && !mid && rankH < 64); y.style.paddingTop = `${lead}px`;
+  y.style.setProperty('--s', `${s}px`); y.style.setProperty('--f', `${far ? Math.min(24, rankH - 6) : mid ? 26 : Math.min(36, Math.max(26, s + 5))}px`); y.style.setProperty('--lw', `${per * (s + gap)}px`);
   ranks.forEach((r) => { r.style.height = `${rankH}px`; });
 }
 function gateHtml(at) {
