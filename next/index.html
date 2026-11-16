@@ -1153,17 +1153,20 @@ body.resulted:not(.looking) #transport, body.resulted #after, body.resulted:not(
 .kit b { display: flex; align-items: baseline; gap: 8px; min-width: 0; white-space: nowrap; }
 .kit b .ktg { flex: none; font-family: inherit; font-size: 11px; font-weight: 600; font-style: normal; letter-spacing: .08em; text-transform: uppercase; color: var(--gold); opacity: .85; }
 
-/* Inside a door (The Cells, The Calls, The Patron): the top frame is the room's name and the way out. */
+/* Inside a door (The Barracks, The Calls, The Patron): the top frame is the room's name and the way out. */
 body.inside header { align-items: center; }
 body.inside header h1 { display: flex; align-items: center; gap: 10px; }
 #navBack { width: 44px; height: 44px; min-height: 44px; padding: 0 0 4px; border-radius: 10px; font: 400 30px/1 var(--f-ui); color: var(--gold); background: rgba(20,17,14,.7); border: 1px solid #4a3a26; }
 body.inside header .sndbtn, body.inside #fbOpen { display: none; }
-h2.sec.fam { display: grid; grid-template-columns: auto 1fr; column-gap: 8px; align-items: baseline; margin-top: 14px; }
-h2.sec.fam b { color: var(--gold); font-weight: 700; } h2.sec.fam span { justify-self: end; }
-h2.sec.fam i { grid-column: 1 / -1; font-style: normal; letter-spacing: .02em; text-transform: none; font-weight: 500; font-size: 13.5px; color: var(--ink-2, #b9ad98); margin-top: 3px; }
+.famline { margin: -2px 0 2px; font: 500 13.5px/1.3 var(--f-ui); color: var(--ink-2, #b9ad98); }
 .piece .pk.kitline { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* The top frame already names the room and shows the purse. */
 #hall > h2.sec, #patronScr > h2.sec { display: none; }
+
+/* The barracks lists fighters in the muster's row, without the button that puts a man in the squad. */
+#fighterList { display: flex; flex-direction: column; gap: 6px; }
+#fighterList .piece.frow.slim { padding: 5px 8px; } #fighterList .frow.slim .ph { grid-template-columns: 30px minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+#fighterList .frow.slim .ph svg { width: 30px; height: auto; } #fighterList .frow.slim .ph svg.stand.icon { width: 28px; }
 </style>
 
 <div class="wrap">
@@ -2434,7 +2437,7 @@ function show(name) {
   hideToast(); if (name === 'school' && $('toast')) $('toast').hidden = true; if (name === 'hall') lastCall = null;
   if (name === 'school') { dayCheck(); yardNew = new Set(G.fighters.filter((f) => !(G.seen ?? []).includes(f.id)).map((f) => f.id)); G.seen = G.fighters.map((f) => f.id); saveG(); }
   // Inside a door: the top frame names the room and is the way back out. One place for it on every such screen.
-  const room = { hall: 'The Calls', rosterScr: 'The Cells', patronScr: 'The Patron' }[name], h1 = document.querySelector('header h1');
+  const room = { hall: 'The Calls', rosterScr: 'The Barracks', patronScr: 'The Patron' }[name], h1 = document.querySelector('header h1');
   document.body.classList.toggle('inside', !!room);
   if (h1) { h1.innerHTML = room ? `<button id="navBack" type="button" aria-label="Back to the school">‹</button>${room}` : 'Ludus'; if (room) $('navBack').onclick = () => show('school'); }
   renderHud();
@@ -3062,7 +3065,7 @@ function renderSchool() {
   // Doors: each is hung when its system arrives, in the order they came, and never moves afterwards.
   const pat = patronOpen() ? patronState() : null, back = errandsBack().length, soon = pat?.out.length ? Math.min(...pat.out.map((e) => e.ends)) : 0;
   const doors = [
-    G.doctores.length > 1 && { id: 'cells', name: 'The Cells', art: ART.home?.cells, dot: yardNew.size > 0, run: () => show('rosterScr') },
+    G.doctores.length > 1 && { id: 'cells', name: 'The Barracks', art: ART.home?.cells, dot: yardNew.size > 0, run: () => show('rosterScr') },
     inSight('calls') && { id: 'calls', name: 'The Calls', art: ART.npcs?.herald, bust: true, dot: G.morning || callsReady().length > 0, run: () => show('hall') },
     pat && { id: 'patron', name: 'The Patron', art: ART.npcs?.patron, bust: true, chip: back ? 'Paid' : soon ? `<span id="patronClock" data-ends="${soon}">${clock(soon - Date.now())}</span>` : '', go: back > 0, run: () => show('patronScr') },
   ].filter(Boolean);
@@ -3215,15 +3218,13 @@ renderMeter = ((orig) => function () {
 })(renderMeter);
 function renderRosterScreen() {
   const rumour = nextDoctore();
-  $('docList').innerHTML = E.DOCTORE_UNLOCKS.filter((u) => G.doctores.includes(u.id)).map((u) => { const x = E.DOCTORE_BY_ID[u.id], sq = squadOf(u.id);
-    return `<div class="dcard" style="cursor:default">${docFace(u.id)}<span class="dn">${x.name}</span><span class="df">${E.FACTIONS[x.faction].name}</span><span class="dt"><b>${x.twist.name}</b> · ${x.twist.line}</span><span class="ds">${sq.length ? `Last squad: ${sq.map((f) => f.name).join(', ')}` : 'Has not fought for you yet'}</span></div>`; }).join('')
+  $('docList').innerHTML = E.DOCTORE_UNLOCKS.filter((u) => G.doctores.includes(u.id)).map((u) => { const x = E.DOCTORE_BY_ID[u.id];
+    return `<div class="dcard" style="cursor:default">${docFace(u.id)}<span class="dn">${x.name}</span><span class="df">${E.FACTIONS[x.faction].name}</span><span class="dt"><b>${x.twist.name}</b> · ${x.twist.line}</span></div>`; }).join('')
     + (rumour ? `<p class="hint" style="margin:0">Word is another doctore will come asking for work after ${rumour.wins} more win${rumour.wins === 1 ? '' : 's'}.</p>` : '');
   // Fighters stand under their family, and each family says in a line what it is.
   const order = (f) => `${M(f).stars}|${M(f).title}|${M(f).lean}|${f.name}`, fams = [...new Set(G.fighters.map((f) => M(f).faction))];
   $('fighterList').innerHTML = fams.map((k) => { const mine = G.fighters.filter((f) => M(f).faction === k).sort((a, b) => order(a).localeCompare(order(b)));
-    return `<h2 class="sec fam"><b>${E.FACTIONS[k]?.name ?? 'Others'}</b><span>${mine.length}</span><i>${E.FACTIONS[k]?.identity ?? ''}</i></h2>` + mine.map((f) => { const u = unitOf(f), r = E.resolveUnit(u), kit = E.loadoutOf(f), b = E.BUILDS?.[kit.template]?.find((x) => x.id === kit.build);
-      return `<div class="piece"><div class="ph" style="grid-template-columns:40px minmax(0,1fr) auto">${tokenSvg(lookOf(u), { side: 0, bare: true })}
-      <button class="info" data-f="${f.id}"><span class="pn"><em class="pdot" style="background:${paintOf(f)}"></em>${f.name}</span><span class="pk">${E.UNITS[u.template].name} ${'★'.repeat(M(f).stars)}</span><span class="pk kitline">${kit.name}${b?.role ? ` · ${b.role}` : ''}</span>${statLine(r)}</button><span class="bc">${cost(u)}</span></div></div>`; }).join(''); }).join('');
+    return `<h3 class="rfam">${E.FACTIONS[k]?.name ?? 'Others'}</h3><p class="famline">${E.FACTIONS[k]?.identity ?? ''}</p>` + mine.map((f) => fighterRow(f, E.resolveUnit(unitOf(f)))).join(''); }).join('');
   $('fighterList').querySelectorAll('[data-f]').forEach((el) => el.onclick = () => openFighter(el.dataset.f));
 }
 nameTeam = ((orig) => function (team) { orig(team); if (!FREE && G?.fighters) for (const u of team.units) if (u.fid && fighterById(u.fid)) u.name = fighterById(u.fid).name; })(nameTeam);
@@ -3234,6 +3235,15 @@ const fighterLine = (f) => { const u = E.fighterUnit(f), r = E.resolveUnit(u); r
 /** The bill split: the body alone (unarmed, light), and what his kit adds. */
 const costSplit = (u) => { const total = cost(u), body = Math.min(total, E.billOf({ template: u.template, grade: 'light' }).total); return total > body ? `<small>body ${body}<br>kit ${total - body}</small>` : ''; };
 
+/** The one row a fighter is shown as, wherever he is listed: piece, name, what he is, stars, two numbers, the kit he wears, his price.
+    The muster adds the button that puts him in the squad; everything else about him is on his sheet. */
+function fighterRow(f, r, { inSquad = false, cant = false, add = false } = {}) {
+  const u = unitOf(f), c = cost(u), kit = E.loadoutOf(f);
+  return `<div class="piece frow slim ${add ? '' : 'view'} ${inSquad ? 'in' : ''}"><div class="ph">${tokenSvg(lookOf(u), { side: 0, bare: true })}
+      <button class="info" data-f="${f.id}"><span class="pn">${f.name}<small>${E.UNITS[f.template].name}</small><em class="rst">${'★'.repeat(M(f).stars)}</em><span class="mini"><span><b>${Math.round(r.stats.hp)}</b>HP</span><span><b>${Math.round(r.stats.atk + r.weapon.damage)}</b>DMG</span></span></span><span class="pk"><b>${kit.name}</b></span></button>
+      <span class="bc" style="${cant ? 'opacity:.5' : ''}">${c}</span>
+      ${add ? `<button class="add" data-toggle="${f.id}" ${cant ? 'disabled' : ''} aria-pressed="${inSquad}" aria-label="${inSquad ? 'Take' : 'Put'} ${f.name} ${inSquad ? 'out of' : 'in'} the squad">${inSquad ? '✓' : '+'}</button>` : ''}</div></div>`;
+}
 let rosterTab = 'all';
 const famOf = (f) => E.UNITS[f.template].faction ?? 'none';
 renderRoster = ((orig) => function () {
@@ -3255,16 +3265,8 @@ renderRoster = ((orig) => function () {
     const u = unitOf(f), c = cost(u), r = E.resolveUnit(u, E.doctoreEffectsFor(S.mine, E.UNITS[f.template]));
     const inSquad = S.mine.units.some((x) => x.fid === f.id);
     const cant = !inSquad && (c > left || (E.fieldable(S.myDoc, f.template) === 'neutral' && neutralsIn >= 3));
-    // One short row: who he is, his loadout (what he carries, what he can do, how heavy his armor is), two numbers, his price. The rest is on his sheet.
-    const it = r.items ?? {}, wpn = `${it.main?.name ?? r.weapon.name}${it.off?.category === 'shield' ? ' & shield' : ''}${r.weapon.range > 1 ? ` (reach ${r.weapon.range})` : ''}`;
-    const own = E.resolveUnit(u, []);   // his own loadout, without what the doctore lends him
-    const can = [...own.traits.map((t) => E.TRAITS[t]?.name), ...own.actives.map((a) => E.ACTIVE_DEF[a]?.name), ...Object.keys(own.skills ?? {}).filter((k) => own.skills[k] > 0).map((k) => E.SKILLS[k]?.name)].filter(Boolean);
-    const kit = E.loadoutOf(f), loadout = kit?.name ? `<b>${kit.name}</b>` : `<b>${wpn}</b>${can.map((c) => ` · <i>${c}</i>`).join('')}`;
     const head = fams.length > 1 && rosterTab === 'all' && famOf(f) !== lastFam ? `<h3 class="rfam">${E.FACTIONS[famOf(f)]?.name ?? 'Others'}</h3>` : ''; lastFam = famOf(f);
-    return `${head}<div class="piece frow slim ${inSquad ? 'in' : ''}"><div class="ph">${tokenSvg(lookOf(u), { side: 0, bare: true })}
-      <button class="info" data-f="${f.id}"><span class="pn">${f.name}<small>${E.UNITS[f.template].name}</small><em class="rst">${'★'.repeat(M(f).stars)}</em><span class="mini"><span><b>${Math.round(r.stats.hp)}</b>HP</span><span><b>${Math.round(r.stats.atk + r.weapon.damage)}</b>DMG</span></span></span><span class="pk">${loadout}</span></button>
-      <span class="bc" style="${cant ? 'opacity:.5' : ''}">${c}</span>
-      <button class="add" data-toggle="${f.id}" ${cant ? 'disabled' : ''} aria-pressed="${inSquad}" aria-label="${inSquad ? 'Take' : 'Put'} ${f.name} ${inSquad ? 'out of' : 'in'} the squad">${inSquad ? '✓' : '+'}</button></div></div>`;
+    return head + fighterRow(f, r, { inSquad, cant, add: true });
   }).join('') + (out.length ? `<p class="hint" style="margin:0">Sitting out under ${E.DOCTORE_BY_ID[G.doctore].name}: ${out.map((f) => f.name).join(', ')}.</p>` : '');
   $('roster').querySelectorAll('[data-rtab]').forEach((el) => el.onclick = () => { rosterTab = el.dataset.rtab; renderRoster(); });
   $('roster').querySelectorAll('[data-toggle]').forEach((el) => el.onclick = () => { toggleSquad(el.dataset.toggle); renderMuster(false); });
