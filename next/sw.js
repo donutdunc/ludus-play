@@ -1,4 +1,4 @@
-const CACHE = 'ludus-9ebaeff400';
+const CACHE = 'ludus-0200c1c614';
 const SHELL = ['./', 'manifest.webmanifest', 'icon-180.png', 'icon-512.png'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: 'no-cache' })))).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });

@@ -1206,6 +1206,9 @@ button.docsel { background: none; border: 0; padding: 0; text-align: left; color
 .dpick b { font: 400 18px/1.1 var(--f-display); margin-right: 8px; } .dpick small { font: 600 10px var(--f-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
 .dpick i { display: block; margin-top: 4px; font: 500 13.5px/1.3 var(--f-ui); font-style: normal; color: var(--ink-2, #b9ad98); } .dpick i em { font-style: normal; color: var(--gold); font-weight: 600; }
 .card .who .meta.kit { margin: 1px 0 0; padding: 0; }
+
+/* An explanation is always the top thing on the screen: over the fight card, the fighter's sheet and anything else that opened it. */
+#sheet { z-index: 70; } #scrim { z-index: 69; }
 </style>
 
 <div class="wrap">
@@ -2703,7 +2706,7 @@ function renderDrill() {
   if (cr) cr.chips = cr.chips.filter((c) => c.k !== 'k-order' && c.kind !== 'Armor grade');   // what he can do, not what we call him
   const stats = [...st.statuses].map((id) => `<div class="dst ${ST[id]?.[1] ? 'good' : 'bad'}"><b>${ST[id]?.[0] ?? id}</b><i>${id === 'guard' ? 'until he is hit' : st.left?.[id] > 0 ? `${st.left[id]} turn${st.left[id] > 1 ? 's' : ''} left` : ''}</i><span>${ST[id]?.[2] ?? ''}</span></div>`).join('');
   $('drill').innerHTML = `<div class="dh">${art ? `<img data-fam="${st.look.faction}" src="${art}" alt="">` : tokenSvg(st.look, { side: st.side, bare: true })}
-      <div class="dw"><div class="dn">${st.name}<small>${st.side === 0 ? 'yours' : 'theirs'}${b ? ` · ${tpl(b).name}` : ''}</small></div>
+      <div class="dw"><div class="dn">${st.name}<small>${b ? tpl(b).name : ''}</small></div>
         <div class="dhp ${st.side === 0 ? 'mine' : ''}"><i><b style="width:${(hp / st.maxHp * 100).toFixed(0)}%"></b></i><span>${st.alive ? `${Math.round(hp)} / ${Math.round(st.maxHp)} HP` : 'Down'}</span></div></div>
       <button id="drillX" aria-label="Close">✕</button></div>
     ${st.alive ? `<div class="dgo"><span>Going for</span><b>${tg?.alive ? tg.name : tg ? `picks again on his turn (${tg.name} is down)` : 'nobody yet'}${tg?.alive && st.why ? `<small>${st.why}</small>` : ''}</b></div>` : ''}
@@ -3425,7 +3428,7 @@ function renderFighter() {
       <div class="fcost"><span class="fstars">${'★'.repeat(M(f).stars)}</span><b>${total}</b></div>
     </div>
     <div class="stats fstats">${tiles}</div>
-    <div class="frow2 kitrow${['kit', 'kit:earned'].includes(beatNow()?.need.key) ? ' beat-here' : ''}"><span>Kit</span><small style="grid-column:2;margin:0">${kits.length < 2 ? 'His only kit.' : onFirst ? 'Pick one.' : `Blue numbers above: the change from ${firstKit.name}.`}</small>
+    <div class="frow2 kitrow${['kit', 'kit:earned'].includes(beatNow()?.need.key) ? ' beat-here' : ''}"><span>Kit</span><small style="grid-column:2;margin:0">${kits.length < 2 ? 'His only kit.' : ''}</small>
       <div class="kits">${kits.map((k) => `<button class="kit ${k.locked ? 'locked' : ''}" data-kit="${k.id}" aria-pressed="${k.id === cur.id}" ${k.locked ? 'disabled' : ''}><b>${k.name}${k.locked ? '' : `<i class="ktg">Targets ${k.rule}</i>`}</b><span>${k.locked ? `Opens at ${k.locked} token${k.locked > 1 ? 's' : ''}: answer the call with ${f.name} again.` : `${k.does}${k.cost !== firstKit.cost ? ` · ${k.cost > firstKit.cost ? '+' : '−'}${Math.abs(k.cost - firstKit.cost)}` : ''}`}</span><em>${k.locked ? '🔒' : k.cost}</em></button>`).join('')}</div></div>
     ${allChips.length ? `<div class="frow2 chiprow"><span>Abilities</span><div class="chips">${allChips.map((c, n) => `<button class="chip ${c.k} ${c.lent ? 'lent' : ''}" data-chip="${n}">${c.label}</button>`).join('')}</div></div>` : ''}
     ${E.trainsAt(f) && inSight('training') ? (() => { const tr = G.training, mine = tr && tr.fid === f.id, other = tr && !mine ? G.fighters.find((x) => x.id === tr.fid) : null;
