@@ -1152,6 +1152,18 @@ body.resulted:not(.looking) #transport, body.resulted #after, body.resulted:not(
 /* The rule a kit fights by, beside its name. */
 .kit b { display: flex; align-items: baseline; gap: 8px; min-width: 0; white-space: nowrap; }
 .kit b .ktg { flex: none; font-family: inherit; font-size: 11px; font-weight: 600; font-style: normal; letter-spacing: .08em; text-transform: uppercase; color: var(--gold); opacity: .85; }
+
+/* Inside a door (The Cells, The Calls, The Patron): the top frame is the room's name and the way out. */
+body.inside header { align-items: center; }
+body.inside header h1 { display: flex; align-items: center; gap: 10px; }
+#navBack { width: 44px; height: 44px; min-height: 44px; padding: 0 0 4px; border-radius: 10px; font: 400 30px/1 var(--f-ui); color: var(--gold); background: rgba(20,17,14,.7); border: 1px solid #4a3a26; }
+body.inside header .sndbtn, body.inside #fbOpen { display: none; }
+h2.sec.fam { display: grid; grid-template-columns: auto 1fr; column-gap: 8px; align-items: baseline; margin-top: 14px; }
+h2.sec.fam b { color: var(--gold); font-weight: 700; } h2.sec.fam span { justify-self: end; }
+h2.sec.fam i { grid-column: 1 / -1; font-style: normal; letter-spacing: .02em; text-transform: none; font-weight: 500; font-size: 13.5px; color: var(--ink-2, #b9ad98); margin-top: 3px; }
+.piece .pk.kitline { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* The top frame already names the room and shows the purse. */
+#hall > h2.sec, #patronScr > h2.sec { display: none; }
 </style>
 
 <div class="wrap">
@@ -1198,16 +1210,13 @@ body.resulted:not(.looking) #transport, body.resulted #after, body.resulted:not(
     <h2 class="sec">The Patron <span id="patronNote"></span></h2>
     <div class="speaker" id="patronSpeak"></div>
     <div id="patronList" class="screen" style="gap:10px"></div>
-    <button class="cta" id="patronBack">Back to the school</button>
   </section>
 
   <!-- ROSTER: doctores, their saved squads, and every fighter -->
   <section id="rosterScr" class="screen" hidden>
-    <h2 class="sec">Doctores <span>each keeps his own squad</span></h2>
+    <h2 class="sec">Doctores</h2>
     <div id="docList" class="screen" style="gap:8px"></div>
-    <h2 class="sec">Fighters <span id="fighterNote"></span></h2>
     <div id="fighterList" class="roster"></div>
-    <button class="cta" id="rosterBack">Back to the school</button>
   </section>
 
   <!-- THE CALLS: how new fighters arrive -->
@@ -1216,7 +1225,6 @@ body.resulted:not(.looking) #transport, body.resulted #after, body.resulted:not(
     <div class="speaker" id="hallSpeak"></div>
     <div id="callResult" hidden></div>
     <div id="callList" class="screen" style="gap:8px"></div>
-    <button class="cta" id="hallBack">Back to the school</button>
   </section>
 
   <!-- READY -->
@@ -2425,6 +2433,10 @@ function show(name) {
   if (FREE) { FREE = false; document.body.classList.remove('free'); S.myDoc = G.doctore; S.mine.doctore = G.doctore; try { if (location.hash === '#battle') history.replaceState(null, '', location.pathname.replace(/\/battle\/?$/, '/') + location.search); } catch (e) { /* the address bar is cosmetic */ } }
   hideToast(); if (name === 'school' && $('toast')) $('toast').hidden = true; if (name === 'hall') lastCall = null;
   if (name === 'school') { dayCheck(); yardNew = new Set(G.fighters.filter((f) => !(G.seen ?? []).includes(f.id)).map((f) => f.id)); G.seen = G.fighters.map((f) => f.id); saveG(); }
+  // Inside a door: the top frame names the room and is the way back out. One place for it on every such screen.
+  const room = { hall: 'The Calls', rosterScr: 'The Cells', patronScr: 'The Patron' }[name], h1 = document.querySelector('header h1');
+  document.body.classList.toggle('inside', !!room);
+  if (h1) { h1.innerHTML = room ? `<button id="navBack" type="button" aria-label="Back to the school">‹</button>${room}` : 'Ludus'; if (room) $('navBack').onclick = () => show('school'); }
   renderHud();
   if (name === 'school') renderSchool(); else if (name === 'hall') renderHall(); else if (name === 'rosterScr') renderRosterScreen(); else if (name === 'patronScr') { PAT.crews = {}; PAT.pick = null; HOME.back = errandsBack().length; renderPatron(); }
   window.scrollTo(0, 0);
@@ -3093,7 +3105,7 @@ window.addEventListener('resize', () => { if (S.step === 'school') layoutYard();
 // Closing a fighter's sheet over the home shows what changed on it: a new kit is a different piece, a drill puts him at the post.
 closeEdit = ((orig) => function () { const was = !$('edit').hidden; orig(); if (was && S.step === 'school' && G) renderSchool(); })(closeEdit);
 $('homeMoreBtn').onclick = () => { const m = $('homeMore'), openNow = m.hidden; m.hidden = !openNow; $('homeMoreBtn').setAttribute('aria-expanded', String(openNow)); if (openNow) m.scrollIntoView({ behavior: SAND?.calm ? 'auto' : 'smooth', block: 'start' }); };
-$('patronBack').onclick = () => show('school');
+
 /** For testers: the script's pace against its plan, a way past any step, and a way to tomorrow. */
 function renderTesters() {
   $('ownSets').textContent = OWN_SETS ? 'Pieces: both sides in their own sets (trial)' : 'Pieces: yours light, theirs dark';
@@ -3123,9 +3135,9 @@ $('resetSchool').onclick = () => {
   if (!resetArmed) { resetArmed = true; $('resetSchool').textContent = 'Tap again to close this school for good'; return; }
   startOver();
 };
-$('rosterBack').onclick = () => show('school');
+
 $('toFree').onclick = freeBattle;
-$('hallBack').onclick = () => show('school');
+
 // ---------- Fighters: the school owns named individuals ----------
 const rngNow = () => new E.Rng(Math.floor(Math.random() * 1e9));
 const fighterById = (id) => G.fighters.find((f) => f.id === id);
@@ -3204,14 +3216,14 @@ renderMeter = ((orig) => function () {
 function renderRosterScreen() {
   const rumour = nextDoctore();
   $('docList').innerHTML = E.DOCTORE_UNLOCKS.filter((u) => G.doctores.includes(u.id)).map((u) => { const x = E.DOCTORE_BY_ID[u.id], sq = squadOf(u.id);
-    const n = G.fighters.filter((f) => E.fieldable(u.id, f.template)).length;
-    return `<div class="dcard" style="cursor:default">${docFace(u.id)}<span class="dn">${x.name}</span><span class="df">${E.FACTIONS[x.faction].name} · can field ${n} of your fighters</span><span class="dt"><b>${x.twist.name}</b> · ${x.twist.line}</span><span class="ds">${sq.length ? `Squad: ${sq.map((f) => f.name).join(', ')}` : 'No squad saved yet. One is kept the first time you muster under this doctore.'}</span></div>`; }).join('')
+    return `<div class="dcard" style="cursor:default">${docFace(u.id)}<span class="dn">${x.name}</span><span class="df">${E.FACTIONS[x.faction].name}</span><span class="dt"><b>${x.twist.name}</b> · ${x.twist.line}</span><span class="ds">${sq.length ? `Last squad: ${sq.map((f) => f.name).join(', ')}` : 'Has not fought for you yet'}</span></div>`; }).join('')
     + (rumour ? `<p class="hint" style="margin:0">Word is another doctore will come asking for work after ${rumour.wins} more win${rumour.wins === 1 ? '' : 's'}.</p>` : '');
-  $('fighterNote').textContent = `${G.fighters.length}`;
-  const order = (f) => `${M(f).faction}|${M(f).stars}|${M(f).title}|${M(f).lean}|${f.name}`;
-  $('fighterList').innerHTML = [...G.fighters].sort((a, b) => order(a).localeCompare(order(b))).map((f) => { const t = E.UNITS[f.template], u = unitOf(f), r = E.resolveUnit(u);
-    return `<div class="piece"><div class="ph" style="grid-template-columns:40px minmax(0,1fr) auto">${tokenSvg(lookOf(u), { side: 0, bare: true })}
-      <button class="info" data-f="${f.id}"><span class="pn"><em class="pdot" style="background:${paintOf(f)}"></em>${f.name}</span><span class="pk">${fighterLine(f)} · ${E.FACTIONS[t.faction]?.name ?? ''}</span>${statLine(r)}</button><span class="bc">${cost(u)}${costSplit(u)}</span></div></div>`; }).join('');
+  // Fighters stand under their family, and each family says in a line what it is.
+  const order = (f) => `${M(f).stars}|${M(f).title}|${M(f).lean}|${f.name}`, fams = [...new Set(G.fighters.map((f) => M(f).faction))];
+  $('fighterList').innerHTML = fams.map((k) => { const mine = G.fighters.filter((f) => M(f).faction === k).sort((a, b) => order(a).localeCompare(order(b)));
+    return `<h2 class="sec fam"><b>${E.FACTIONS[k]?.name ?? 'Others'}</b><span>${mine.length}</span><i>${E.FACTIONS[k]?.identity ?? ''}</i></h2>` + mine.map((f) => { const u = unitOf(f), r = E.resolveUnit(u), kit = E.loadoutOf(f), b = E.BUILDS?.[kit.template]?.find((x) => x.id === kit.build);
+      return `<div class="piece"><div class="ph" style="grid-template-columns:40px minmax(0,1fr) auto">${tokenSvg(lookOf(u), { side: 0, bare: true })}
+      <button class="info" data-f="${f.id}"><span class="pn"><em class="pdot" style="background:${paintOf(f)}"></em>${f.name}</span><span class="pk">${E.UNITS[u.template].name} ${'★'.repeat(M(f).stars)}</span><span class="pk kitline">${kit.name}${b?.role ? ` · ${b.role}` : ''}</span>${statLine(r)}</button><span class="bc">${cost(u)}</span></div></div>`; }).join(''); }).join('');
   $('fighterList').querySelectorAll('[data-f]').forEach((el) => el.onclick = () => openFighter(el.dataset.f));
 }
 nameTeam = ((orig) => function (team) { orig(team); if (!FREE && G?.fighters) for (const u of team.units) if (u.fid && fighterById(u.fid)) u.name = fighterById(u.fid).name; })(nameTeam);
