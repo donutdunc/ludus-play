@@ -1145,6 +1145,9 @@ body.resulted:not(.looking) #transport, body.resulted #after, body.resulted:not(
 @keyframes stampin { from { opacity: 0; transform: scale(1.7); } }
 @media (max-height: 760px) { [data-look="lino"] body.fighting .spot .mid.kill .act { font-size: 28px; } }
 @media (prefers-reduced-motion: reduce) { [data-look="lino"] .spot .mid.kill .sm { animation: none; } }
+
+/* A piece's card in a fight: his own aim is gold, and everyone who is on him is a red line to him. */
+.aim.drillaim:not(.onhim) { color: var(--gold); } .aim.onhim { color: #d2261a; border-top-style: solid; border-top-width: 2.5px; opacity: .95; filter: drop-shadow(0 0 1px rgba(0,0,0,.6)); }
 </style>
 
 <div class="wrap">
@@ -2597,8 +2600,11 @@ place = ((orig) => function (el, row, col) { orig(el, row, col); el.style.zIndex
 apply = ((orig) => function (e, anim) {
   if (e.kind === 'turn') P.aim = null;
   else if (e.kind === 'intent') { P.aim = { a: e.aid, t: e.tid }; const st = P.state.get(e.aid); if (st) { st.fresh = st.tgt !== e.tid; st.tgt = e.tid; st.why = e.note ?? ''; } }
+  // What has come over a man and stays: vengeance sworn, a berserk rage, restlessness. Kept so his card can show it.
+  else if (e.kind === 'trigger' && e.aid != null) { const st = P.state.get(e.aid), [head, rest] = trigWords(e.note); if (st && LASTING[head]) { const m = (st.trig ??= {}); m[head] = { n: (m[head]?.n ?? 0) + 1, rest }; } }
   const d = orig(e, anim); spotEvent(e, !anim); return d; })(apply);
-resetState = ((orig) => function () { orig(); P.aim = null; P.hpSeen = new Map(); spotLast = null; spotNow = { a: null, t: null }; for (const st of P.state.values()) { st.tgt = null; st.why = ''; st.fresh = false; } })(resetState);
+const LASTING = { Vengeance: (x) => `+${Math.round(Math.min(E.BALANCE.vengefulCap, x.n * E.BALANCE.vengefulPerDeath) * 100)}% damage, sworn for the fallen (most ${Math.round(E.BALANCE.vengefulCap * 100)}%).`, Berserk: (x) => `Berserk ${x.rest}`.trim() + '.', Restless: (x) => x.rest.replace(/^./, (c) => c.toUpperCase()) + '.' };
+resetState = ((orig) => function () { orig(); P.aim = null; P.hpSeen = new Map(); spotLast = null; spotNow = { a: null, t: null }; for (const st of P.state.values()) { st.tgt = null; st.why = ''; st.fresh = false; st.trig = {}; } })(resetState);
 
 // ---------- Drill-down: tap a piece in a fight to pause and read it: who it is going for, who is on it, what is on it. ----------
 document.body.insertAdjacentHTML('beforeend', '<section id="drill" class="drill" hidden aria-live="polite"></section>');
@@ -2614,7 +2620,9 @@ function renderDrill() {
   document.body.classList.add('drilling');
   P.els.get(drillUid)?.classList.add('sel');
   if (st.alive && tg?.alive) { aimLine(posOf(drillUid), posOf(st.tgt), st.side); document.querySelector('.fx .aim:last-child, .aim:last-of-type')?.classList.add('drillaim'); document.querySelectorAll('.aim').forEach((x) => x.classList.add('drillaim')); P.els.get(st.tgt)?.classList.add('aimed'); }
-  const onIt = [...P.state.values()].filter((o) => o.alive && o.side !== st.side && o.tgt === drillUid).map((o) => o.name);
+  // Who is on him is drawn, not listed: a red line from each of them to him.
+  if (st.alive) for (const [uid, o] of P.state) if (o.alive && o.side !== st.side && o.tgt === drillUid) { aimLine(posOf(uid), posOf(drillUid), o.side); const l = $('fx').lastElementChild; l.classList.add('drillaim', 'onhim'); }
+  const kept = Object.entries(st.trig ?? {}).map(([head, x]) => `<div class="dst good"><b>${head}${x.n > 1 && head === 'Vengeance' ? ` ×${Math.min(x.n, Math.round(E.BALANCE.vengefulCap / E.BALANCE.vengefulPerDeath))}` : ''}</b><i>for the fight</i><span>${LASTING[head](x)}</span></div>`).join('');
   const art = artOf(st.look), hp = Math.max(0, st.hp), cr = b ? chipsFor(b, team) : null;
   if (cr) cr.chips = cr.chips.filter((c) => c.k !== 'k-order' && c.kind !== 'Armor grade');   // what he can do, not what we call him
   const stats = [...st.statuses].map((id) => `<div class="dst ${ST[id]?.[1] ? 'good' : 'bad'}"><b>${ST[id]?.[0] ?? id}</b><i>${st.left?.[id] > 0 ? `${st.left[id]} turn${st.left[id] > 1 ? 's' : ''} left` : ''}</i><span>${ST[id]?.[2] ?? ''}</span></div>`).join('');
@@ -2622,8 +2630,8 @@ function renderDrill() {
       <div class="dw"><div class="dn">${st.name}<small>${st.side === 0 ? 'yours' : 'theirs'}${b ? ` · ${tpl(b).name}` : ''}</small></div>
         <div class="dhp ${st.side === 0 ? 'mine' : ''}"><i><b style="width:${(hp / st.maxHp * 100).toFixed(0)}%"></b></i><span>${st.alive ? `${Math.round(hp)} / ${Math.round(st.maxHp)} HP` : 'Down'}</span></div></div>
       <button id="drillX" aria-label="Close">✕</button></div>
-    ${st.alive ? `<div class="dgo"><span>Going for</span><b>${tg?.alive ? tg.name : tg ? `picks again on his turn (${tg.name} is down)` : 'nobody yet'}${tg?.alive && st.why ? `<small>${st.why}</small>` : ''}</b></div><div class="dgo"><span>On him</span><b>${onIt.length ? onIt.join(', ') : 'nobody'}</b></div>` : ''}
-    ${st.alive ? (stats || '<div class="dst none"><span>No statuses on him right now.</span></div>') : ''}
+    ${st.alive ? `<div class="dgo"><span>Going for</span><b>${tg?.alive ? tg.name : tg ? `picks again on his turn (${tg.name} is down)` : 'nobody yet'}${tg?.alive && st.why ? `<small>${st.why}</small>` : ''}</b></div>` : ''}
+    ${st.alive ? (kept + stats || '<div class="dst none"><span>Nothing on him right now.</span></div>') : ''}
     ${cr ? drillStats(cr.r) + chipsHtml(cr.chips) : ''}`;
   $('drill').hidden = false;
   $('drillX').onclick = closeDrill;
