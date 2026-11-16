@@ -952,7 +952,7 @@ body.athome header { display: none; }
 .hsay::before { content: ''; position: absolute; left: -8px; top: 50%; margin-top: -8px; border: 8px solid transparent; border-left: 0; border-right-color: #e9dcc0; }
 .hsay::after { content: '›'; position: absolute; right: 10px; top: 50%; transform: translateY(-54%); font: 600 26px/1 var(--f-ui); color: #8a6a2c; }
 .hsay.hot { padding-right: 46px; } .hsay.hot::after { right: 7px; width: 32px; height: 40px; border-radius: 7px; background: var(--gold); color: #1b1408; display: grid; place-items: center; transform: translateY(-50%); box-shadow: 0 0 0 2px #14110e; line-height: .9; }
-.hsay p { margin: 0; max-height: 70px; overflow: hidden; }
+.hsay p { margin: 0; max-height: 68px; overflow: hidden; }
 /* the school: one board, the same object as an arena */
 .hboard { margin: 12px 11px 0; height: calc(100dvh - 276px - var(--inset, 0px)); min-height: 430px; border-radius: 3px; background: #0f0b08; display: flex; flex-direction: column;
   box-shadow: 0 0 0 3px #14110e, 0 0 0 9px var(--rim), 0 0 0 11px #14110e, 0 14px 26px rgba(0,0,0,.6); }
@@ -2994,22 +2994,22 @@ function gateHtml(at) {
   const open = openArenas(), b = beatNow(), beatA = b?.fight?.arena;
   if (!open.some((a) => a.id === HOME.arena)) HOME.arena = (open.some((a) => a.id === beatA) ? beatA : open[open.length - 1].id);
   const i = open.findIndex((a) => a.id === HOME.arena), a = open[i], n = G.arenaWins[a.id] ?? 0, purse = E.reward(a.id, true, n > 0).denarii;
-  const hot = at.k === 'gate' && (!at.id || at.id === a.id), newest = i === open.length - 1, shut = !!b && !b.fight;   // during the first day the gate waits for the step in hand
+  const hot = at.k === 'gate' && (!at.id || at.id === a.id), newest = i === open.length - 1, dusk = at.k === 'bar', shut = !!b && !b.fight && !dusk;   // during the first day the gate waits for the step in hand
   const u = G.under, ua = u && E.LADDER_ARENAS.find((x) => x.id === u.arena), nb = u && E.nextBout(u), hotU = at.k === 'under';
   const under = underOpen() ? `<button class="hunder${hotU ? ' hot' : ''}" id="homeUnder">${u ? `${docFace(u.doctore)}<i>Undercard</i><b>${ua.name}</b><em>${u.wins} of ${u.ran}</em><span class="hchip${u.purse ? ' go' : ''}">${u.purse ? `Collect ${u.purse}` : nb ? `<span id="underClock">${clock(nb - Date.now())}</span>` : 'Card full'}</span>`
     : `<i>Undercard</i><em>Nobody posted</em><span class="hchip${hotU ? ' go' : ''}">Post a squad</span>`}</button>` : '';
   return `${under}<div class="hplaques one">${i > 0 && !shut ? '<button class="hstep l" id="gatePrev" aria-label="An earlier pit">‹</button>' : ''}${!newest && !shut ? '<button class="hstep r" id="gateNext" aria-label="A later pit">›</button>' : ''}
     <button class="hplq" id="homeGo" aria-label="${shut ? 'The gate is shut until this step is done' : `Fight at ${lcThe(a.name)}`}"><span class="art" style="background-image:url(${ART.floors?.[a.id] ?? ''})"></span><i class="pin a"></i><i class="pin b"></i>
-      <span class="k">${newest || a.id === beatA ? 'Tonight' : 'An earlier pit'}</span><b style="font-size:${Math.min(22, Math.floor(($('homeBoard').clientWidth - (open.length > 1 ? 100 : 40)) / (a.name.length * .66)))}px">${a.name}</b><em>${a.line}</em><span class="foot${hot ? ' hot' : ''}${shut ? ' shut' : ''}">${shut ? 'Not yet' : 'Fight'}</span></button></div>`;
+      <span class="k">${newest || a.id === beatA ? 'Tonight' : 'An earlier pit'}</span><b style="font-size:${Math.min(22, Math.floor(($('homeBoard').clientWidth - (open.length > 1 ? 100 : 40)) / (a.name.length * .66)))}px">${a.name}</b><em>${a.line}</em><span class="foot${hot || dusk ? ' hot' : ''}${shut ? ' shut' : ''}">${dusk ? 'Close the ledger' : shut ? 'Not yet' : 'Fight'}</span></button></div>`;
 }
 function renderSchool() {
   settlePassive();
   const v = HOME.voice = homeVoice(), at = v.at ?? { k: 'gate' }, b = beatNow();
   const face = v.npc ? (ART.npcs?.[v.npc] ? `<img src="${ART.npcs[v.npc]}" alt="">` : '') : docFace(v.who);
-  $('homeBar').innerHTML = `<span class="hcard">${face}</span><button class="hsay${at.k !== 'gate' ? ' hot' : ''}" id="nextGo"><p>${v.text}</p></button>`;
+  $('homeBar').innerHTML = `<span class="hcard">${face}</span><button class="hsay" id="nextGo"><p>${v.text}</p></button>`;
   $('nextGo').onclick = () => v.run();
   // The line always fits its slot: a longer one is set smaller, and the bar never changes height.
-  { const say = $('nextGo'), p = say.firstChild; let fs = 15; while (fs > 11.5 && p.scrollHeight > say.clientHeight - 4) { fs -= .5; p.style.fontSize = `${fs}px`; p.style.lineHeight = fs < 13.5 ? '1.2' : '1.26'; } }
+  fitSay(); if (!HOME.fonts) { HOME.fonts = true; document.fonts?.ready?.then(() => { if (S.step === 'school') fitSay(); }); }
   $('homePurse').innerHTML = purseHtml();
   // Doors: each is hung when its system arrives, in the order they came, and never moves afterwards.
   const pat = patronOpen() ? patronState() : null, back = errandsBack().length, soon = pat?.out.length ? Math.min(...pat.out.map((e) => e.ends)) : 0;
@@ -3027,7 +3027,7 @@ function renderSchool() {
   if ($('homePost')) $('homePost').onclick = () => { const f = G.training ? fighterById(G.training.fid) : canDrill()[0]; if (f) openFighter(f.id); else show('rosterScr'); };
   $('homeGate').innerHTML = gateHtml(at);
   // While a step of the first day is waiting, the gate is shut: pressing it sends the eye back to the bar.
-  $('homeGo').onclick = () => { const bn = beatNow(); if (bn && !bn.fight) { const say = $('nextGo'); say.classList.remove('nudge'); void say.offsetWidth; say.classList.add('nudge'); return; } enterArena(HOME.arena); };
+  $('homeGo').onclick = () => { const bn = beatNow(); if (HOME.voice?.at?.k === 'bar') return HOME.voice.run(); if (bn && !bn.fight) { const say = $('nextGo'); say.classList.remove('nudge'); void say.offsetWidth; say.classList.add('nudge'); return; } enterArena(HOME.arena); };
   const step = (d) => () => { const open = openArenas(), i = open.findIndex((a) => a.id === HOME.arena); HOME.arena = open[Math.max(0, Math.min(open.length - 1, i + d))].id; renderSchool(); };
   if ($('gatePrev')) $('gatePrev').onclick = step(-1); if ($('gateNext')) $('gateNext').onclick = step(1);
   if ($('homeUnder')) $('homeUnder').onclick = openUnder;
@@ -3039,6 +3039,8 @@ function renderSchool() {
   renderTesters();
   $('resetSchool').textContent = 'Start a new school'; resetArmed = false;
 }
+/** Set the bar's line as large as fits its slot. Run again once the real faces have loaded: the stand-in is narrower and flatters the fit. */
+function fitSay() { const say = $('nextGo'), p = say?.firstChild; if (!p) return; let fs = 15; p.style.fontSize = ''; p.style.lineHeight = ''; while (fs > 11.5 && p.scrollHeight > say.clientHeight - 6) { fs -= .5; p.style.fontSize = `${fs}px`; p.style.lineHeight = fs < 13.5 ? '1.2' : '1.26'; } }
 /** What the home shows that can change by itself. When it changes, the home is drawn again; otherwise only the clocks tick. */
 const homeSig = () => { const u = G.under; return `${u ? `${u.ran}:${u.purse}` : '-'}|${errandsBack().length}|${G.patron?.out.length ?? 0}|${G.training?.fid ?? ''}`; };
 setInterval(() => {
