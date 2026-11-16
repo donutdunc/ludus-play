@@ -3113,7 +3113,7 @@ renderMeter = ((orig) => function () {
     else { const run = (v, cls) => { for (let i = 0; i < Math.floor(v / 25); i++) { g += `<path class="${cls}" d="M${x + .2} ${.8}h14.2l.3 12.4h-14.6z"/>`; x += 1; bundle(cls); x += 17; } for (let i = 0; i < Math.floor(v % 25 / 5); i++) { bundle(cls); x += 15; } if (v % 5) { bundle(cls, v % 5); x += 3 + (v % 5) * 2.6; } };
       run(sp, over ? 'ov' : 'on'); if (!over) { x += 3; run(S.bill - sp, ''); } }
     $('meter').querySelector('.bar').outerHTML = `<svg class="tally" viewBox="0 0 ${S.bill <= 100 ? x - 3 : Math.max(x - 3, 317)} 14" preserveAspectRatio="xMinYMid meet" style="max-width:${S.bill <= 100 ? Math.ceil(S.bill / 5) * 30 + 'px' : 'none'}" aria-hidden="true">${g}</svg>`; }
-  $('meter').querySelector('.top').insertAdjacentHTML('beforeend', `<button class="primary" id="toForm2" ${$('toFormation').disabled ? 'disabled' : ''}>Line them up ›</button>`);
+  $('meter').querySelector('.top').insertAdjacentHTML('beforeend', `<button class="primary" id="toForm2" ${$('toFormation').disabled ? 'disabled' : ''}>Take the sand ›</button>`);
   $('toForm2').onclick = () => go('formation');
   // In the school the tray is the squad at a glance, on one line that never changes height: tap a piece to send him back. His kit is on his roster row.
   $('meter').querySelectorAll('[data-m]').forEach((el) => { el.setAttribute('aria-label', `Take ${S.mine.units[+el.dataset.m].name} out of the squad`); el.onclick = () => { S.mine.units.splice(+el.dataset.m, 1); renderMuster(false); }; });
