@@ -2538,8 +2538,16 @@ function spotArgs(e) {
 }
 /** Say it on the bar. Quiet (a rewind rebuilding the board): only remember it, so the bar can show the last thing said once the board is rebuilt. */
 // A blow that kills is one card: the number lands, then Down is stamped under it. The man falling is not a second card.
-let lastBlow = null;
-function spotEvent(e, quiet) { let a = spotArgs(e); if (!a) return;
+let lastBlow = null, lastTrick = null;
+const STATUS_DID = { stun: 'stunned', slow: 'slowed', poison: 'poisoned', bleed: 'bleeding', burn: 'burning', harried: 'harried', sunder: 'armour broken', fear: 'afraid', blind: 'blinded', disarmed: 'disarmed', grievous: 'grievous wound', heckled: 'heckled', taunt: 'taunted' };
+function spotEvent(e, quiet) {
+  // A trick says what it did on its own card: the blow it struck and whatever it left on the man are its result, not cards of their own.
+  if (e.kind === 'status' && lastTrick && e.aid === lastTrick.aid && e.tid === lastTrick.a[1] && lastTrick.hit) {
+    const a = [...lastTrick.a]; a[3] = `${a[3]} · ${STATUS_DID[e.note] ?? e.note}${e.turns ? ` ${e.turns} turn${e.turns > 1 ? 's' : ''}` : ''}`; lastTrick.a = a; if (lastBlow) lastBlow.a = a; spotLast = a; if (!quiet) spot(...a); return; }
+  let a = spotArgs(e); if (!a) return;
+  if (e.kind === 'attack' && lastTrick && e.aid === lastTrick.aid && e.label === lastTrick.label) {
+    a = [...lastTrick.a]; a[1] = e.tid; a[3] = e.outcome === 'miss' ? 'misses' : `${e.amount} damage${e.outcome === 'crit' ? ', a crit' : e.outcome === 'block' ? ', blocked' : ''}`; a[6] = ''; lastTrick.a = a; lastTrick.hit = e.outcome !== 'miss'; }
+  else if (e.kind !== 'death') lastTrick = e.kind === 'active' ? { aid: e.aid, label: e.label, a, hit: false } : null;
   if (e.kind === 'death' && lastBlow && lastBlow.tid === e.tid) { a = [...lastBlow.a]; a[3] = [a[3], 'Down'].filter(Boolean).join(' · '); a[4] = `${a[4]} kill`; }
   lastBlow = (e.kind === 'attack' && e.outcome !== 'miss') || e.kind === 'dot' ? { tid: e.tid, a } : null;
   spotLast = a; if (quiet) spotNow = { a: a[0], t: a[1] }; else spot(...a); }
@@ -3854,7 +3862,7 @@ function beatStops(ev) {
     while (i < ev.length && !BEAT_HEAD.has(ev[i].kind)) i++; if (i >= ev.length) break;
     const head = ev[i++];
     // A man walking several tiles is one beat, not one a tile. So is everyone reacting to the same thing at once.
-    while (i < ev.length && (BEAT_TAIL.has(ev[i].kind) || ((head.kind === 'attack' || head.kind === 'dot') && ev[i].kind === 'death' && ev[i].tid === head.tid) || (head.kind === 'move' && ev[i].kind === 'move' && ev[i].aid === head.aid && !ev[i].note === !head.note) || (head.kind === 'trigger' && sameTrig(ev[i], head)))) i++;
+    while (i < ev.length && (BEAT_TAIL.has(ev[i].kind) || ((head.kind === 'attack' || head.kind === 'dot') && ev[i].kind === 'death' && ev[i].tid === head.tid) || (head.kind === 'active' && ((ev[i].kind === 'attack' && ev[i].aid === head.aid && ev[i].label === head.label) || (ev[i].kind === 'death' && ev[i - 1] && i > 0 && ev.slice(Math.max(0, i - 4), i).some((x) => x.kind === 'attack' && x.aid === head.aid && x.label === head.label && x.tid === ev[i].tid)))) || (head.kind === 'move' && ev[i].kind === 'move' && ev[i].aid === head.aid && !ev[i].note === !head.note) || (head.kind === 'trigger' && sameTrig(ev[i], head)))) i++;
     stops.push(i);
   }
   if (stops[stops.length - 1] !== ev.length) stops.push(ev.length);
