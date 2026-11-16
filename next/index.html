@@ -1122,6 +1122,10 @@ body:not(.free) #muster .row:has(> #draftMe) { display: none; }
 .plate.foot { margin-top: 2px; box-shadow: inset 0 1px 0 rgba(255,246,210,.75), inset 0 -3px 0 rgba(96,66,10,.5), 0 0 0 2px #14110e, 0 34px 0 34px #120d08; }
 .plate.foot:disabled { box-shadow: inset 0 1px 0 rgba(255,246,210,.15), 0 0 0 2px #14110e, 0 34px 0 34px #120d08; }
 .plate.foot::before { content: ''; position: absolute; left: -34px; right: -34px; bottom: 100%; height: 22px; margin-bottom: 2px; background: linear-gradient(transparent, #120d08); pointer-events: none; }
+
+/* The muster is one screen: no title row over it (the purse and the sound are a step back, at home), and a little less air between its parts. */
+body.mustering header { display: none; }
+body.mustering #muster { gap: 9px !important; } body.mustering .docbox:has(#docPort) #docTwist p { padding: 6px 12px; }
 </style>
 
 <div class="wrap">
@@ -2411,7 +2415,7 @@ function show(name) {
   S.run++; P.token++; P.playing = false; S.mode = 'idle'; S.step = name; S.sel = null;
   closeEdit(); closeSheet();
   for (const id of ['start', 'school', 'hall', 'rosterScr', 'patronScr', 'muster', 'arena']) $(id).hidden = id !== name;
-  document.body.classList.toggle('athome', name === 'school'); homeSheet(null); if (name === 'school') { HOME.arena = null; $('homeMore').hidden = true; $('homeMoreBtn').setAttribute('aria-expanded', 'false'); }
+  document.body.classList.toggle('athome', name === 'school'); document.body.classList.remove('mustering'); homeSheet(null); if (name === 'school') { HOME.arena = null; $('homeMore').hidden = true; $('homeMoreBtn').setAttribute('aria-expanded', 'false'); }
   document.body.classList.remove('fighting', 'forming');
   $('steps').hidden = true;
   if (FREE) { FREE = false; document.body.classList.remove('free'); S.myDoc = G.doctore; S.mine.doctore = G.doctore; try { if (location.hash === '#battle') history.replaceState(null, '', location.pathname.replace(/\/battle\/?$/, '/') + location.search); } catch (e) { /* the address bar is cosmetic */ } }
@@ -2723,7 +2727,7 @@ function renderCrumb() {
 go = ((orig) => function (step) {
   revealEnd(true);
   orig(step); const forming = !FREE && S.step === 'formation';
-  document.body.classList.toggle('forming', forming); if (forming) { document.body.classList.add('fighting'); formBar(); } else if (S.step !== 'fight') $('spot').classList.remove('lintel');
+  document.body.classList.toggle('mustering', !FREE && S.step === 'muster'); document.body.classList.toggle('forming', forming); if (forming) { document.body.classList.add('fighting'); formBar(); } else if (S.step !== 'fight') $('spot').classList.remove('lintel');
   renderCrumb();
 })(go);
 // On the formation screen a tapped piece's card lies over the far half of the board, which is empty until the gates open,
