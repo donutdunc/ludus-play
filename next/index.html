@@ -1380,6 +1380,47 @@ body.forming .fightbar #fight { padding: 0 18px; letter-spacing: .06em; white-sp
 body.forming .fightbar #formBack { background: var(--stone-2); border: 1px solid var(--line); border-radius: 8px; color: var(--ink); align-self: center; justify-self: auto; }
 body.forming .fightbar #fight { font-size: 18px; letter-spacing: .05em; padding: 0 22px; }
 #veil[data-kind="shadow"] { -webkit-mask-image: linear-gradient(#000 66%, transparent 99%); mask-image: linear-gradient(#000 66%, transparent 99%); }
+
+/* The gallery: every fighter on his own sheet, one swipe apart. */
+#gal { position: fixed; inset: 0; z-index: 60; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; background: #14100c; padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px); }
+#gal[hidden] { display: none; }
+#gal .gtop { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 10px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+#gal .gtop #galX { width: 44px; height: 44px; min-height: 0; padding: 0; }
+#gal .gtabs { display: flex; gap: 6px; } #gal .gtabs button { flex: 1; height: 44px; min-height: 0; padding: 0 6px; font: 600 14px var(--f-ui); white-space: nowrap; }
+#gal .gtabs button[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
+#gal .gbody { overflow-y: auto; padding: 14px 16px 18px; display: flex; flex-direction: column; gap: 10px; -webkit-overflow-scrolling: touch; }
+#gal .gfoot { display: grid; grid-template-columns: 64px minmax(0, 1fr) 64px; align-items: center; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--line); }
+#gal .gfoot button { height: 48px; min-height: 0; padding: 0 0 4px; font: 600 26px/1 var(--f-ui); } #gal .gfoot span { text-align: center; font: 600 13px var(--f-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+#gal .ghead { position: relative; height: 220px; border-radius: 10px; overflow: hidden; background: var(--fam-bg, linear-gradient(#c39a55, #e3c27c)); box-shadow: 0 0 0 1px #14110e, 0 0 0 4px #5a3a1c, 0 0 0 5px #14110e; margin: 5px; }
+#gal .ghead img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 18%; }
+#gal .ghead .gpiece { position: absolute; right: 10px; bottom: 8px; width: 74px; padding: 6px 6px 2px; border-radius: 8px; background: linear-gradient(#e6c887, #c9a560); box-shadow: 0 0 0 2px #14110e, 0 4px 10px rgba(0,0,0,.5); }
+#gal .ghead:not(:has(img)) .gpiece { right: auto; left: 50%; transform: translateX(-50%); width: 104px; background: none; box-shadow: none; }
+#gal .gpiece svg { display: block; width: 100% !important; height: auto !important; overflow: visible; }
+#gal .gname { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-top: 4px; } #gal .gname b { font: 400 32px/1.05 var(--f-display); color: var(--ink); }
+#gal .gstars { color: var(--gold); font: 18px/1 var(--f-ui); letter-spacing: .06em; white-space: nowrap; }
+#gal .gmeta { font: 600 12px/1.2 var(--f-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); } #gal .gmeta em, #gal .gdoc b em { margin-left: 8px; font-style: normal; color: var(--good, #9be07a); letter-spacing: .08em; }
+#gal .gsays { margin: 0; font: 500 15px/1.35 var(--f-ui); font-style: italic; color: var(--ink-2); }
+#gal .gsec { margin-top: 6px; font: 600 11px/1 var(--f-ui); letter-spacing: .18em; text-transform: uppercase; color: var(--gold); }
+#gal .gchips { display: flex; flex-wrap: wrap; gap: 6px; }
+#gal .gkits { display: grid; gap: 8px; }
+#gal .gkit { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: center; text-align: left; min-height: 56px; padding: 9px 12px; background: var(--stone-2); border: 1px solid var(--line); border-radius: 10px; }
+#gal .gkit[aria-pressed="true"] { border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold); background: var(--stone-3); }
+#gal .gkit b { font: 400 18px/1.15 var(--f-display); color: var(--ink); } #gal .gkit b i { display: block; margin-top: 3px; font: 600 11px/1 var(--f-ui); font-style: normal; letter-spacing: .1em; text-transform: uppercase; color: #9fd3e6; }
+#gal .gkit span { grid-column: 1; font: 500 13.5px/1.3 var(--f-ui); color: var(--ink-2); }
+#gal .gkit em { grid-column: 2; grid-row: 1 / span 2; font: 600 22px/1 var(--f-ui); font-style: normal; color: var(--gold); text-align: right; font-variant-numeric: tabular-nums; } #gal .gkit em small { display: block; margin-top: 3px; font: 600 12px/1 var(--f-ui); color: var(--ink-3); }
+#gal .gkit u { grid-column: 1 / -1; text-decoration: none; font: 600 11px/1.2 var(--f-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+#gal .gunder { margin: 0; font: 500 14.5px/1.35 var(--f-ui); color: var(--ink-2); }
+#gal .gfam { padding: 18px 14px; border-radius: 10px; text-align: center; background: radial-gradient(90% 140% at 50% 130%, rgba(226,160,60,.2), transparent 62%), #0f0b08; box-shadow: 0 0 0 1px #14110e, 0 0 0 4px #5a3a1c, 0 0 0 5px #14110e; margin: 5px; }
+#gal .gfam i { font: 600 10px/1 var(--f-ui); font-style: normal; letter-spacing: .24em; text-transform: uppercase; color: var(--gold); } #gal .gfam b { display: block; margin: 6px 0; font: 400 34px/1.05 var(--f-display); letter-spacing: .06em; color: #e9cd84; } #gal .gfam p { margin: 0; font: 500 15px/1.35 var(--f-ui); color: #cdbb97; }
+#gal .gdoc { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 12px; align-items: start; padding: 10px; background: var(--stone-2); border: 1px solid var(--line); border-radius: 10px; }
+#gal .gdoc .dface, #gal .gdoc .sig { width: 56px; height: 56px; border-radius: 6px; object-fit: cover; object-position: top; box-shadow: 0 0 0 1px #14110e, 0 0 0 3px #5a3a1c; }
+#gal .gdoc b { display: block; font: 400 19px/1.1 var(--f-display); color: var(--ink); } #gal .gdoc b em { font: 600 11px var(--f-ui); text-transform: uppercase; }
+#gal .gdoc span { display: block; margin-top: 3px; font: 600 13.5px/1.3 var(--f-ui); color: var(--gold); } #gal .gdoc small { display: block; margin-top: 3px; font: 500 13px/1.3 var(--f-ui); color: var(--ink-2); }
+#gal .gcount { display: flex; flex-wrap: wrap; gap: 6px 16px; } #gal .gcount span { display: inline-flex; align-items: baseline; gap: 6px; } #gal .gcount b { font: 600 16px var(--f-ui); color: var(--ink); }
+#gal .gline { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px 6px; padding: 12px 8px 8px; border-radius: 10px; background: linear-gradient(#e6c887, #cfae6a); }
+#gal .gline button { appearance: none; min-height: 0; padding: 0; border: 0; background: none; display: grid; justify-items: center; gap: 2px; opacity: .55; } #gal .gline button.own { opacity: 1; }
+#gal .gline button svg { width: 44px !important; height: auto !important; overflow: visible; display: block; } #gal .gline button i { font: 600 11px/1.1 var(--f-ui); font-style: normal; color: #3a2710; }
+#gal .gbody > * { flex: none; }
 </style>
 
 <div class="wrap">
@@ -1414,7 +1455,7 @@ body.forming .fightbar #fight { font-size: 18px; letter-spacing: .05em; padding:
         <summary>For testers</summary>
         <div class="row"><button id="toFree" class="grow">Free battle</button><button id="resetSchool" class="grow">Start a new school</button></div>
         <button id="ownSets"></button>
-        <div class="row"><button id="skipBeat" class="grow">Skip this step</button></div>
+        <div class="row"><button id="skipBeat" class="grow">Skip this step</button><button id="toGallery" class="grow">Gallery</button></div>
         <div class="row" id="testClock"></div>
         <div id="paceBox"></div>
       </details>
@@ -3706,6 +3747,62 @@ function soundCall(id, free) {
   chron(got.duplicate ? `${got.fighter.name} answered the ${c.name} again: one token.` : `${got.fighter.name} answered the ${free === 'morning' ? 'morning call' : c.name}.`);
   scriptEvent(`call:${id}`); saveG();
 }
+// ---------- The gallery ----------
+// Every fighter in the game on his own sheet, one swipe apart, owned or not: the face, the piece, his line, the six numbers, what he can do, and each kit
+// he could wear with who it makes him go for and what it costs. Each family opens with a page of its own: what it is, and who leads it.
+// For now it is a designers' tool behind the tester menu; what a player is shown of it, and when, is still to be decided.
+const GAL = { at: 0, kit: {}, list: null };
+function galList() {
+  const first = ['riffraff', 'warren', 'legion'], fams = [...new Set(E.CAST.map((c) => c.faction))].sort((x, y) => (first.indexOf(x) + 99) % 99 - (first.indexOf(y) + 99) % 99), out = [];   // in the order a school meets them
+  for (const k of fams) { out.push({ fam: k }); for (const c of E.CAST.filter((x) => x.faction === k).sort((a, b) => a.stars - b.stars || a.name.localeCompare(b.name))) out.push({ fam: k, id: c.id }); }
+  return out;
+}
+function openGallery(at) {
+  GAL.list = galList(); if (at != null) GAL.at = at;
+  let el = $('gal'); if (!el) { el = document.createElement('div'); el.id = 'gal'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); document.body.appendChild(el);
+    let x0 = null, y0 = 0; el.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+    el.addEventListener('touchend', (e) => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null; if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) galGo(dx < 0 ? 1 : -1); }, { passive: true }); }
+  el.hidden = false; renderGallery();
+}
+const galGo = (d) => { const n = GAL.list.length; GAL.at = (GAL.at + d + n) % n; renderGallery(); $('galBody').scrollTop = 0; };
+function renderGallery() {
+  const el = $('gal'), it = GAL.list[GAL.at], fams = [...new Set(GAL.list.map((x) => x.fam))], stars = (n) => `<span class="gstars">${'★'.repeat(n)}</span>`;
+  let body = '', r = null, chips = [];
+  if (!it.id) {   // the family's own page
+    const k = it.fam, F = E.FACTIONS[k], men = E.CAST.filter((c) => c.faction === k), docs = E.DOCTORES.filter((d) => d.faction === k), by = {}; for (const c of men) by[c.stars] = (by[c.stars] ?? 0) + 1;
+    body = `<div class="gfam"><i>Family</i><b>${F.name}</b><p>${F.identity}</p></div>
+      <div class="gsec">Who leads them</div>${docs.map((d) => `<div class="gdoc">${docFace(d.id)}<div><b>${d.name}${G.doctores.includes(d.id) ? '<em>yours</em>' : ''}</b><span>${d.twist.name}: ${d.twist.line}</span><small>${d.blurb}</small></div></div>`).join('')}
+      <div class="gsec">Who they are</div><div class="gcount">${Object.entries(by).map(([s, n]) => `<span>${stars(+s)}<b>${n}</b></span>`).join('')}</div>
+      <div class="gline">${men.sort((a, b) => a.stars - b.stars || a.name.localeCompare(b.name)).map((c) => `<button data-jump="${GAL.list.findIndex((x) => x.id === c.id)}" class="${fighterById(c.id) ? 'own' : ''}" aria-label="${c.name}">${tokenSvg(lookOf(unitOf(fighterById(c.id) ?? E.recruit(c.id))), { side: 0, bare: true })}<i>${c.name}</i></button>`).join('')}</div>`;
+  } else {
+    const mine = fighterById(it.id), base = mine ?? E.recruit(it.id), m = E.memberOf(base), kits = E.kitsOf(base), open = E.kitsOpen(base), pick = GAL.kit[it.id] ?? base.loadout, f = { ...base, loadout: pick };
+    const u = unitOf(f), t = E.UNITS[u.template], cf = chipsFor(u, null), art = artOfFighter(f), first = cost(E.fighterUnit({ ...base, loadout: kits[0].id }));
+    r = cf.r; chips = cf.chips.filter((c) => c.k !== 'k-order' && c.kind !== 'Armor grade');
+    const leads = E.DOCTORES.filter((d) => E.fieldableBy(d.id, it.id)).map((d) => d.name);
+    body = `<div class="ghead" data-fam="${m.faction}">${art ? `<img src="${art}" alt="">` : ''}<span class="gpiece">${tokenSvg(lookOf(u), { side: 0, bare: true })}</span></div>
+      <div class="gname"><b>${m.name}</b>${stars(m.stars)}</div>
+      <div class="gmeta">${t.name} · ${E.FACTIONS[m.faction].name}${mine ? '<em>in your school</em>' : ''}</div>
+      <p class="gsays">${m.line}</p>
+      ${statsHtml(r)}
+      ${chips.length ? `<div class="chips gchips">${chips.map((c, n) => `<button class="chip ${c.k}" data-chip="${n}">${c.label}</button>`).join('')}</div>` : ''}
+      <div class="gsec">Kits</div>
+      <div class="gkits">${kits.map((b, n) => { const ku = E.fighterUnit({ ...base, loadout: b.id }), kr = E.resolveUnit(ku), c = cost(ku), locked = n >= open;
+        return `<button class="gkit" data-kit="${b.id}" aria-pressed="${b.id === pick}"><b>${b.name}<i>Targets ${ORDER_HELP[ku.tactic ?? defaultOrder(kr)][0]}</i></b><span>${b.role || `${kr.weapon.name}, ${GRADE[ku.grade ?? 'medium']}`}</span><em>${c}${c !== first ? `<small>${c > first ? '+' : '−'}${Math.abs(c - first)}</small>` : ''}</em>${locked ? `<u>Opens at ${n - 1} token${n - 1 > 1 ? 's' : ''}</u>` : ''}</button>`; }).join('')}</div>
+      <div class="gsec">Fights under</div><p class="gunder">${leads.join(', ')}</p>`;
+  }
+  el.innerHTML = `<div class="gtop"><button id="galX" aria-label="Close the gallery">✕</button><div class="gtabs">${fams.map((k) => `<button data-fam="${k}" aria-pressed="${k === it.fam}">${E.FACTIONS[k].name}</button>`).join('')}</div></div>
+    <div class="gbody" id="galBody">${body}</div>
+    <div class="gfoot"><button id="galPrev" aria-label="Previous">‹</button><span>${GAL.at + 1} of ${GAL.list.length}</span><button id="galNext" aria-label="Next">›</button></div>`;
+  $('galX').onclick = () => { el.hidden = true; el.innerHTML = ''; };
+  $('galPrev').onclick = () => galGo(-1); $('galNext').onclick = () => galGo(1);
+  el.querySelectorAll('.gtabs [data-fam]').forEach((b) => b.onclick = () => { GAL.at = GAL.list.findIndex((x) => x.fam === b.dataset.fam); renderGallery(); });
+  el.querySelectorAll('[data-jump]').forEach((b) => b.onclick = () => { GAL.at = +b.dataset.jump; renderGallery(); });
+  el.querySelectorAll('[data-kit]').forEach((b) => b.onclick = () => { const y = $('galBody').scrollTop; GAL.kit[it.id] = b.dataset.kit; renderGallery(); $('galBody').scrollTop = y; });
+  el.querySelectorAll('[data-chip]').forEach((b) => b.onclick = () => { const c = chips[+b.dataset.chip]; explain(c.kind, c.label, c.body, c.num); });
+  if (r) wireStats(el, r);
+}
+$('toGallery').onclick = () => openGallery();
+
 // ---------- The call is answered ----------
 // A call is a moment, not a line of text. The horn goes and the room goes dark; a piece is set down under a cloth; his stars are struck
 // one at a time, and the wait after each is the same whether another is coming or not; only then does the cloth come off, and the man
