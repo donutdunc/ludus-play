@@ -1472,6 +1472,8 @@ body.resulted:not(.looking) .kinpool { display: none; }
 
 /* The Horde's pool reads green where Kinship reads gold. */
 .kinpool[data-pool="Spite"] span b { background: #8fbf5a; } .kinpool[data-pool="Spite"] i { color: #8fbf5a; }
+
+#gal .gtabs { touch-action: pan-x; overscroll-behavior-x: contain; padding-right: 14px; }
 </style>
 
 <div class="wrap">
@@ -3856,7 +3858,8 @@ function galList() {
 function openGallery(at) {
   GAL.list = galList(); if (at != null) GAL.at = at;
   let el = $('gal'); if (!el) { el = document.createElement('div'); el.id = 'gal'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); document.body.appendChild(el);
-    let x0 = null, y0 = 0; el.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+    let x0 = null, y0 = 0; el.addEventListener('touchstart', (e) => { if (e.target.closest('.gtabs')) { x0 = null; return; }   // a drag along the family tabs scrolls the tabs; it does not turn the page
+      x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
     el.addEventListener('touchend', (e) => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null; if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) galGo(dx < 0 ? 1 : -1); }, { passive: true }); }
   el.hidden = false; renderGallery();
 }
@@ -3891,10 +3894,13 @@ function renderGallery() {
       ${slots ? `<div class="gsec">Pieces beside the kit · ${worn.length} of ${slots}</div><div class="grelics">${Object.keys(E.RELIC_KINDS).map((kind) => `<div class="grk"><i>${E.RELIC_KINDS[kind]}</i>${E.RELICS.filter((x) => x.kind === kind).map((x) => { const on = worn.includes(x.id), add = on ? 0 : cost({ ...E.fighterUnit(f), relics: [...worn.filter((id) => E.RELIC_BY_ID[id].kind !== kind), x.id] }) - cost({ ...E.fighterUnit(f), relics: worn.filter((id) => E.RELIC_BY_ID[id].kind !== kind) }); return `<button class="grelic" data-relic="${x.id}" aria-pressed="${on}"><b>${x.name}</b><span>${x.body}</span>${on ? '' : `<em>+${add}</em>`}</button>`; }).join('')}</div>`).join('')}</div>` : ''}
       <div class="gsec">Fights under</div><p class="gunder">${leads.join(', ')}</p>`;
   }
+  const tabsAt = el.querySelector('.gtabs')?.scrollLeft ?? 0;
   el.innerHTML = `<div class="gtop"><button id="galX" aria-label="Close the gallery">✕</button><div class="gtabs">${fams.map((k) => `<button data-fam="${k}" aria-pressed="${k === it.fam}">${E.FACTIONS[k].name.replace(/^The /, '')}</button>`).join('')}</div></div>
     <div class="gbody" id="galBody">${body}</div>
     <div class="gfoot"><button id="galPrev" aria-label="Previous">‹</button><span>${GAL.at + 1} of ${GAL.list.length}</span><button id="galNext" aria-label="Next">›</button></div>`;
   $('galX').onclick = () => { el.hidden = true; el.innerHTML = ''; };
+  { const tabs = el.querySelector('.gtabs'), on = tabs.querySelector('[aria-pressed="true"]'); tabs.scrollLeft = tabsAt;   // the tabs stay where they were dragged to, and the open family is always in view
+    if (on) { const a = on.getBoundingClientRect(), t = tabs.getBoundingClientRect(); if (a.left < t.left) tabs.scrollLeft -= t.left - a.left + 12; else if (a.right > t.right) tabs.scrollLeft += a.right - t.right + 12; } }
   $('galPrev').onclick = () => galGo(-1); $('galNext').onclick = () => galGo(1);
   el.querySelectorAll('.gtabs [data-fam]').forEach((b) => b.onclick = () => { GAL.at = GAL.list.findIndex((x) => x.fam === b.dataset.fam); renderGallery(); });
   el.querySelectorAll('[data-jump]').forEach((b) => b.onclick = () => { GAL.at = +b.dataset.jump; renderGallery(); });
