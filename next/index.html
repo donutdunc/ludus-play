@@ -1343,6 +1343,43 @@ body.resulted:not(.looking) #crowdSign { display: none; }
 /* Home: when a named house is waiting in tonight's pit, her face hangs on the plaque. */
 .hplq .hfoe { position: absolute !important; right: 12px; top: 9px; line-height: 0; }
 .hplq .hfoe img, .hplq .hfoe .sig { width: 46px; height: 46px; border-radius: 6px; object-fit: cover; object-position: top; box-shadow: 0 0 0 1px #14110e, 0 0 0 3px #7c1d17, 0 0 0 4px #14110e, 0 3px 6px rgba(0,0,0,.5); display: block; }
+
+/* The way back from the formation sits first in the row under the board. */
+.fightbar #formBack { display: none; }
+body.forming .fightbar { grid-template-columns: auto auto minmax(0, 1fr) auto; gap: 8px; }
+body.forming .fightbar #formBack { display: block; width: 44px; height: 44px; min-height: 0; padding: 0 0 3px; font: 600 24px/1 var(--f-ui); }
+body.forming .fightbar #fight { padding: 0 18px; letter-spacing: .06em; white-space: nowrap; }
+/* The Tavern Cellar's plaque has hung in lamp smoke for years: soot worked into the grain, a greasy smear across it, drips from the beam above,
+   a cup ring, and lettering gone dull. */
+.spot[data-arena="dregs"] .shade { background:
+    radial-gradient(circle at 84% 34%, transparent 0 11px, rgba(150,96,44,.34) 12px 14px, transparent 15.5px),
+    radial-gradient(circle at 86.5% 40%, transparent 0 9px, rgba(120,74,32,.2) 10px 11px, transparent 12px),
+    linear-gradient(rgba(4,3,2,.85), rgba(4,3,2,0)) 17% 0 / 3px 46% no-repeat, linear-gradient(rgba(4,3,2,.8), rgba(4,3,2,0)) 19.5% 0 / 2px 28% no-repeat,
+    linear-gradient(rgba(4,3,2,.85), rgba(4,3,2,0)) 63% 0 / 4px 34% no-repeat, linear-gradient(rgba(4,3,2,.7), rgba(4,3,2,0)) 91% 0 / 2px 58% no-repeat,
+    radial-gradient(60% 90% at 8% 100%, rgba(74,84,40,.3), transparent 70%), radial-gradient(40% 70% at 97% 6%, rgba(4,3,2,.8), transparent 70%), radial-gradient(34% 60% at 2% 4%, rgba(4,3,2,.75), transparent 70%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='110'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .09' numOctaves='2' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 .42  0 0 0 0 .3  0 0 0 0 .14  0 0 0 -2.2 1.0'/%3E%3C/filter%3E%3Crect width='400' height='110' filter='url(%23s)'/%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='110'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9 .55' numOctaves='3' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 .08  0 0 0 0 .05  0 0 0 0 .02  0 0 0 -1.5 1.05'/%3E%3C/filter%3E%3Crect width='220' height='110' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(80% 130% at 50% 135%, rgba(196,120,40,.2), transparent 62%), #17110b; }
+.spot[data-arena="dregs"] .shade b { color: #c9ac6a; text-shadow: 0 1px 0 #000, 1px 2px 3px rgba(0,0,0,.9); }
+.spot[data-arena="dregs"] .shade span { color: #94835f; } .spot[data-arena="dregs"] .shade i { color: #b08a36; }
+.spot[data-arena="dregs"] .shade::before, .spot[data-arena="dregs"] .shade::after { filter: saturate(.5) brightness(.6); }
+/* The dark of a cellar comes further out and is not still: it reaches onto the open sand in slow fingers, and something in it glows now and then. */
+#veil[data-kind="shadow"] { height: 53%; }
+#veil[data-kind="shadow"] .vtx { height: 45%; } #veil.faced[data-kind="shadow"] .vtx { height: 58%; }
+#veil[data-kind="shadow"] .vbg { background: radial-gradient(46% 30% at 22% 34%, rgba(190,84,26,.13), transparent 70%), linear-gradient(rgba(6,4,2,.98) 0 58%, rgba(6,4,2,.7) 72%, rgba(6,4,2,0)); animation: vglow 7s ease-in-out infinite; }
+#veil[data-kind="shadow"] .vbg::before, #veil[data-kind="shadow"] .vbg::after { top: -46%;
+  background: radial-gradient(closest-side at 34% 62%, rgba(4,3,2,.9), transparent 62%), radial-gradient(closest-side at 68% 38%, rgba(120,84,44,.16), transparent 56%), radial-gradient(closest-side at 56% 74%, rgba(4,3,2,.84), transparent 50%), radial-gradient(closest-side at 24% 34%, rgba(4,3,2,.6), transparent 44%), radial-gradient(closest-side at 74% 66%, rgba(4,3,2,.78), transparent 42%); }
+#veil[data-kind="shadow"] .vbg::after { top: -22%; }
+#veil[data-kind="shadow"]::before { content: ''; position: absolute; left: -30%; right: -30%; bottom: -4%; height: 44%; pointer-events: none;
+  background: radial-gradient(22% 70% at 18% 20%, rgba(5,3,2,.8), transparent 70%), radial-gradient(16% 90% at 41% 8%, rgba(5,3,2,.72), transparent 70%), radial-gradient(26% 62% at 63% 14%, rgba(5,3,2,.8), transparent 70%), radial-gradient(14% 84% at 84% 10%, rgba(5,3,2,.66), transparent 70%);
+  filter: blur(5px); animation: vcreep 17s ease-in-out infinite alternate; }
+@keyframes vcreep { from { transform: translateX(-7%) scaleY(.82); } to { transform: translateX(7%) scaleY(1.12); } }
+@keyframes vglow { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(.82); } }
+#veil.lift[data-kind="shadow"]::before { opacity: 0; transition: opacity .4s ease-in; }
+#veil.lift[data-kind="shadow"] .vbg { animation: vclear .75s ease-in forwards; }
+@media (prefers-reduced-motion: reduce) { #veil[data-kind="shadow"]::before, #veil[data-kind="shadow"] .vbg { animation: none; } }
+body.forming .fightbar #formBack { background: var(--stone-2); border: 1px solid var(--line); border-radius: 8px; color: var(--ink); align-self: center; justify-self: auto; }
+body.forming .fightbar #fight { font-size: 18px; letter-spacing: .05em; padding: 0 22px; }
+#veil[data-kind="shadow"] { -webkit-mask-image: linear-gradient(#000 66%, transparent 99%); mask-image: linear-gradient(#000 66%, transparent 99%); }
 </style>
 
 <div class="wrap">
@@ -3067,11 +3104,13 @@ renderCard = ((orig) => function () {
 })(renderCard);
 /** Formation's top bar: the fight's bar, in the fight's place, holding the way back and what to do here. */
 function formBar() {
-  // The same plaque that hangs over the gate when the fight starts, so nothing changes up here when it does. The way back is on it.
+  // The same plaque that hangs over the gate when the fight starts, so nothing changes up here when it does. 
   const a = arenaNow(), bar = $('spot');
   bar.classList.remove('more', 'lit'); bar.classList.add('lintel');
-  bar.innerHTML = `<button id="formBack" aria-label="Back to the squad">‹</button><div class="shade"><i>Tonight</i><b>${a.name}</b><span>${a.line ?? ''}</span></div>`;
-  $('formBack').onclick = () => go('muster');
+  bar.innerHTML = `<div class="shade"><i>Tonight</i><b>${a.name}</b><span>${a.line ?? ''}</span></div>`;
+  // The way back is with the other controls under the board, first in the row, so the plaque is only a plaque.
+  let back = $('formBack'); if (!back) { back = document.createElement('button'); back.id = 'formBack'; back.setAttribute('aria-label', 'Back to the squad'); back.textContent = '‹'; $('autoArrange').before(back); }
+  back.onclick = () => go('muster');
 }
 function newSchool() {
   const id = E.DEFAULT_DOCTORE;
