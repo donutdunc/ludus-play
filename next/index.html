@@ -3840,15 +3840,22 @@ function frameSvg(fam, seed) {
 function openFighter(fid) { sheetFid = fid; S.editing = null; $('edit').hidden = false; $('scrim2').hidden = false; $('scrim2').onclick = closeEdit; renderFighter(); }
 // A kit row is its name and four fixed slots, in this order: weapon, armor, off hand, family rule. No sentence fills a slot; the name carries the flavor.
 const kkey = (cls, kind, label, tag, body, num) => `<i class="kkey ${cls}" data-kk="${encodeURIComponent(JSON.stringify([kind, label, body, num ?? '']))}">${label}${tag ? `<u>${tag}</u>` : ''}</i>`;
-/** Gear slots that read the same on every one of a fighter's kits say nothing about a kit, so they are left off its row. */
-const kitSame = (pairs) => { const sig = { Weapon: ([kr]) => `${kr.weapon.name}|${kr.weapon.range}`, Armor: ([, ku]) => ku.grade ?? '', 'Off hand': ([kr]) => kr.items.off?.name ?? '', Move: ([kr]) => kr.move }, out = new Set();
-  for (const k of Object.keys(sig)) if (new Set(pairs.map(sig[k])).size <= 1) out.add(k); return out; };
-const kitKeys = (kr, ku, same = new Set()) => { const w = kr.weapon, off = kr.items.off, g = ku && ku.grade ? E.GRADES[ku.grade] : null, out = [];
-  const wtag = w.range > 1 ? (kr.template.role === 'back' || w.range > 2 ? `Range ${w.range}` : `Reach ${w.range}`) : '';
-  if (!kr.gift?.safe && !same.has('Weapon')) out.push(kkey('gear', 'Weapon', w.name, wtag, `${w.damage} ${w.type} damage on top of his own strength. ${w.range > 1 ? `Hits from ${w.range} squares away${w.range === 2 ? ', so he can fight from behind the man in front' : ''}.` : 'Reach 1: he must stand next to his man.'}${w.hands === 2 ? ' Two hands.' : ''}${w.armorPierce ? ` Ignores ${Math.round(w.armorPierce * 100)}% of armor.` : ''}${w.critBonus ? ` +${w.critBonus} crit.` : ''}${w.spdMod ? ` ${w.spdMod > 0 ? '+' : '−'}${Math.abs(w.spdMod)} speed.` : ''}`, `${Math.round(w.damage)} ${w.type}`));
-  if (g && !same.has('Armor')) out.push(kkey('gear', 'Armor', `${g.name} armor`, '', `${g.line}.`, ''));
-  if (off && off !== kr.items.main && !same.has('Off hand')) out.push(kkey('gear', 'Off hand', off.name, '', off.description, ''));
-  if (!same.has('Move')) out.push(kkey('gear', 'Movement', `Move ${kr.move}`, '', kr.move ? `Walks up to ${kr.move} squares a turn.` : 'Stays on the square he is placed on.', ''));
+/** A kit has no gear to list: its row says only the numbers that differ from the fighter's other kits, then what the kit does. */
+const KIT_NUMS = [
+  ['HP', (r) => Math.round(r.stats.hp), (v) => `HP ${v}`, 'Health in this kit.'],
+  ['Dmg', (r) => (r.gift?.safe ? 0 : Math.round(r.stats.atk + r.weapon.damage)), (v) => `Dmg ${v}`, 'Damage of a clean hit in this kit, before armor.'],
+  ['Armor', (r) => Math.round(E.armorCut(r.stats.def) * 100), (v) => `Armor ${v}%`, 'The share of each hit his armor takes off in this kit.'],
+  ['Spd', (r) => Math.round(r.stats.spd), (v) => `Spd ${v}`, 'How often his turn comes round in this kit.'],
+  ['Move', (r) => r.move, (v) => `Move ${v}`, (v) => (v ? `Walks up to ${v} squares a turn.` : 'Stays on the square he is placed on.')],
+  ['Reach', (r) => r.weapon.range, (v, r) => `${r.template.role === 'back' || v > 2 ? 'Range' : 'Reach'} ${v}`, (v) => (v > 1 ? `Hits from ${v} squares away${v === 2 ? ', so he can fight from behind the man in front' : ''}.` : 'He must stand next to his man.')],
+  ['Block', (r) => (r.gift?.blockAll ? -1 : Math.round(r.block * 100)), (v) => `Block ${v}%`, 'Chance to block a hit that lands. A blocked hit deals half damage.'],
+  ['Pierce', (r) => Math.round((r.weapon.armorPierce ?? 0) * 100), (v) => `Pierce ${v}%`, 'The share of the target\'s armor his hits ignore.'],
+  ['Crit', (r) => Math.round(r.stats.crit + (r.weapon.critBonus ?? 0)), (v) => `Crit ${v}%`, 'Chance that a hit is a critical hit.'],
+  ['On hit', (r) => (r.weapon.onHit ? `${r.weapon.onHit.status} ${Math.round(r.weapon.onHit.chance * 100)}` : ''), (v) => { const [st, c] = String(v).split(' '); return `${st[0].toUpperCase()}${st.slice(1)} ${c}%`; }, 'Chance that a hit leaves this on the target.'],
+];
+const kitSame = (pairs) => { const out = new Set(); for (const [k, get] of KIT_NUMS) if (new Set(pairs.map(([kr]) => get(kr))).size <= 1) out.add(k); return out; };
+const kitKeys = (kr, ku, same = new Set(KIT_NUMS.map((x) => x[0]))) => { const out = [];
+  for (const [k, get, label, body] of KIT_NUMS) { const v = get(kr); if (same.has(k) || v === -1 || v === '' || (k !== 'Move' && k !== 'Dmg' && v === 0)) continue; out.push(kkey('gear', '', label(v, kr), '', typeof body === 'function' ? body(v) : body, '')); }
   for (const id of ku?.actives ?? []) { const d = E.ACTIVE_DEF[id]; if (d) out.push(kkey('counts', '', d.name, '', d.description, [d.when && d.when !== 'Always' ? `When: ${d.when}` : '', `every ${d.cooldown} turns`].filter(Boolean).join(' · '))); }
   for (const [id, lv] of Object.entries(ku?.skills ?? {})) { const d = lv && E.SKILLS[id]; if (d) out.push(kkey('counts', 'Skill', d.name, '', d.perLevel ?? d.description ?? '', '')); }
   if (kr.gift) for (const k of E.giftKeys(kr.gift)) out.push(kkey(k.kind, '', k.label, '', k.body, ''));   // the rule text says what it grants or consumes; no label above it and no tally below
