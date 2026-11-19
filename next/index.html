@@ -1515,15 +1515,16 @@ body.forming .fightbar #fight { font-size: 16.5px; letter-spacing: .03em; paddin
 #gal .gnote { margin: 8px 0 0; padding: 6px 10px; border-left: 2px solid var(--gold); font-size: 12.5px; color: #c9b48a; background: rgba(255,255,255,.04); border-radius: 0 6px 6px 0; }
 #gal .gtwo .gsec { margin-bottom: 6px; }
 
-/* The leash. Cords at the arranging step, and a collar on each bonded beast in its handler's colour; the handler's own tag counts his beasts. */
-#fx svg.leashes { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+/* The leash: a rawhide cord at the arranging step, a bronze ring on each bonded beast, a row of rings on the handler. */
+#board > svg.leashes { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; z-index: 1; }
 .collar { appearance: none; position: absolute; width: 12.5%; height: calc(100% / 12); min-height: 0; margin: 0; padding: 0; border: 0; background: none; pointer-events: auto; z-index: 3; font-style: normal; }
-.collar::after { content: ''; position: absolute; right: 6%; top: 4%; width: 15px; height: 15px; border-radius: 50%; background: var(--c, transparent); border: 2.5px solid #1c120a; box-shadow: 0 1px 0 rgba(0,0,0,.4); }
-.collar.off::after { background: rgba(28,18,10,.25); border-style: dashed; }
-.collar.hand { pointer-events: none; display: flex; justify-content: flex-end; align-items: flex-start; }
-.collar.hand::after { content: none; }
-.collar.hand b { margin: 3% 3% 0 0; min-width: 22px; padding: 0 5px; border-radius: 9px; background: var(--c); border: 2px solid #1c120a; font: 700 10.5px/14px var(--num, system-ui); color: #1c120a; text-align: center; box-shadow: 0 1px 0 rgba(0,0,0,.4); }
+.collar > svg { position: absolute; right: 4%; top: 6%; width: 15px; height: 15px; filter: drop-shadow(0 1px 0 rgba(0,0,0,.35)); }
+.collar.hand { pointer-events: none; }
+.collar.hand b { position: absolute; right: 4%; top: 6%; display: flex; gap: 2px; padding: 2px 3px; border-radius: 6px; background: rgba(28,18,10,.72); }
+.collar.hand em { width: 7px; height: 7px; border-radius: 50%; box-sizing: border-box; border: 1.5px solid #8a7550; }
+.collar.hand em.on { border: 0; background: radial-gradient(circle at 35% 30%, #f2d48a, #b07a2c 60%, #6b4518); }
 .tok > .collar.on { left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
+.tok > .collar.on > svg, .tok > .collar.on.hand b { top: 2%; right: 2%; }
 
 /* The test arena. The loadout: both squads and their kits. On the sand: a slim bar with the way back, the pairing and its score, and Fight. */
 #vsBar, #vsLoad { display: none; }
@@ -4653,26 +4654,32 @@ tokenTap = ((orig) => function (side, i) { TRAP.sel = null; orig(side, i); })(to
 clearFx = ((orig) => function () { orig(); document.querySelectorAll('#tokens .trapmark').forEach((x) => x.remove()); })(clearFx);
 
 // ---------- The leash: which beast is bonded to which handler ----------
-// At the arranging step a cord runs from each handler to his beasts, in his colour, and each beast wears a collar in that colour. Tap a collar to hand the beast
-// to the next handler with room, or to nobody. Left alone, a beast goes to the nearest handler with room. In the fight the collars stay on the pieces.
-const LEASH_COL = ['#e2b23a', '#58b3a6', '#cf6f93', '#93a84a', '#8f8fd6'];
-const leashNow = () => { const us = S.mine.units; if (!us.every((u) => u.pos)) return null; const B = E.bondsOf(us.map((u) => ({ b: u, x: u.pos.x, y: u.pos.y }))), L = B.map((a) => a[0] ?? null), hs = us.map((u, i) => i).filter((i) => E.isHandler(us[i])); return { L, B, hs, col: (h) => LEASH_COL[hs.indexOf(h) % LEASH_COL.length] }; };
-renderFormation = ((orig) => function () { orig(); if (S.step !== 'formation') return;
-  const us = S.mine.units, now = leashNow(); if (!now || !now.hs.length || !us.some((u) => E.isLeashable(u))) return; const { L, B, hs, col } = now;
-  const at = (u) => ({ row: H - 1 - u.pos.x, col: u.pos.y });
-  $('fx').insertAdjacentHTML('beforeend', `<svg class="leashes" viewBox="0 0 8 ${H}" preserveAspectRatio="none" aria-hidden="true">${us.flatMap((u, i) => B[i].map((h) => { const a = at(u), b = at(us[h]); return `<line x1="${a.col + .5}" y1="${a.row + .62}" x2="${b.col + .5}" y2="${b.row + .62}" stroke="#1c120a" stroke-width=".16" stroke-linecap="round" vector-effect="non-scaling-stroke" style="stroke-width:6px"/><line x1="${a.col + .5}" y1="${a.row + .62}" x2="${b.col + .5}" y2="${b.row + .62}" stroke="${col(h)}" stroke-linecap="round" vector-effect="non-scaling-stroke" style="stroke-width:3px"/>`; })).join('')}</svg>`);
+// At the arranging step a rawhide cord runs from each handler to his beasts, and each beast wears a small bronze ring; a beast with nobody wears an
+// empty one. The handler's own tag is a row of rings: one filled for each beast he holds, one open for each he has room for. No colours, no numbers:
+// the cord says whose beast is whose. Tap a beast's ring to hand it to the next handler with room, or to nobody. In the fight the rings stay on.
+const RING = (k) => `<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5" fill="none" stroke="#1c120a" stroke-width="4"/>${k === 'off' ? '<circle cx="8" cy="8" r="5" fill="none" stroke="#c9b48a" stroke-width="1.6" stroke-dasharray="2.2 2"/>' : '<circle cx="8" cy="8" r="5" fill="none" stroke="#b07a2c" stroke-width="2.2"/><path d="M4.6 5.4a4.6 4.6 0 0 1 5.4-1.6" fill="none" stroke="#f2d48a" stroke-width="1.1" stroke-linecap="round"/>'}</svg>`;
+const RINGS = (held, room) => Array.from({ length: Math.max(held, room) }, (_, k) => `<em class="${k < held ? 'on' : ''}"></em>`).join('');
+const leashNow = () => { const us = S.mine.units; if (!us.every((u) => u.pos)) return null; const B = E.bondsOf(us.map((u) => ({ b: u, x: u.pos.x, y: u.pos.y }))), L = B.map((a) => a[0] ?? null), hs = us.map((u, i) => i).filter((i) => E.isHandler(us[i])); return { L, B, hs }; };
+renderFormation = ((orig) => function () { orig(); document.querySelectorAll('#board > svg.leashes').forEach((x) => x.remove()); if (S.step !== 'formation') return;
+  const us = S.mine.units, now = leashNow(); if (!now || !now.hs.length || !us.some((u) => E.isLeashable(u))) return; const { L, B, hs } = now;
+  const at = (u) => ({ row: H - 1 - u.pos.x, col: u.pos.y }), r = $('board').getBoundingClientRect(), tw = r.width / 8, th = r.height / H;
+  // The cord, in pixels: from base to base, sagging a little into the sand between them.
+  const cord = (a, b) => { const x1 = (a.col + .5) * tw, y1 = (a.row + .78) * th, x2 = (b.col + .5) * tw, y2 = (b.row + .78) * th, mx = (x1 + x2) / 2, my = (y1 + y2) / 2 + Math.hypot(x2 - x1, y2 - y1) * .12, d = `M${x1.toFixed(1)} ${y1.toFixed(1)}Q${mx.toFixed(1)} ${my.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
+    return `<path d="${d}" stroke="#1c120a" stroke-width="5" opacity=".85"/><path d="${d}" stroke="#9a6a34" stroke-width="2.8"/><path d="${d}" stroke="#d9b07a" stroke-width="2.8" stroke-dasharray="3 5" opacity=".7"/>`; };
+  $('tokens').insertAdjacentHTML('beforebegin', `<svg class="leashes" width="${r.width}" height="${r.height}" fill="none" stroke-linecap="round" aria-hidden="true">${us.flatMap((u, i) => B[i].map((h) => cord(at(u), at(us[h])))).join('')}</svg>`);
   us.forEach((u, i) => { const a = at(u);
-    if (hs.includes(i)) { const n = B.reduce((a, hsOf, k) => a + (hsOf.includes(i) ? E.slotsOf(us[k]) : 0), 0), el = document.createElement('i'); el.className = 'collar hand'; el.style.setProperty('--c', col(i)); el.innerHTML = `<b>${n}/${E.leashOf(u)}</b>`; place(el, a.row, a.col); $('tokens').appendChild(el); return; }
+    if (hs.includes(i)) { const n = B.reduce((a, hsOf, k) => a + (hsOf.includes(i) ? E.slotsOf(us[k]) : 0), 0), el = document.createElement('i'); el.className = 'collar hand'; el.innerHTML = `<b>${RINGS(n, E.leashOf(u))}</b>`; el.setAttribute('aria-label', `${u.name} holds ${n} of ${E.leashOf(u)}`); place(el, a.row, a.col); $('tokens').appendChild(el); return; }
     if (!E.isLeashable(u)) return;
-    const el = document.createElement('button'); el.type = 'button'; el.className = `collar${L[i] == null ? ' off' : ''}`; if (L[i] != null) el.style.setProperty('--c', col(L[i])); place(el, a.row, a.col);
+    const el = document.createElement('button'); el.type = 'button'; el.className = `collar${L[i] == null ? ' off' : ''}`; el.innerHTML = RING(L[i] == null ? 'off' : 'on'); place(el, a.row, a.col);
     el.setAttribute('aria-label', L[i] == null ? `${u.name}: no handler. Tap to bond.` : `${u.name}: bonded to ${us[L[i]].name}. Tap to change.`);
     el.onclick = (ev) => { ev.stopPropagation(); if ((u.gift ?? {}).tame) { u.bond = B[i].length ? 'none' : undefined; renderFormation(); return; } const room = (h) => E.leashOf(us[h]) - B.reduce((a, x, k) => a + (x.includes(h) && k !== i ? E.slotsOf(us[k]) : 0), 0) >= E.slotsOf(u), opts = hs.filter(room), cur = L[i] == null ? -1 : opts.indexOf(L[i]), next = opts[cur + 1];
       u.bond = next == null ? 'none' : us[next].fid; renderFormation(); };
     $('tokens').appendChild(el); });
 })(renderFormation);
 { const arrange = $('autoArrange').onclick; $('autoArrange').onclick = (ev) => { for (const u of S.mine.units) delete u.bond; arrange(ev); }; }
-apply = ((orig) => function (e, anim) { if (e.kind === 'leash') { const hs = [...P.state.entries()].filter(([, st]) => st.side === P.state.get(e.aid)?.side && P.res.events.some((x) => x.kind === 'leash' && x.aid === st.uid)).map(([id]) => id), c = LEASH_COL[Math.max(0, hs.indexOf(e.aid)) % LEASH_COL.length];
-    for (const id of [e.aid, ...e.tids]) { const el = P.els.get(id); if (!el) continue; el.querySelector('.collar')?.remove(); const d = document.createElement('i'); d.className = `collar on${id === e.aid ? ' hand' : ''}`; d.style.setProperty('--c', c); if (id === e.aid) d.innerHTML = `<b>${e.tids.length}</b>`; el.appendChild(d); } return 0; }
+setupFight = ((orig) => function (res) { document.querySelectorAll('#board > svg.leashes').forEach((x) => x.remove()); return orig(res); })(setupFight);
+apply = ((orig) => function (e, anim) { if (e.kind === 'leash') {
+    for (const id of [e.aid, ...e.tids]) { const el = P.els.get(id); if (!el) continue; el.querySelector('.collar')?.remove(); const d = document.createElement('i'); d.className = `collar on${id === e.aid ? ' hand' : ''}`; d.innerHTML = id === e.aid ? `<b>${RINGS(e.tids.length, 0)}</b>` : RING('on'); el.appendChild(d); } return 0; }
   return orig(e, anim); })(apply);
 
 // ---------- The Warren's ground: a warren mouth on a kobold side's own back row, and a tunnel mouth on the enemy's when it fields a tunneller ----------
