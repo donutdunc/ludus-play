@@ -4688,7 +4688,9 @@ if (!G) newSchool();
 S.myDoc = G.doctore; S.mine.doctore = G.doctore; if ((G.squads ?? {})[G.doctore]) loadSquad(); else syncSquad();
 const vsOf = () => { const m = /^#vs-([a-z]+)-([a-z]+)$/.exec(location.hash); return m && E.TEST_SQUADS.some((s) => s.id === m[1]) && E.TEST_SQUADS.some((s) => s.id === m[2]) ? [m[1], m[2]] : null; };
 const lastVs = () => { try { const v = JSON.parse(localStorage.getItem('ludus-vs') ?? 'null'); return Array.isArray(v) && v.every((x) => E.TEST_SQUADS.some((s) => s.id === x)) ? v : null; } catch (e) { return null; } };
-if (vsOf()) matchup(...vsOf()); else if (lastVs()) matchup(...lastVs()); else if (location.hash === '#battle' || /\/battle\/?$/.test(location.pathname)) freeBattle(); else { draftRival(); show('school'); }
+// The test arena is defined further down, so it opens once the whole file has run; if it cannot, the school opens instead.
+const openVs = (v) => setTimeout(() => { try { matchup(...v); } catch (e) { console.error(e); try { localStorage.removeItem('ludus-vs'); } catch (x) { /* nothing kept */ } document.body.classList.remove('matchup', 'vsload'); draftRival(); show('school'); } }, 0);
+if (vsOf()) openVs(vsOf()); else if (lastVs()) openVs(lastVs()); else if (location.hash === '#battle' || /\/battle\/?$/.test(location.pathname)) freeBattle(); else { draftRival(); show('school'); }
 window.addEventListener('hashchange', () => { if (vsOf()) matchup(...vsOf()); else if (location.hash === '#battle' && !FREE) freeBattle(); });
 $('toVs').onclick = () => matchup(...(lastVs() ?? ['show', 'pack']));
 /** Leave the test matchups for the school; the game opens at the school again next time. */
