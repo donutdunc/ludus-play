@@ -1524,10 +1524,13 @@ body.forming .fightbar #fight { font-size: 16.5px; letter-spacing: .03em; paddin
 
 /* Test matchups (#vs-a-b): a bar of two pickers over the board, nothing else around it. */
 #vsBar { display: none; }
-body.matchup #vsBar { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+body.matchup #vsBar { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto auto; gap: 8px; align-items: center; }
 #vsBar select { min-width: 0; min-height: 44px; font: inherit; font-size: 15px; padding: 0 8px; border-radius: 8px; background: #2a2622; color: #f1e8d6; border: 1px solid #5a4c3a; }
 #vsBar button { min-height: 44px; padding: 0 12px; }
 body.matchup #steps, body.matchup #noteBox, body.matchup #backFormation, body.matchup #backMuster, body.matchup #exitFight, body.matchup #again { display: none !important; }
+
+/* In free battle, the test squads are reached through Test matchups, not two extra rows. */
+#testMe, #testThem { display: none !important; }
 </style>
 
 <div class="wrap">
@@ -1560,6 +1563,7 @@ body.matchup #steps, body.matchup #noteBox, body.matchup #backFormation, body.ma
       <div class="row"><button id="fbOpen2" class="grow">Give feedback</button></div>
       <details class="testers" id="testers" open>
         <summary>For testers</summary>
+        <div class="row"><button id="toVs" class="primary grow">Test matchups</button></div>
         <div class="row"><button id="toFree" class="grow">Free battle</button><button id="resetSchool" class="grow">Start a new school</button></div>
         <button id="ownSets"></button>
         <div class="row"><button id="skipBeat" class="grow">Skip this step</button><button id="toGallery" class="grow">Gallery</button></div>
@@ -4665,17 +4669,22 @@ buildGrid(); renderLegend();
 if (!G) newSchool();
 S.myDoc = G.doctore; S.mine.doctore = G.doctore; if ((G.squads ?? {})[G.doctore]) loadSquad(); else syncSquad();
 const vsOf = () => { const m = /^#vs-([a-z]+)-([a-z]+)$/.exec(location.hash); return m && E.TEST_SQUADS.some((s) => s.id === m[1]) && E.TEST_SQUADS.some((s) => s.id === m[2]) ? [m[1], m[2]] : null; };
-if (vsOf()) matchup(...vsOf()); else if (location.hash === '#battle' || /\/battle\/?$/.test(location.pathname)) freeBattle(); else { draftRival(); show('school'); }
+const lastVs = () => { try { const v = JSON.parse(localStorage.getItem('ludus-vs') ?? 'null'); return Array.isArray(v) && v.every((x) => E.TEST_SQUADS.some((s) => s.id === x)) ? v : null; } catch (e) { return null; } };
+if (vsOf()) matchup(...vsOf()); else if (lastVs()) matchup(...lastVs()); else if (location.hash === '#battle' || /\/battle\/?$/.test(location.pathname)) freeBattle(); else { draftRival(); show('school'); }
 window.addEventListener('hashchange', () => { if (vsOf()) matchup(...vsOf()); else if (location.hash === '#battle' && !FREE) freeBattle(); });
 /** Test matchups: one test squad against another, straight into the fight. Two pickers to change either side, Swap, and Again for a new roll. */
+$('toVs').onclick = () => matchup(...(lastVs() ?? ['show', 'pack']));
+/** Leave the test matchups for the school; the game opens at the school again next time. */
+function leaveVs() { try { localStorage.removeItem('ludus-vs'); } catch (e) { /* this visit only */ } document.body.classList.remove('matchup'); if (location.hash.startsWith('#vs-')) history.replaceState(null, '', location.pathname); show('school'); }
 function matchup(a, b) {
+  try { localStorage.setItem('ludus-vs', JSON.stringify([a, b])); } catch (e) { /* this visit only */ }
   FREE = true; document.body.classList.add('free', 'matchup');
   const A = E.testTeam(a); S.myDoc = A.doctore; S.mine = { name: 'Yours', doctore: A.doctore, units: A.units.map((u) => ({ ...u, _style: styleOf(u).id })) };
   S.rival = 'test:' + b; draftRival(); S.bill = 150; S.vs = [a, b];
   let bar = $('vsBar'); if (!bar) { bar = document.createElement('div'); bar.id = 'vsBar'; $('arena').prepend(bar); }
-  const opts = (sel) => E.TEST_SQUADS.map((s) => `<option value="${s.id}"${s.id === sel ? ' selected' : ''}>${s.name.replace(/^The (.)/, (m, c) => c.toUpperCase())} · ${E.FACTIONS[s.fam].name.replace(/^The /, '')}</option>`).join('');
-  bar.innerHTML = `<select id="vsA" aria-label="Your squad">${opts(a)}</select><button id="vsSwap" aria-label="Swap sides">⇄</button><select id="vsB" aria-label="Their squad">${opts(b)}</select><button id="vsAgain" class="primary">Again</button>`;
-  const to = (x, y) => { location.hash = `#vs-${x}-${y}`; };
+  const opts = (sel) => E.TEST_SQUADS.map((s) => `<option value="${s.id}"${s.id === sel ? ' selected' : ''}>${s.name.replace(/^The (.)/, (m, c) => c.toUpperCase())}</option>`).join('');
+  bar.innerHTML = `<select id="vsA" aria-label="Your squad">${opts(a)}</select><button id="vsSwap" aria-label="Swap sides">⇄</button><select id="vsB" aria-label="Their squad">${opts(b)}</select><button id="vsAgain" class="primary">Again</button><button id="vsLeave" aria-label="Leave test matchups">✕</button>`;
+  const to = (x, y) => matchup(x, y); $('vsLeave').onclick = leaveVs;
   $('vsA').onchange = () => to($('vsA').value, S.vs[1]); $('vsB').onchange = () => to(S.vs[0], $('vsB').value); $('vsSwap').onclick = () => to(S.vs[1], S.vs[0]); $('vsAgain').onclick = () => go('fight');
   go('fight');
 }
