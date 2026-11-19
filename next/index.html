@@ -1531,6 +1531,9 @@ body.matchup #steps, body.matchup #noteBox, body.matchup #backFormation, body.ma
 
 /* In free battle, the test squads are reached through Test matchups, not two extra rows. */
 #testMe, #testThem { display: none !important; }
+
+/* Test matchups wait on the board with both squads set; the bar's Fight starts it, so the formation bar is not needed. */
+body.matchup .fightbar { display: none !important; }
 </style>
 
 <div class="wrap">
@@ -4683,10 +4686,10 @@ function matchup(a, b) {
   S.rival = 'test:' + b; draftRival(); S.bill = 150; S.vs = [a, b];
   let bar = $('vsBar'); if (!bar) { bar = document.createElement('div'); bar.id = 'vsBar'; $('arena').prepend(bar); }
   const opts = (sel) => E.TEST_SQUADS.map((s) => `<option value="${s.id}"${s.id === sel ? ' selected' : ''}>${s.name.replace(/^The (.)/, (m, c) => c.toUpperCase())}</option>`).join('');
-  bar.innerHTML = `<select id="vsA" aria-label="Your squad">${opts(a)}</select><button id="vsSwap" aria-label="Swap sides">⇄</button><select id="vsB" aria-label="Their squad">${opts(b)}</select><button id="vsAgain" class="primary">Again</button><button id="vsLeave" aria-label="Leave test matchups">✕</button>`;
+  bar.innerHTML = `<select id="vsA" aria-label="Your squad">${opts(a)}</select><button id="vsSwap" aria-label="Swap sides">⇄</button><select id="vsB" aria-label="Their squad">${opts(b)}</select><button id="vsAgain" class="primary">Fight</button><button id="vsLeave" aria-label="Leave test matchups">✕</button>`;
   const to = (x, y) => matchup(x, y); $('vsLeave').onclick = leaveVs;
   $('vsA').onchange = () => to($('vsA').value, S.vs[1]); $('vsB').onchange = () => to(S.vs[0], $('vsB').value); $('vsSwap').onclick = () => to(S.vs[1], S.vs[0]); $('vsAgain').onclick = () => go('fight');
-  go('fight');
+  go('formation');   // both squads on the board, waiting: Fight starts it
 }
 // ---------- The lintel: one solid strip at the top of every screen ----------
 // The phone lays a blur over the page under the clock, and it reaches a little below the status bar. A solid strip under it gives
