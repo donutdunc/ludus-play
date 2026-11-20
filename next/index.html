@@ -19,6 +19,8 @@
 </head>
 <body>
 <style>
+/* Until the first real screen is drawn the screens stay hidden, so nothing jumps into place (20 Nov). */
+html:not(.ready) body > * { visibility: hidden; animation: bootShow 0s 1.5s forwards; } @keyframes bootShow { to { visibility: visible; } }   /* if the script ever fails, the page still shows after a moment */ html.ready body > * { animation: bootIn .18s ease-out; } @keyframes bootIn { from { opacity: 0; } }
 /* Layout: one column, phone first. A stone frame around a sand board (12 deep x 8 lanes), controls above, the piece card below. Single deliberate look: night arena. */
 :root {
   --stone: #1b1815; --stone-2: #26221d; --stone-3: #332d26; --line: #4a4137;
@@ -5231,6 +5233,8 @@ const vsOf = () => { const m = /^#vs-([a-z]+)-([a-z]+)$/.exec(location.hash); re
 const lastVs = () => { try { const v = JSON.parse(localStorage.getItem('ludus-vs') ?? 'null'); return Array.isArray(v) && v.every((x) => E.TEST_SQUADS.some((s) => s.id === x)) ? v : null; } catch (e) { return null; } };
 // The test arena is defined further down, so it opens once the whole file has run; if it cannot, the school opens instead.
 const openVs = (v) => setTimeout(() => { try { matchup(...v); } catch (e) { console.error(e); try { localStorage.removeItem('ludus-vs'); } catch (x) { /* nothing kept */ } document.body.classList.remove('matchup', 'vsload'); draftRival(); show('school'); } }, 0);
+/* The page is painted once before this script has run; until the first real screen is drawn the screens stay hidden, so nothing jumps into place (20 Nov). */
+requestAnimationFrame(() => requestAnimationFrame(() => document.documentElement.classList.add('ready')));
 if (vsOf()) openVs(vsOf()); else if (lastVs()) openVs(lastVs()); else if (location.hash === '#battle' || /\/battle\/?$/.test(location.pathname)) freeBattle(); else { draftRival(); show('school'); }
 window.addEventListener('hashchange', () => { if (vsOf()) matchup(...vsOf()); else if (location.hash === '#battle' && !FREE) freeBattle(); });
 $('toVs').onclick = () => matchup(...(lastVs() ?? ['show', 'pack']));
