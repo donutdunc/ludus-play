@@ -1698,9 +1698,8 @@ body.vsform #card:not(.over) { display: none; }
       <details class="testers" id="testers" open>
         <summary>For testers</summary>
         <div class="row"><button id="toVs" class="primary grow">Test matchups</button></div>
-        <div class="row"><button id="toFree" class="grow">Free battle</button><button id="resetSchool" class="grow">Start a new school</button></div>
-        <button id="ownSets"></button>
         <div class="row"><button id="skipBeat" class="grow">Skip this step</button><button id="toGallery" class="grow">Gallery</button></div>
+        <div class="row"><button id="ownSets" class="grow"></button><button id="resetSchool" class="grow">Start a new school</button></div>
         <div class="row" id="testClock"></div>
         <div id="paceBox"></div>
       </details>
@@ -3566,12 +3565,8 @@ function newSchool() {
   dressAll();
   S.myDoc = id; S.mine = { name: 'Yours', doctore: id, units: [] }; saveG();
 }
-/** Free battle: every doctore, every piece, any rival or bill. The testers' door, and where battle prep grows up. */
-function freeBattle() {
-  FREE = true; document.body.classList.add('free');
-  if (!E.RIVALS.some((r) => r.id === S.rival) && S.rival !== 'random' && !String(S.rival).startsWith('test:')) S.rival = 'random';
-  draftRival(); go('muster');
-}
+/** Free battle was folded into the test matchups (20 Nov): the matchups do the same job with kits, formations and a running score. Old #battle links land there. */
+function freeBattle() { matchup(...(lastVs() ?? ['show', 'pack'])); }
 
 const speak = (el, who, name, html) => { $(el).innerHTML = `${ART.npcs?.[who] ? `<img src="${ART.npcs[who]}" alt="">` : '<span></span>'}<div class="say"><b>${name}</b>${html}</div>`; };
 const arenaIds = () => E.LADDER_ARENAS.map((a) => a.id);
@@ -3927,7 +3922,6 @@ $('resetSchool').onclick = () => {
   startOver();
 };
 
-$('toFree').onclick = freeBattle;
 
 // ---------- Fighters: the school owns named individuals ----------
 const rngNow = () => new E.Rng(Math.floor(Math.random() * 1e9));
