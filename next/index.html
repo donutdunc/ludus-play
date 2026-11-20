@@ -4389,11 +4389,12 @@ const tiersOpen = () => !!G && !FREE && E.scriptOver(SC());
 const bindKeys = (root) => root.querySelectorAll('[data-kk]').forEach((el) => el.onclick = (ev) => {   // a keyword always opens its rule, on any kit, worn or not: reading a kit never changes it (20 Nov). A tap anywhere else on the kit puts it on.
   ev.stopPropagation(); const [a, b, c, d] = JSON.parse(decodeURIComponent(el.dataset.kk)); explain(a, b, c, d); });
 /** A duplicate's token, said plainly: the bar toward the kit it went to, full when it opened it (20 Nov). Tokens are notches cut in a bone strip. */
+/* Kit tokens are counted from the start (20 Nov): the bar toward a kit has a segment for every token that kit takes in all, so Dig your heels in reads 1 of 3, not 0 of 2. */
 const tokenStep = (f, justIn) => { const now = E.kitsOpen(f), was = justIn ? E.kitsOpen({ ...f, tokens: f.tokens - 1 }) : now;
-  if (now > was) { const from = E.kitTokens(now - 2), need = E.kitTokens(now - 1) - from; return { kit: E.kitsOf(f)[now - 1], have: need, need, opened: true }; }
-  const nx = E.nextKit(f); return nx && { ...nx, opened: false }; };
-const tokenBar = (f, justIn = false) => { const st = tokenStep(f, justIn); if (!st) return '';
-  return `<div class="tkbar${st.opened ? ' opened' : ''}" aria-label="${st.have} of ${st.need} kit tokens toward ${st.kit.name}"><div class="tkhead"><span class="tkt">Kit tokens</span><span class="tkl"><span class="tkk">${st.kit.name}</span>${st.opened ? ' · open' : ` · ${st.have} of ${st.need}`}</span></div><span class="tkn">${Array.from({ length: st.need }, (_, k) => `<i class="${k < st.have ? 'on' : ''}"></i>`).join('')}</span></div>`; };
+  if (now > was) { const need = E.kitTokens(now - 1); return { kit: E.kitsOf(f)[now - 1], have: need, need, opened: true }; }
+  const open = E.kitsOpen(f), kits = E.kitsOf(f); if (open >= kits.length) return null; return { kit: kits[open], have: f.tokens, need: E.kitTokens(open), opened: false }; };
+const tokenBar = (f, justIn = false, named = true) => { const st = tokenStep(f, justIn); if (!st) return '';
+  return `<div class="tkbar${st.opened ? ' opened' : ''}" aria-label="${st.have} of ${st.need} kit tokens toward ${st.kit.name}"><div class="tkhead"><span class="tkt">Kit tokens</span><span class="tkl">${named ? `<span class="tkk">${st.kit.name}</span> · ` : ''}${st.opened ? 'open' : `${st.have} of ${st.need}`}</span></div><span class="tkn">${Array.from({ length: st.need }, (_, k) => `<i class="${k < st.have ? 'on' : ''}"></i>`).join('')}</span></div>`; };
 const tokenNews = (f) => (tokenStep(f, true)?.opened ? 'Answering again opened a new kit.' : 'Answering again counts toward his next kit.');
 function renderFighter() {
   const f = fighterById(sheetFid);
@@ -4431,7 +4432,7 @@ function renderFighter() {
     </div>
     ${tiles}
     <div class="frow2 kitrow${['kit', 'kit:earned'].includes(beatNow()?.need.key) ? ' beat-here' : ''}"><span>Kit</span><small style="grid-column:2;margin:0">${kits.length < 2 ? 'His only kit.' : ''}</small>
-      <div class="kits">${kits.map((k) => `<button class="kit ${k.locked ? 'locked' : ''}" data-kit="${k.id}" aria-pressed="${k.id === cur.id}" ${k.locked ? 'disabled' : ''}><b>${k.name}${k.locked ? '' : `<i class="ktg">${k.id === kits[0].id && kits.length > 1 ? 'Base · ' : ''}${k.rule ? `Targets ${k.rule}` : 'Stays back'}</i>`}</b><span>${k.locked ? (k.id === E.nextKit(f)?.kit.id ? tokenBar(f) : `Opens at ${E.kitTokens(k.locked)} tokens.`) : ''}</span>${k.locked ? '' : k.keys}<em>${k.locked ? '🔒' : k.cost}</em></button>`).join('')}</div></div>
+      <div class="kits">${kits.map((k) => `<button class="kit ${k.locked ? 'locked' : ''}" data-kit="${k.id}" aria-pressed="${k.id === cur.id}" ${k.locked ? 'disabled' : ''}><b>${k.name}${k.locked ? '' : `<i class="ktg">${k.id === kits[0].id && kits.length > 1 ? 'Base · ' : ''}${k.rule ? `Targets ${k.rule}` : 'Stays back'}</i>`}</b><span>${k.locked ? (k.id === E.nextKit(f)?.kit.id ? tokenBar(f, false, false) : `Opens at ${E.kitTokens(k.locked)} tokens.`) : ''}</span>${k.locked ? '' : k.keys}<em>${k.locked ? '🔒' : k.cost}</em></button>`).join('')}</div></div>
     ${tiersOpen() ? (() => { const own = tierOwned(f), capT = E.tierCap(M(f).stars), at = Math.min(f.tier ?? 1, own), next = own < capT ? own + 1 : 0;
       return `<div class="frow2 tierrow"><span>Tier</span><div class="tiers">${Array.from({ length: own }, (_, k) => `<button data-tier="${k + 1}" aria-pressed="${k + 1 === at}">${E.TIER_NAMES[k + 1]}</button>`).join('')}${next ? `<button class="buy" data-tierbuy="${next}" ${G.denarii >= tierPrice(f, next) ? '' : 'disabled'}>${E.TIER_NAMES[next]}<i>${tierPrice(f, next)}</i></button>` : ''}</div></div>`; })() : ''}
     ${allChips.length ? `<div class="frow2 chiprow"><span>Abilities</span><div class="chips">${allChips.map((c, n) => `<button class="chip ${c.k} ${c.lent ? 'lent' : ''}" data-chip="${n}">${c.label}</button>`).join('')}</div></div>` : ''}
