@@ -3936,6 +3936,10 @@ function chalkMark() { const key = S.mine.units.map((u) => u.fid ?? u.name).sort
   if (was == null || was === key || S.step !== 'muster') return;
   sfxPlay('chalk', .04, (r, t) => { if (!(typeof sndClip === 'function' && sndClip(r, t, 'chalk', { gain: .55, jit: .1 }))) sndNoise(r, t, { buf: 'grit', dur: .16, f: 3400, f1: 2600, q: 1.2, curve: SND_BELL, gain: .3, top: 7000 }); }); }
 renderMuster = ((orig) => function (...args) { const out = orig.apply(this, args); chalkMark(); return out; })(renderMuster);
+/* Choosing a kit is a different mark on the slate: two short quick ticks, higher than the roster stroke, like crossing one line out and writing another. */
+document.addEventListener('click', (ev) => { const b = ev.target.closest?.('button[data-kit]'); if (!b || b.disabled || ev.target.closest('[data-kk]') && b.getAttribute('aria-pressed') === 'true') return;
+  sfxPlay('kit', .08, (r, t) => { if (typeof sndClip === 'function' && sndClip(r, t, 'chalk', { gain: .34, rate: 1.7, jit: .04 })) { sndClip(r, t + .11, 'chalk', { gain: .5, rate: 1.45, jit: .04 }); return; }
+    sndNoise(r, t, { buf: 'grit', dur: .07, f: 4200, q: 1.2, gain: .2, top: 8000 }); sndNoise(r, t + .11, { buf: 'grit', dur: .09, f: 3800, q: 1.2, gain: .28, top: 8000 }); }); }, true);
 go = ((orig) => function (step) { const out = orig(step); CHALK.key = S.mine.units.map((u) => u.fid ?? u.name).sort().join(','); return out; })(go);
 const squadOf = (id) => ((G.squads ?? {})[id] ?? []).map((m) => fighterById(m.fid)).filter(Boolean);
 /** Who leads tonight: every doctore of the school as a card, with his face, his family and what he changes. One tap puts him in charge. */
