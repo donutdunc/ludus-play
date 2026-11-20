@@ -1719,6 +1719,9 @@ body:not(.free) #meter .pick b { display: none; }
 #muster .meter button:not(.pick):not(.drop) { background: none; border: 0; box-shadow: none; color: rgba(239,230,208,.7); font-weight: 600; text-decoration: underline dotted rgba(239,230,208,.35); text-underline-offset: 4px; }
 .docbox .tw, #docRow .tw { text-decoration: underline dotted rgba(239,230,208,.45); text-underline-offset: 3px; }
 .kit[aria-pressed="true"] { border-color: var(--bone); box-shadow: inset 0 0 0 1px var(--bone); }   /* the worn kit is bone-white like every other choice */
+
+/* Every kit tag is the same size, whatever its name (20 Nov): one tag shape down the whole roll call. */
+.frow.slim .pk .ktag { box-sizing: border-box; width: 156px; max-width: 100%; justify-content: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: inline-block; text-align: center; }
 </style>
 
 <div class="wrap">
@@ -4116,7 +4119,7 @@ const costSplit = (u) => { const total = cost(u), body = Math.min(total, E.billO
 function fighterRow(f, r, { inSquad = false, cant = false, add = false } = {}) {
   const u = unitOf(f), c = cost(u), kit = E.loadoutOf(f);
   return `<div class="piece frow slim ${add ? '' : 'view'} ${inSquad ? 'in' : ''}"><div class="ph">${tokenSvg(lookOf(u), { side: 0, bare: true })}
-      <button class="info" data-f="${f.id}"><span class="pn"><span class="pnm">${f.name}</span>${E.UNITS[f.template].name === f.name ? '' : `<small>${E.UNITS[f.template].name}</small>`}<em class="rst">${'★'.repeat(M(f).stars)}</em><span class="mini"><span><b>${Math.round(r.stats.hp)}</b>HP</span><span><b>${Math.round(r.stats.atk + r.weapon.damage)}</b>DMG</span></span></span><span class="pk"><b class="ktag">${kit.name}${E.kitsOpen(f) > 1 ? `<i>⇄ ${E.kitsOpen(f)}</i>` : ''}</b></span></button>
+      <button class="info" data-f="${f.id}"><span class="pn"><span class="pnm">${f.name}</span>${E.UNITS[f.template].name === f.name ? '' : `<small>${E.UNITS[f.template].name}</small>`}<em class="rst">${'★'.repeat(M(f).stars)}</em><span class="mini"><span><b>${Math.round(r.stats.hp)}</b>HP</span><span><b>${Math.round(r.stats.atk + r.weapon.damage)}</b>DMG</span></span></span><span class="pk"><b class="ktag">${kit.name}</b></span></button>
       <span class="bc" style="${cant ? 'opacity:.5' : ''}">${c}</span>
       ${add ? `<button class="add" data-toggle="${f.id}" ${cant ? 'disabled' : ''} aria-pressed="${inSquad}" aria-label="${inSquad ? 'Take' : 'Put'} ${f.name} ${inSquad ? 'out of' : 'in'} the squad">${inSquad ? '✓' : '+'}</button>` : ''}</div></div>`;
 }
