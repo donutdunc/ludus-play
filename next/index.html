@@ -4646,7 +4646,7 @@ function sandAdd(list, m, ms) {
   requestAnimationFrame(frame);
 }
 /** The attendants rake the floor between bouts. */
-function sandRake() { SAND.pre = []; SAND.marks = []; SAND.at = new Map(); SAND.run++; SAND.bout++; SAND.turn = 0; sandPaint(); sfxPlay('rake', .5, (r, t) => sndRake(r, t + sfxAfterAdvance(r))); }
+function sandRake() { SAND.pre = []; SAND.marks = []; SAND.at = new Map(); SAND.run++; SAND.bout++; SAND.turn = 0; sandPaint(); }   /* silent: the sand is simply fresh, and nothing on screen rakes it, so there is nothing to hear (20 Nov) */
 /** A little dust, thrown the way things were moving, that hangs for half a second. */
 function sandPuff(pt, ux, uy, n = 5, big = false) {
   if (SAND.calm) return;
