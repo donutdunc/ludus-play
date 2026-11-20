@@ -959,7 +959,7 @@ body.athome header { display: none; }
 .hsay.hot { padding-right: 46px; } .hsay.hot::after { right: 7px; width: 32px; height: 40px; border-radius: 7px; background: var(--gold); color: #1b1408; display: grid; place-items: center; transform: translateY(-50%); box-shadow: 0 0 0 2px #14110e; line-height: .9; }
 .hsay p { margin: 0; max-height: 68px; overflow: hidden; }
 /* the school: one board, the same object as an arena */
-.hboard { margin: 12px 11px 0; height: calc(100dvh - 276px - var(--inset, 0px)); min-height: 430px; border-radius: 3px; background: #0f0b08; display: flex; flex-direction: column;
+.hboard { margin: 12px 11px 0; height: calc(var(--appH, 100dvh) - 276px - var(--inset, 0px)); min-height: 430px; border-radius: 3px; background: #0f0b08; display: flex; flex-direction: column;
   box-shadow: 0 0 0 3px #14110e, 0 0 0 9px var(--rim), 0 0 0 11px #14110e, 0 14px 26px rgba(0,0,0,.6); }
 .hwall { flex: none; background: radial-gradient(70% 120% at 50% -30%, rgba(226,160,60,.12), transparent 70%), #0f0b08; border-bottom: 3px solid #14110e; border-radius: 3px 3px 0 0; }
 .hfascia { height: 32px; display: flex; align-items: center; padding: 0 12px 0 13px; }
@@ -5391,6 +5391,11 @@ spotEnd = ((orig) => function () { orig(); if (document.body.classList.contains(
     document.documentElement.style.setProperty('--inset', `${Math.round(inset)}px`); };
   set(); window.addEventListener('resize', set); window.addEventListener('orientationchange', set);
 })();
+/* The home's height is taken once, at the first paint, and kept: the app around the page settles a moment after opening and hands it a taller
+   view, which used to stretch the yard while you watched (20 Nov). It follows the view only when the view shrinks, or the phone turns. */
+(function appHeight() { let h = window.innerHeight; const put = () => document.documentElement.style.setProperty('--appH', `${h}px`); put();
+  window.addEventListener('resize', () => { if (window.innerHeight < h - 1) { h = window.innerHeight; put(); if (S.step === 'school') layoutYard(); } });
+  window.addEventListener('orientationchange', () => setTimeout(() => { h = window.innerHeight; put(); if (S.step === 'school') layoutYard(); }, 300)); })();
 // ---------- Statuses show on the piece ----------
 // No text tags over the board in the school game. A status is an effect on the piece, by family, and the detail (which
 // status, how many turns) is on the panel when you tap him. Buffs light the piece itself; debuffs mark the sand under it.
