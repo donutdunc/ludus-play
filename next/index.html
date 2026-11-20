@@ -3335,7 +3335,7 @@ function renderDrill() {
   const crowd = P.crowd?.pct ? `<div class="dst bad"><b>Restless crowd</b><i>rising</i><span>Every blow lands ${P.crowd.pct}% harder, his and theirs. Healing is halved.</span></div>` : '';
   const art = artOf(st.look), hp = Math.max(0, st.hp), cr = b ? chipsFor(b, team) : null;
   if (cr) cr.chips = cr.chips.filter((c) => c.k !== 'k-order' && c.kind !== 'Armor grade');   // what he can do, not what we call him
-  const stats = [...st.statuses].map((id) => `<div class="dst ${ST[id]?.[1] ? 'good' : 'bad'}"><b>${ST[id]?.[0] ?? id}</b><i>${id === 'guard' ? 'until he is hit' : st.left?.[id] > 0 ? `${st.left[id]} turn${st.left[id] > 1 ? 's' : ''} left` : ''}</i><span>${ST[id]?.[2] ?? ''}${st.from?.[id] ? ` <em>From ${st.from[id]}.</em>` : ''}</span></div>`).join('');
+  const stats = [...st.statuses].map((id) => `<div class="dst ${ST[id]?.[1] ? 'good' : 'bad'}"><b>${ST[id]?.[0] ?? id}</b><i>${id === 'guard' ? 'until he is hit' : id === 'onguard' ? 'until his next turn' : st.left?.[id] > 90 ? 'for the whole fight' : st.left?.[id] > 0 ? `${st.left[id]} turn${st.left[id] > 1 ? 's' : ''} left` : ''}</i><span>${ST[id]?.[2] ?? ''}${st.from?.[id] ? ` <em>From ${st.from[id]}.</em>` : ''}</span></div>`).join('');
   $('drill').innerHTML = `<div class="dh">${art ? `<img data-fam="${st.look.faction}" src="${art}" alt="">` : tokenSvg(st.look, { side: st.side, bare: true })}
       <div class="dw"><div class="dn">${st.name}<small>${b ? tpl(b).name : ''}</small></div>
         <div class="dhp ${st.side === 0 ? 'mine' : ''}"><i><b style="width:${(hp / st.maxHp * 100).toFixed(0)}%"></b></i><span>${st.alive ? `${Math.round(hp)} / ${Math.round(st.maxHp)} HP` : 'Down'}</span></div></div>
