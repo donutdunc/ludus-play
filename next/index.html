@@ -14,13 +14,13 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <title>Ludus</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus+SC&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap">
+<link id="fontCss" rel="stylesheet" media="print" onload="this.media='all'; window.__fontCss = true" href="https://fonts.googleapis.com/css2?family=Marcellus+SC&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap">
 <style>:root{color-scheme:dark;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}html{background:#1b1815}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head>
 <body>
 <style>
 /* Until the first real screen is drawn the screens stay hidden, so nothing jumps into place (20 Nov). */
-html:not(.ready) body > * { visibility: hidden; animation: bootShow 0s 1.5s forwards; } @keyframes bootShow { to { visibility: visible; } }   /* if the script ever fails, the page still shows after a moment */ html.ready body > * { animation: bootIn .18s ease-out; } @keyframes bootIn { from { opacity: 0; } }
+html:not(.ready) body > * { visibility: hidden; animation: bootShow 0s 4s forwards; } @keyframes bootShow { to { visibility: visible; } }   /* if the script ever fails, the page still shows after a moment */ 
 /* Layout: one column, phone first. A stone frame around a sand board (12 deep x 8 lanes), controls above, the piece card below. Single deliberate look: night arena. */
 :root {
   --stone: #1b1815; --stone-2: #26221d; --stone-3: #332d26; --line: #4a4137;
@@ -5234,7 +5234,9 @@ const lastVs = () => { try { const v = JSON.parse(localStorage.getItem('ludus-vs
 // The test arena is defined further down, so it opens once the whole file has run; if it cannot, the school opens instead.
 const openVs = (v) => setTimeout(() => { try { matchup(...v); } catch (e) { console.error(e); try { localStorage.removeItem('ludus-vs'); } catch (x) { /* nothing kept */ } document.body.classList.remove('matchup', 'vsload'); draftRival(); show('school'); } }, 0);
 /* The page is painted once before this script has run; until the first real screen is drawn the screens stay hidden, so nothing jumps into place (20 Nov). */
-requestAnimationFrame(() => requestAnimationFrame(() => document.documentElement.classList.add('ready')));
+/* The typefaces load from the web without holding up the first paint (which would show a blank page); text set before they land reflows when they do, so the screen waits for them (at most 1.2 s), lays the yard out again, then shows (20 Nov). */
+{ const reveal = () => requestAnimationFrame(() => { try { if (S.step === 'school') { layoutYard(); fitSay(); } } catch (e) { console.error(e); } requestAnimationFrame(() => document.documentElement.classList.add('ready')); });
+  const late = new Promise((r) => setTimeout(r, 1200)); Promise.race([new Promise((r) => { const css = document.getElementById('fontCss'); if (!css || window.__fontCss) r(); else { css.addEventListener('load', r); css.addEventListener('error', r); } }).then(() => document.fonts?.ready), late]).then(reveal, reveal); }
 if (vsOf()) openVs(vsOf()); else if (lastVs()) openVs(lastVs()); else if (location.hash === '#battle' || /\/battle\/?$/.test(location.pathname)) freeBattle(); else { draftRival(); show('school'); }
 window.addEventListener('hashchange', () => { if (vsOf()) matchup(...vsOf()); else if (location.hash === '#battle' && !FREE) freeBattle(); });
 $('toVs').onclick = () => matchup(...(lastVs() ?? ['show', 'pack']));
