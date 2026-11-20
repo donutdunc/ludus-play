@@ -1773,6 +1773,20 @@ body:not(.free) #meter .pick b { display: none; }
 #card .pc-kit h3 { color: var(--ink-3) !important; font: 600 11px/1.2 var(--f-ui); letter-spacing: .14em; }   /* the kit's name is a label, not gold */
 /* A man a doctore brings twice: one plain line under the squad (20 Nov). */
 .joinbox .jtwice { display: block; grid-column: 1 / -1; margin-top: 6px; font: 500 14px/1.3 var(--f-text); color: var(--ink-2); }
+/* Muster roll (20 Nov): HP and DMG stand in their own column, stacked and centred on the bill beside them; the name keeps the line to itself. */
+.frow.slim .info { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; align-items: center; }
+.frow.slim .info .pn { grid-column: 1; grid-row: 1; } .frow.slim .info .pk { grid-column: 1; grid-row: 2; }
+.frow.slim .info .mini.side { grid-column: 2; grid-row: 1 / 3; align-self: center; display: grid; grid-template-columns: auto auto; gap: 2px 4px; align-items: baseline; justify-items: end; margin: 0; padding: 0; }
+.frow.slim .info .mini.side span { display: contents; } .frow.slim .info .mini.side b { font: 700 16px/1.1 var(--f-ui); margin: 0; color: var(--ink); }
+/* Auto pick and Clear: small dark slabs like the School button, not underlined links. */
+#muster .meter .mtools button.slab { height: 32px; min-height: 32px; text-underline-offset: 0; padding: 0 12px; border-radius: 8px; background: rgba(20,17,14,.7); border: 1px solid #4a3a26; text-decoration: none; font: 600 14px var(--f-ui); letter-spacing: .02em; color: var(--ink-2); box-shadow: inset 0 1px 0 rgba(255,240,210,.05); }
+#muster .meter .mtools button.slab:active { background: rgba(10,8,6,.85); }
+/* A + that still fits the bill is bright and breathes slowly; one that does not is faint and still. */
+#muster .frow.slim .ph .add:not(:disabled):not([aria-pressed="true"]) { color: rgba(242,234,216,.92); animation: addBeckon 2.6s ease-in-out infinite; }
+@keyframes addBeckon { 50% { color: rgba(242,234,216,.55); } }
+#muster .frow.slim .ph .add:disabled { opacity: .22; }
+@media (prefers-reduced-motion: reduce) { #muster .frow.slim .ph .add { animation: none !important; } }
+.frow.slim .info .mini.side i { justify-self: start; font: 600 10px/1.1 var(--f-ui); font-style: normal; letter-spacing: .08em; color: var(--ink-3); }
 </style>
 
 <div class="wrap">
@@ -4175,7 +4189,7 @@ function renderDocRow() {
 // The bill card carries the way forward, so nothing floats over the roster.
 renderMeter = ((orig) => function () {
   orig(); if (FREE) return;
-  const e = $('meter').querySelector('.empty'); if (e) e.textContent = 'Tap + on a fighter to put him in the squad.';
+  const e = $('meter').querySelector('.empty'); if (e) e.textContent = '';   /* the empty tray keeps its place; the + that beckons says what to do (20 Nov) */
   $('meter').querySelectorAll('.pick[data-m]').forEach((el) => { const u = S.mine.units[+el.dataset.m], svg = el.querySelector('svg'); if (u && svg) svg.outerHTML = tokenSvg(lookOf(u), { side: 0, bare: true }); });   /* plain plinths: the green ring is the fight's, not the roll call's */
   { // The bill in chalk, always on one line. Up to 100: a stroke a point, a slash through every fifth, the whole bill laid out and filling in.
     // Past 100 that will not fit, so five bundles are tied into a sheaf (a boxed bundle, worth 25): what is spent is chalked first, what is left follows faint.
@@ -4186,7 +4200,7 @@ renderMeter = ((orig) => function () {
       run(sp, over ? 'ov' : 'on'); if (!over) { x += 3; run(S.bill - sp, ''); } }
     $('meter').querySelector('.bar').outerHTML = `<svg class="tally" viewBox="0 0 ${S.bill <= 100 ? x - 3 : Math.max(x - 3, 317)} 14" preserveAspectRatio="xMinYMid meet" style="max-width:${S.bill <= 100 ? Math.ceil(S.bill / 5) * 30 + 'px' : 'none'}" aria-hidden="true">${g}</svg>`; }
   // Auto and Clear sit on the bill card, where the squad they change is, so the roster below ends on a fighter and the plate.
-  $('meter').querySelector('.top').insertAdjacentHTML('beforeend', '<span class="mtools"><button id="draftMe2">Auto pick</button><button id="clearMe2">Clear</button></span>');
+  $('meter').querySelector('.top').insertAdjacentHTML('beforeend', '<span class="mtools"><button id="draftMe2" class="slab">Auto pick</button><button id="clearMe2" class="slab">Clear</button></span>');
   $('draftMe2').onclick = () => $('draftMe').click(); $('clearMe2').onclick = () => $('clearMe').click();
   // The way on is the plate at the foot of the screen, as on every step of the road to a fight. Unready, it is dull and says what is missing.
   { let pl = $('toForm2'); if (!pl) { pl = document.createElement('button'); pl.id = 'toForm2'; pl.className = 'plate foot'; pl.type = 'button'; $('muster').appendChild(pl); pl.onclick = () => go('formation'); }
@@ -4224,7 +4238,7 @@ const costSplit = (u) => { const total = cost(u), body = Math.min(total, E.billO
 function fighterRow(f, r, { inSquad = false, cant = false, add = false } = {}) {
   const u = unitOf(f), c = cost(u), kit = E.loadoutOf(f);
   return `<div class="piece frow slim ${add ? '' : 'view'} ${inSquad ? 'in' : ''}"><div class="ph">${tokenSvg(lookOf(u), { side: 0, bare: true })}
-      <button class="info" data-f="${f.id}"><span class="pn"><span class="pnm">${f.name}</span>${E.UNITS[f.template].name === f.name ? '' : `<small>${E.UNITS[f.template].name}</small>`}<em class="rst">${'★'.repeat(M(f).stars)}</em><span class="mini"><span><b>${Math.round(r.stats.hp)}</b>HP</span><span><b>${Math.round(r.stats.atk + r.weapon.damage)}</b>DMG</span></span></span><span class="pk"><b class="ktag">${kit.name}</b></span></button>
+      <button class="info" data-f="${f.id}"><span class="pn"><span class="pnm">${f.name}</span>${E.UNITS[f.template].name === f.name ? '' : `<small>${E.UNITS[f.template].name}</small>`}<em class="rst">${'★'.repeat(M(f).stars)}</em></span><span class="pk"><b class="ktag">${kit.name}</b></span><span class="mini side"><span><b>${Math.round(r.stats.hp)}</b><i>HP</i></span><span><b>${Math.round(r.stats.atk + r.weapon.damage)}</b><i>DMG</i></span></span></button>
       <span class="bc" style="${cant ? 'opacity:.5' : ''}">${c}</span>
       ${add ? `<button class="add" data-toggle="${f.id}" ${cant ? 'disabled' : ''} aria-pressed="${inSquad}" aria-label="${inSquad ? 'Take' : 'Put'} ${f.name} ${inSquad ? 'out of' : 'in'} the squad">${inSquad ? '✓' : '+'}</button>` : ''}</div></div>`;
 }
