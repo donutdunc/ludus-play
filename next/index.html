@@ -1754,6 +1754,7 @@ body:not(.free) #meter .pick b { display: none; }
         <div class="row"><button id="toVs" class="primary grow">Test matchups</button></div>
         <div class="row"><button id="skipBeat" class="grow">Skip this step</button><button id="toGallery" class="grow">Gallery</button></div>
         <div class="row"><button id="ownSets" class="grow"></button><button id="resetSchool" class="grow">Start a new school</button></div>
+        <p id="sndDiag" class="hint" style="margin:6px 0 0"></p>
         <div class="row" id="testClock"></div>
         <div id="paceBox"></div>
       </details>
@@ -4769,10 +4770,20 @@ apply = ((orig) => function (e, anim) {
 // in a row are the same take. Each is played a shade faster or slower every time. The synthesised sounds above stay as the fallback
 // until the recordings have decoded, and for everything that has no recording (scrapes, sand, stings, cues).
 const CLIP = { buf: {}, last: {} };
-function clipLoad(rig) { if (rig.clips || typeof SFX_CLIPS === 'undefined') return; rig.clips = true;
-  for (const [k, b64] of Object.entries(SFX_CLIPS)) { try { const bin = atob(b64), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
-    const kind = k.split('_')[0], done = (buf) => { (CLIP.buf[kind] ??= []).push(buf); }, p = rig.ac.decodeAudioData(u8.buffer, done, () => {}); p?.catch?.(() => {}); } catch (e) { /* that take stays silent */ } } }
-function sndClip(rig, t, kind, { gain = .6, pan = 0, rate = 1, jit = .05 } = {}) { clipLoad(rig); const list = CLIP.buf[kind]; if (!list?.length) return false;
+/* Decoding every recording at once on the first tap jammed an iPhone's sound for seconds, and while it ran every sound fell back to the old
+   synthetic tones (the "harsh horn blare", 20 Nov). Now the recordings decode a few at a time, the everyday ones first, and a sound whose
+   recording is still decoding is simply silent. Decoded recordings belong to no one context, so a new one can use them at once. */
+const CLIP_FIRST = ['wood', 'thwack', 'tap', 'advance', 'chalk', 'club', 'bone', 'bronze', 'marble', 'scrap', 'fall', 'miss', 'block', 'crit'];
+CLIP.has = new Set(typeof SFX_CLIPS === 'undefined' ? [] : Object.keys(SFX_CLIPS).map((k) => k.split('_')[0]));
+CLIP.total = typeof SFX_CLIPS === 'undefined' ? 0 : Object.keys(SFX_CLIPS).length; CLIP.done = 0;
+function clipLoad(rig) { if (CLIP.started || typeof SFX_CLIPS === 'undefined') return; CLIP.started = true;
+  const rank = (k) => { const i = CLIP_FIRST.indexOf(k.split('_')[0]); return i < 0 ? 99 : i; }, queue = Object.keys(SFX_CLIPS).sort((a, b) => rank(a) - rank(b));
+  const next = () => { const k = queue.shift(); if (!k) return; let bin; try { bin = atob(SFX_CLIPS[k]); } catch (e) { CLIP.done++; next(); return; }
+    const u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    const kind = k.split('_')[0], fin = () => { CLIP.done++; sfxDiag(); next(); };
+    try { const pr = rig.ac.decodeAudioData(u8.buffer, (buf) => { (CLIP.buf[kind] ??= []).push(buf); fin(); }, fin); pr?.catch?.(() => {}); } catch (e) { fin(); } };
+  for (let n = 0; n < 3; n++) next(); }
+function sndClip(rig, t, kind, { gain = .6, pan = 0, rate = 1, jit = .05 } = {}) { clipLoad(rig); const list = CLIP.buf[kind]; if (!list?.length) return CLIP.has.has(kind);   /* recorded but still decoding: silent, never the synthetic stand-in */
   let i = Math.floor(Math.random() * list.length); if (list.length > 1 && i === CLIP.last[kind]) i = (i + 1) % list.length; CLIP.last[kind] = i;
   const src = rig.ac.createBufferSource(), amp = rig.ac.createGain(); src.buffer = list[i]; src.playbackRate.value = rate * (1 - jit + Math.random() * 2 * jit); amp.gain.value = gain;
   src.connect(amp); sfxPan(rig, amp, pan).connect(rig.out); src.start(Math.max(t, rig.ac.currentTime)); return true; }
@@ -5062,14 +5073,20 @@ const sfxMat = (lk) => (lk.faction === 'legion' ? 'marble' : lk.faction === 'war
 const sfxWeight = (lk) => Math.min(1, (LEAN_OF(lk) === 'tank' ? .8 : LEAN_OF(lk) === 'shooter' ? .15 : .4) + ((lk.stars || 1) >= 4 ? .2 : 0));
 const sfxAcross = (col) => (col - 3.5) / 3.5 * .5;
 const SND_ICON = (on) => `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 9.5h3.2L12 5.5v13l-4.8-4H4z" fill="currentColor"/>${on ? '<path d="M15.2 9a4.2 4.2 0 0 1 0 6M17.6 6.6a7.6 7.6 0 0 1 0 10.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>' : '<path d="M15.5 9.5l5 5M20.5 9.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>'}</svg>`;
+/** For testers: what the sound is actually doing, under the testers' buttons. */
+function sfxDiag() { const el = document.getElementById('sndDiag'); if (!el) return; const ac = SFX.rig?.ac;
+  el.textContent = `Sound ${SFX.on ? 'on' : 'off'} · ${ac ? ac.state : 'not started'} · ${CLIP.done}/${CLIP.total} recordings ready`; }
+setInterval(sfxDiag, 1500);
 function sfxButtons() { document.querySelectorAll('.sndbtn').forEach((b) => { b.innerHTML = SND_ICON(SFX.on); b.setAttribute('aria-pressed', String(SFX.on)); b.setAttribute('aria-label', SFX.on ? 'Sound is on. Turn it off' : 'Sound is off. Turn it on'); b.onclick = sfxToggle; }); }
 function sfxToggle() {
   SFX.on = !SFX.on; try { localStorage.setItem('ludus-sound', SFX.on ? '1' : '0'); } catch (e) { /* kept for this visit only */ }
-  sfxButtons();
+  sfxButtons(); setTimeout(sfxDiag, 50);
   if (!SFX.on) { SFX.drag = null; try { SFX.rig?.ac.suspend?.(); } catch (e) { /* already quiet */ } return; }
-  sfxWake(); const knock = () => sfxPlay('ui', 0, (r, t) => sndClack(r, t, 'wood', { gain: .45 }));   // one knock, so you know it is on
-  const ac = SFX.rig?.ac; if (!ac) return;
-  if (ac.state === 'running') knock(); else { try { ac.resume()?.then?.(knock); } catch (e) { /* nothing to confirm with */ } ac.onstatechange = () => { if (ac.state === 'running') { ac.onstatechange = null; knock(); } }; }
+  // A context the phone left suspended or interrupted is replaced with a fresh one, made inside this tap, which iPhone Safari lets run.
+  if (SFX.rig && SFX.rig.ac.state !== 'running') { try { SFX.rig.ac.close?.(); } catch (e) { /* gone already */ } SFX.rig = null; }
+  sfxWake();
+  let tries = 0; const knock = () => { const r = sfx(); if (r && CLIP.buf.wood?.length) { sndClip(r, r.ac.currentTime + .01, 'wood', { gain: .45, jit: 0 }); sfxDiag(); return; } if (++tries < 40) setTimeout(knock, 100); else sfxDiag(); };   // one knock, so you know it is on
+  knock();
 }
 renderHud = ((orig) => function () { orig(); $('fbOpen')?.insertAdjacentHTML('beforebegin', '<button class="sndbtn" type="button"></button>'); sfxButtons(); })(renderHud);
 $('transport').insertAdjacentHTML('beforeend', '<button class="sndbtn" type="button"></button>'); sfxButtons();
