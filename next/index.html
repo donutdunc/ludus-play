@@ -5167,19 +5167,24 @@ function sndRake(rig, t) {
   sndNoise(rig, t, { dur: .6, f: 1500, f1: 2300, q: .9, curve, gain: .12, top: 6000 }); sndNoise(rig, t, { buf: 'grit', f: 2800, q: .6, dur: .6, curve, gain: .22, top: 6000 });
 }
 /** The live rig, if sound is on and the browser has let it start. */
-function sfx() { const r = SFX.on ? SFX.rig : null; return r && r.ac.state === 'running' ? r : null; }
+/* A rig the tap has just asked to resume counts as live: what is scheduled on it plays the moment the phone lets it run, so the first sound of a visit is not lost (20 Nov). */
+function sfx() { const r = SFX.on ? SFX.rig : null; return r && (r.ac.state === 'running' || (r.ac.state === 'suspended' && performance.now() - (SFX.woke ?? -1e9) < 1500)) ? r : null; }
 /** Browsers only let sound start from inside a tap, so every tap wakes it. */
 function sfxWake() {
   if (!SFX.on) return;
   if (!SFX.rig) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
     try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { /* it then behaves as the browser decides */ }
     try { SFX.rig = sfxRig(new AC()); } catch (e) { return; } }
-  if (SFX.rig.ac.state !== 'running') { try { SFX.rig.ac.resume()?.catch?.(() => {}); } catch (e) { /* the next tap tries again */ }
+  if (SFX.rig.ac.state !== 'running') { SFX.woke = performance.now(); try { SFX.rig.ac.resume()?.catch?.(() => {}); } catch (e) { /* the next tap tries again */ }
     // iPhone Safari only truly opens the sound once something plays inside the tap itself; resume() alone can leave it shut until a second
     // try (it took two trips round the sound button to hear anything, 20 Nov). A single silent sample, played now, inside the tap, opens it.
     try { const ac = SFX.rig.ac, src = ac.createBufferSource(); src.buffer = ac.createBuffer(1, 1, 22050); src.connect(ac.destination); src.start(0); } catch (e) { /* the next tap tries again */ } }
 }
 for (const ev of ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown']) document.addEventListener(ev, sfxWake, { capture: true, passive: true });
+/* The recordings are decoded before the first tap, on a context made at load (it waits, silent, until a tap lets it run), so the first sound of a new visit is ready when it is asked for (20 Nov). */
+setTimeout(() => { if (!SFX.on || SFX.rig) return; const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { /* as the browser decides */ }
+  try { SFX.rig = sfxRig(new AC()); clipLoad(SFX.rig); } catch (e) { SFX.rig = null; } }, 400);
 // A screen that comes back from the background (a call, the lock screen) finds its sound suspended: the next tap wakes it, as above.
 /** Play one sound, unless the same kind has only just played. A sound that fails must never stop a fight. */
 /* The heartbeat on the press has the floor: anything a press sets off (the rake, the herald) waits until its third beat has landed. */
