@@ -1781,9 +1781,9 @@ body:not(.free) #meter .pick b { display: none; }
 /* Auto pick and Clear: small dark slabs like the School button, not underlined links. */
 #muster .meter .mtools button.slab { height: 32px; min-height: 32px; text-underline-offset: 0; padding: 0 12px; border-radius: 8px; background: rgba(20,17,14,.7); border: 1px solid #4a3a26; text-decoration: none; font: 600 14px var(--f-ui); letter-spacing: .02em; color: var(--ink-2); box-shadow: inset 0 1px 0 rgba(255,240,210,.05); }
 #muster .meter .mtools button.slab:active { background: rgba(10,8,6,.85); }
-/* A + that still fits the bill is bright and breathes slowly; one that does not is faint and still. */
-#muster .frow.slim .ph .add:not(:disabled):not([aria-pressed="true"]) { color: rgba(242,234,216,.92); animation: addBeckon 2.6s ease-in-out infinite; }
-@keyframes addBeckon { 50% { color: rgba(242,234,216,.55); } }
+/* A + that still fits the bill sits in a chalk ring and pulses gently, all in step; one that does not fit is faint and still (20 Nov). */
+#muster .frow.slim .ph .add:not(:disabled):not([aria-pressed="true"]) { width: 40px; height: 40px; min-height: 40px; border-radius: 50%; border: 1.5px solid rgba(242,234,216,.45); color: #f2ead8; font: 400 28px/1 var(--f-display); text-shadow: 0 0 6px rgba(242,234,216,.35); box-shadow: 0 0 0 0 rgba(242,234,216,0); animation: addBeckon 1.8s ease-in-out infinite; }
+@keyframes addBeckon { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(242,234,216,0); } 50% { transform: scale(1.1); border-color: rgba(242,234,216,.8); box-shadow: 0 0 10px 1px rgba(242,234,216,.22); } }
 #muster .frow.slim .ph .add:disabled { opacity: .22; }
 @media (prefers-reduced-motion: reduce) { #muster .frow.slim .ph .add { animation: none !important; } }
 .frow.slim .info .mini.side i { justify-self: start; font: 600 10px/1.1 var(--f-ui); font-style: normal; letter-spacing: .08em; color: var(--ink-3); }
