@@ -5035,9 +5035,13 @@ function sfxWake() {
   if (!SFX.rig) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
     try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { /* it then behaves as the browser decides */ }
     try { SFX.rig = sfxRig(new AC()); } catch (e) { return; } }
-  if (SFX.rig.ac.state !== 'running') { try { SFX.rig.ac.resume()?.catch?.(() => {}); } catch (e) { /* the next tap tries again */ } }
+  if (SFX.rig.ac.state !== 'running') { try { SFX.rig.ac.resume()?.catch?.(() => {}); } catch (e) { /* the next tap tries again */ }
+    // iPhone Safari only truly opens the sound once something plays inside the tap itself; resume() alone can leave it shut until a second
+    // try (it took two trips round the sound button to hear anything, 20 Nov). A single silent sample, played now, inside the tap, opens it.
+    try { const ac = SFX.rig.ac, src = ac.createBufferSource(); src.buffer = ac.createBuffer(1, 1, 22050); src.connect(ac.destination); src.start(0); } catch (e) { /* the next tap tries again */ } }
 }
 for (const ev of ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown']) document.addEventListener(ev, sfxWake, { capture: true, passive: true });
+// A screen that comes back from the background (a call, the lock screen) finds its sound suspended: the next tap wakes it, as above.
 /** Play one sound, unless the same kind has only just played. A sound that fails must never stop a fight. */
 /* The heartbeat on the press has the floor: anything a press sets off (the rake, the herald) waits until its third beat has landed. */
 function sfxAfterAdvance(r) { return Math.max(0, .85 - (r.ac.currentTime - (SFX.last.ui ?? -9))); }   /* a short wait after a single tap costs nothing, so this does not ask which was played */
@@ -5064,7 +5068,8 @@ function sfxToggle() {
   sfxButtons();
   if (!SFX.on) { SFX.drag = null; try { SFX.rig?.ac.suspend?.(); } catch (e) { /* already quiet */ } return; }
   sfxWake(); const knock = () => sfxPlay('ui', 0, (r, t) => sndClack(r, t, 'wood', { gain: .45 }));   // one knock, so you know it is on
-  try { SFX.rig?.ac.resume()?.then?.(knock); } catch (e) { /* nothing to confirm with */ }
+  const ac = SFX.rig?.ac; if (!ac) return;
+  if (ac.state === 'running') knock(); else { try { ac.resume()?.then?.(knock); } catch (e) { /* nothing to confirm with */ } ac.onstatechange = () => { if (ac.state === 'running') { ac.onstatechange = null; knock(); } }; }
 }
 renderHud = ((orig) => function () { orig(); $('fbOpen')?.insertAdjacentHTML('beforebegin', '<button class="sndbtn" type="button"></button>'); sfxButtons(); })(renderHud);
 $('transport').insertAdjacentHTML('beforeend', '<button class="sndbtn" type="button"></button>'); sfxButtons();
