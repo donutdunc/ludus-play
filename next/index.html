@@ -1562,10 +1562,10 @@ body.matchup #steps, body.matchup #noteBox, body.matchup .after, body.matchup #e
 #card .pc-bill { color: var(--ink-3); padding: 4px 2px; }
 #card .pc-hp { display: flex; flex-direction: column; gap: 5px; } #card .pc-hpl span { text-transform: none; letter-spacing: 0; font-size: 14px; color: var(--ink); margin-right: auto; }
 #card .pc-bar { height: 8px; border-radius: 4px; background: #3a322a; overflow: hidden; } #card .pc-bar i { display: block; height: 100%; background: #6fae5c; border-radius: 4px; }
-#card .pc-stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-top: 1px solid rgba(241,232,214,.12); border-bottom: 1px solid rgba(241,232,214,.12); padding: 6px 0; }
+#card .pc-stats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); border-top: 1px solid rgba(241,232,214,.12); border-bottom: 1px solid rgba(241,232,214,.12); padding: 6px 0; }
 #card .pc-stat { all: unset; cursor: pointer; display: grid; gap: 3px; justify-items: center; padding: 2px 0; border-radius: 6px; }
 #card .pc-stat:focus-visible { outline: 2px solid var(--gold); }
-#card .pc-stat b { font: 700 22px/1 var(--f-ui); color: var(--ink); } #card .pc-stat:last-child b { font-size: 16px; line-height: 1.375; color: var(--ink-2); }
+#card .pc-stat b { font: 700 22px/1 var(--f-ui); color: var(--ink); }
 #card .pc-stat span { font: 600 10px/1 var(--f-ui); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); white-space: nowrap; }
 #card .pc-kit { display: flex; flex-direction: column; gap: 8px; min-height: 0; flex: 1; }
 #card .pc-kit h3 { margin: 0; font: 600 13px/1 var(--f-ui); letter-spacing: .16em; text-transform: uppercase; color: var(--gold); }
@@ -1665,6 +1665,12 @@ body.matchup .midlab { display: none; }
 
 /* One explainer on the formation screen: the caption says how to move pieces, so the card's hint line stays hidden until a piece is tapped. */
 body.vsform #card:not(.over) { display: none; }
+
+/* A long name or kind never pushes a barracks row wider than the phone: the kind gives way first. */
+.frow.slim .info, .frow.slim .pn { min-width: 0; } .frow.slim .pn small { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The squad strip on the muster shows who is in; each man's bill is already on his row below, so it is not said twice. */
+body:not(.free) #meter .pick b { display: none; }
+.frow.slim .pn .pnm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .frow.slim .pn .rst { flex: none; }
 </style>
 
 <div class="wrap">
@@ -2260,7 +2266,7 @@ function renderCard() {
   if (live && live.alive) for (const id of live.statuses ?? []) chips.unshift({ k: 'k-order', label: `Now: ${ST[id]?.[0] ?? id}`, kind: 'Status', body: ST[id]?.[2] ?? '' });
   chips.splice(1, 0, { k: 'k-order', label: `Targets: ${ORDER_HELP[ord][0]}`, kind: 'Targeting', body: ORDER_HELP[ord][1] });
   // One card everywhere: who he is, his numbers, then his kit written out. Same height whatever the kit says; the rules scroll inside.
-  const cls = (b.fid && E.CAST_BY_ID?.[b.fid]?.title) || t.name, showCls = cls && cls !== b.name && !b.name.startsWith(cls) ? cls : (E.FACTIONS[t.faction]?.name ?? '').replace(/^The /, '');
+  const cls = t.name,   /* the kind, as the barracks and the sheet name him */ showCls = cls && cls !== b.name && !b.name.startsWith(cls) ? cls : (E.FACTIONS[t.faction]?.name ?? '').replace(/^The /, '');
   const rules = chips.filter((c) => !['Role', 'Targeting', 'Status'].includes(c.kind) && c.body), sts = live && live.alive ? [...(live.statuses ?? [])] : [];
   const hpNow = live ? Math.max(0, Math.round(live.hp)) : null, hpMax = Math.round(live?.maxHp ?? r.stats.hp);
   const num = (v, k, key) => `<button class="pc-stat" data-stat="${key ?? k}"><b>${v}</b><span>${k}</span></button>`;
@@ -2269,7 +2275,7 @@ function renderCard() {
       <div class="pc-who"><div class="pc-name">${b.name}</div><div class="pc-cls">${showCls} · <i>${'★'.repeat(starsOf(b))}</i></div>
         ${live ? `<div class="pc-hp"><div class="pc-bar"><i style="width:${Math.round(100 * hpNow / hpMax)}%"></i></div><div class="pc-hpl"><span>${hpNow} / ${hpMax}</span>${(live.fer ?? 0) > 0 ? `<em class="pc-tag fer">Ferocity ${live.fer}</em>` : ''}${sts.map((id) => `<em class="pc-tag ${ST[id]?.[1] ? 'good' : 'bad'}">${ST[id]?.[0] ?? id}</em>`).join('')}</div></div>`
         : `<div class="pc-tags"><span class="pc-tag">${JOB_NAME[t.job] ?? 'Fighter'}</span><span class="pc-tag">${ORDER_HELP[ord][0]}</span><span class="pc-bill">Bill ${cost(b)}</span></div>`}</div></div>
-    <div class="pc-stats">${num(live ? hpMax : Math.round(r.stats.hp), 'Health', 'HP')}${num(r.gift?.safe ? '–' : Math.round(r.stats.atk + r.weapon.damage), 'Damage', 'ATK')}${num(`${Math.round(E.armorCut(r.stats.def) * 100)}%`, 'Armor', 'ARMOR')}${num(Math.round(r.stats.spd), 'Speed', 'SPD')}${num(`${r.move} · ${r.weapon.range}`, 'Move · Reach', 'MOVE')}</div>
+    <div class="pc-stats">${num(live ? hpMax : Math.round(r.stats.hp), 'HP', 'HP')}${num(r.gift?.safe ? '–' : Math.round(r.stats.atk + r.weapon.damage), 'Dmg', 'ATK')}${num(`${Math.round(E.armorCut(r.stats.def) * 100)}%`, 'Armor', 'ARMOR')}${num(Math.round(r.stats.spd), 'Spd', 'SPD')}${num(r.move, 'Move', 'MOVE')}${num(r.weapon.range, 'Reach', 'REACH')}</div>
     <div class="pc-kit"><h3>${buildOfUnit(b)?.name ?? ''}</h3><div class="pc-rules">${rules.map((c) => `<p><b>${c.label}.</b> ${c.body}</p>`).join('') || '<p>No special rules.</p>'}${sts.map((id) => `<p class="pc-st"><b>${ST[id]?.[0] ?? id}.</b> ${ST[id]?.[2] ?? ''}</p>`).join('')}</div></div>`;
   wireStats(card, r);
 }
@@ -4041,7 +4047,7 @@ const costSplit = (u) => { const total = cost(u), body = Math.min(total, E.billO
 function fighterRow(f, r, { inSquad = false, cant = false, add = false } = {}) {
   const u = unitOf(f), c = cost(u), kit = E.loadoutOf(f);
   return `<div class="piece frow slim ${add ? '' : 'view'} ${inSquad ? 'in' : ''}"><div class="ph">${tokenSvg(lookOf(u), { side: 0, bare: true })}
-      <button class="info" data-f="${f.id}"><span class="pn">${f.name}<small>${E.UNITS[f.template].name}</small><em class="rst">${'★'.repeat(M(f).stars)}</em><span class="mini"><span><b>${Math.round(r.stats.hp)}</b>HP</span><span><b>${Math.round(r.stats.atk + r.weapon.damage)}</b>DMG</span></span></span><span class="pk"><b>${kit.name}</b></span></button>
+      <button class="info" data-f="${f.id}"><span class="pn"><span class="pnm">${f.name}</span>${E.UNITS[f.template].name === f.name ? '' : `<small>${E.UNITS[f.template].name}</small>`}<em class="rst">${'★'.repeat(M(f).stars)}</em><span class="mini"><span><b>${Math.round(r.stats.hp)}</b>HP</span><span><b>${Math.round(r.stats.atk + r.weapon.damage)}</b>DMG</span></span></span><span class="pk"><b>${kit.name}</b></span></button>
       <span class="bc" style="${cant ? 'opacity:.5' : ''}">${c}</span>
       ${add ? `<button class="add" data-toggle="${f.id}" ${cant ? 'disabled' : ''} aria-pressed="${inSquad}" aria-label="${inSquad ? 'Take' : 'Put'} ${f.name} ${inSquad ? 'out of' : 'in'} the squad">${inSquad ? '✓' : '+'}</button>` : ''}</div></div>`;
 }
@@ -5089,7 +5095,7 @@ function vsLoadout() {
       <div class="vl-men">${team.units.map((u, i) => `<button class="vl-man" data-vl="${k}${i}">${tokenSvg(lookOf(u), { side: k === 'A' ? 0 : 1 })}<b>${u.name}</b><small>${specs[i].split(':')[1] ?? ''}</small><em>${cost(u)}</em></button>`).join('')}</div>
       <div class="vl-bill">Bill ${team.units.reduce((n, u) => n + cost(u), 0)}</div></div>`; };
   const sc = vsScore();
-  el.innerHTML = `<div class="vl-top"><h2 class="sec">Test arena</h2><button id="vlLeave" aria-label="Leave the test arena">✕</button></div>
+  el.innerHTML = `<div class="vl-top"><h2 class="sec">Test matchups</h2><button id="vlLeave" aria-label="Leave the test matchups">✕</button></div>
     ${side('A', S.mine, S.vs[0])}<div class="vl-vs"><button id="vlSwap" aria-label="Swap sides">⇄</button>${sc ? `<span>This pairing: <b>${sc}</b></span>` : ''}</div>${side('B', S.theirs, S.vs[1])}
     <button class="primary cta" id="vlGo">Take the sand</button>`;
   $('vlA').onchange = () => matchup($('vlA').value, S.vs[1]); $('vlB').onchange = () => matchup(S.vs[0], $('vlB').value);
