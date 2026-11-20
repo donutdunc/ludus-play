@@ -741,7 +741,7 @@ body:not(.free) .meter .pick { width: 100%; padding: 2px 0; overflow: hidden; } 
 body:not(.free) .meter .info { white-space: nowrap; margin-left: 4px; text-align: left; } .meter .info b { color: var(--ink); } .meter .info.full { color: var(--gold); }
 body:not(.free) #muster h2.sec:has(#rosterNote) { display: none; }
 /* Reading a piece mid-fight: nothing resizes. The bar and the board keep their size and slide up together only if the panel would cover him. */
-body.fighting .spot, body.fighting .board { transition: transform .22s ease; transform: translateY(calc(-1 * var(--drilly, 0px))); }
+
 .drill { max-height: 42dvh; } .drill .dgo b small { display: block; font: 500 13px/1.3 var(--f-ui); color: var(--gold); margin-top: 1px; }
 /* A solid cap over the status-bar strip, so nothing scrolls under the clock and gets blurred. Every screen. */
 body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top, 0px); background: var(--stone); z-index: 80; pointer-events: none; }
@@ -1839,6 +1839,8 @@ body:not(.free) #meter .pick b { display: none; }
 #rite.known .rmore { opacity: 1; transform: none; }
 #rite .rmore .stats { margin: 0; }
 #rite .rcoin { display: none; }
+/* The fight panel docks at the top when the foot would cover the piece you tapped or his target; the board stays where it is (20 Nov). */
+.drill.top { top: 0; bottom: auto; border-top: 0; border-bottom: 2px solid var(--gold); border-radius: 0 0 14px 14px; padding-top: calc(12px + env(safe-area-inset-top, 0px)); padding-bottom: 14px; }
 </style>
 
 <div class="wrap">
@@ -3563,7 +3565,7 @@ go = ((orig) => function (step) { if (step !== 'fight') kinClear(); return orig(
 // ---------- Drill-down: tap a piece in a fight to pause and read it: who it is going for, who is on it, what is on it. ----------
 document.body.insertAdjacentHTML('beforeend', '<section id="drill" class="drill" hidden aria-live="polite"></section>');
 let drillUid = null;
-function closeDrill() { drillUid = null; document.body.style.setProperty('--drilly', '0px'); $('drill').hidden = true; document.body.classList.remove('drilling'); document.querySelectorAll('.aim.drillaim').forEach((x) => x.remove()); document.querySelectorAll('.tok.sel, .tok.aimed').forEach((x) => x.classList.remove('sel', 'aimed')); }
+function closeDrill() { drillUid = null; $('drill').hidden = true; document.body.classList.remove('drilling'); document.querySelectorAll('.aim.drillaim').forEach((x) => x.remove()); document.querySelectorAll('.tok.sel, .tok.aimed').forEach((x) => x.classList.remove('sel', 'aimed')); }
 // The same numbers as his sheet, in one row (his health is already the bar above).
 /* ---------- ONE FIGHTER CARD (20 Nov) ----------
    Every place a fighter is read (the formation, the fight, the barracks sheet, the gallery) shows the same eight numbers in the same order,
@@ -3624,10 +3626,10 @@ function renderDrill() {
     ${cr ? drillStats(cr.r, st, packOf(team, st.idx, st.side)) + chipsHtml(cr.chips) : ''}`;
   $('drill').hidden = false;
   $('drillX').onclick = closeDrill;
-  // The board keeps its size. If he or his target would sit under the panel, the fight slides up just far enough to clear them.
-  { const lift = +getComputedStyle(document.body).getPropertyValue('--drilly').replace('px', '') || 0, top = $('drill').getBoundingClientRect().top;
-    const low = Math.max(...[P.els.get(drillUid), st.alive && tg?.alive ? P.els.get(st.tgt) : null].filter(Boolean).map((el) => el.getBoundingClientRect().bottom + lift));
-    document.body.style.setProperty('--drilly', `${Math.max(0, Math.ceil(low + 16 - top))}px`); }
+  // The board never moves (20 Nov). The panel docks at the foot of the screen; if that would cover him or his target, it docks at the top instead.
+  { const d = $('drill'); d.classList.remove('top'); const rs = [P.els.get(drillUid), st.alive && tg?.alive ? P.els.get(st.tgt) : null].filter(Boolean).map((el) => el.getBoundingClientRect());
+    const low = Math.max(...rs.map((r) => r.bottom)), high = Math.min(...rs.map((r) => r.top)), h = d.getBoundingClientRect().height;
+    if (low + 8 > window.innerHeight - h && high - 8 >= h) d.classList.add('top'); }
   if (cr) { wireTiles($('drill'), cr.r); wireChips($('drill'), cr.chips); }
 }
 $('tokens').addEventListener('click', (ev) => {
