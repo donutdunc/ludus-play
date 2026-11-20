@@ -3389,7 +3389,7 @@ function reveal() {
   v.querySelector('.vtx').innerHTML = `<i>${outOf()}</i>${veilName(S.opponent.name)}${foe ? foeTalk(foe.hello) : `<span>${foeLine()}</span>`}`;
   void v.offsetWidth; v.classList.add('named'); if (foe) v.classList.add('faced');
   const hold = foe ? Math.min(3000, 1300 + foe.hello.length * 26) : 0;
-  sfxPlay('herald', .5, (r, t) => { if (typeof sndClip === 'function') { const pit = ['dregs', 'cellar'].includes($('board').dataset.arena); sndClip(r, t + .1, pit ? 'bell' : 'horn', { gain: pit ? .5 : .45, jit: .02 }); }   // a handbell down in the pits, the horn in the open arenas sndThud(r, t + .06, { gain: .5, f: 210 }); sndNoise(r, t + .06, { type: 'lowpass', f: 700, q: .4, dur: .3, gain: .14 }); });
+  sfxPlay('herald', .5, (r, t) => { if (typeof sndClip === 'function') { const pit = ['dregs', 'cellar'].includes($('board').dataset.arena); sndClip(r, t + .1, pit ? 'bell' : 'horn', { gain: pit ? .5 : .45, jit: .02 }); } /* a handbell down in the pits, the horn in the open arenas */ sndThud(r, t + .06, { gain: .5, f: 210 }); sndNoise(r, t + .06, { type: 'lowpass', f: 700, q: .4, dur: .3, gain: .14 }); });
   if (!calm) {   // they wait behind the gate, unseen
     board.classList.add('revealing');
     for (const uid of R.foes) { const el = P.els.get(uid); el.style.transition = 'none'; el.style.opacity = '0'; place(el, GATE.row, GATE.col); }
