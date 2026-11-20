@@ -4298,8 +4298,13 @@ const KIT_NUMS = [
   ['On hit', (r) => (r.weapon.onHit ? `${r.weapon.onHit.status} ${Math.round(r.weapon.onHit.chance * 100)}` : ''), (v) => { const [st, c] = String(v).split(' '); return `${st[0].toUpperCase()}${st.slice(1)} ${c}%`; }, 'Chance that a hit leaves this on the target.'],
 ];
 const kitSame = (pairs) => { const out = new Set(); for (const [k, get] of KIT_NUMS) if (new Set(pairs.map(([kr]) => get(kr))).size <= 1) out.add(k); return out; };
-const kitKeys = (kr, ku, same = new Set(KIT_NUMS.map((x) => x[0]))) => { const out = [];
-  for (const [k, get, label, body] of KIT_NUMS) { const v = get(kr); if (same.has(k) || v === -1 || v === '' || (k !== 'Move' && k !== 'Dmg' && v === 0)) continue; out.push(kkey('gear', '', label(v, kr), '', typeof body === 'function' ? body(v) : body, '')); }
+/** A kit's keys. The first kit is the base: it shows only its own rules. Every other kit shows its rules and only the numbers that differ from the base, as the change (20 Nov). */
+const KIT_PCT = new Set(['Armor', 'Block', 'Pierce', 'Crit']);
+const kitKeys = (kr, ku, baseR) => { const out = [];
+  if (baseR && baseR !== kr) for (const [k, get, label, body] of [...KIT_NUMS, ['Acc', (r) => Math.round(r.stats.acc), (v) => `Acc ${v}`, 'Chance to hit, before his target\'s evasion.'], ['Eva', (r) => Math.round(r.evasion), (v) => `Eva ${v}`, 'Chance to step out of a hit.']]) {
+    const v = get(kr), b = get(baseR); if (v === b) continue;
+    const text = typeof v === 'number' && typeof b === 'number' && v !== -1 && b !== -1 ? `${k} ${v > b ? '+' : '−'}${Math.abs(v - b)}${KIT_PCT.has(k) ? '%' : ''}` : v === '' || v === -1 ? '' : label(v, kr);
+    if (text) out.push(kkey('gear', '', text, '', `${typeof body === 'function' ? body(v) : body} ${label(v, kr)} in this kit, against ${label(b, baseR)} in the first.`, '')); }
   for (const id of ku?.actives ?? []) { const d = E.ACTIVE_DEF[id]; if (d) out.push(kkey('counts', '', d.name, '', d.description, [d.when && d.when !== 'Always' ? `When: ${d.when}` : '', `every ${d.cooldown} turns`].filter(Boolean).join(' · '))); }
   for (const [id, lv] of Object.entries(ku?.skills ?? {})) { const d = lv && E.SKILLS[id]; if (d) out.push(kkey('counts', 'Skill', d.name, '', d.perLevel ?? d.description ?? '', '')); }
   if (kr.gift) for (const k of E.giftKeys(kr.gift)) out.push(kkey(k.kind, '', k.label, '', k.body, ''));   // the rule text says what it grants or consumes; no label above it and no tally below
@@ -4325,7 +4330,7 @@ function renderFighter() {
   // Kits he can choose from: whole sets, never taken apart. Only the ones for the man he is, so a kit never turns him into someone else.
   const kitPairs = E.kitsOf(f).map((b) => { const ku = E.fighterUnit({ ...f, loadout: b.id, tier: Math.min(f.tier ?? 1, tierOwned(f, b.id)) }); return [E.resolveUnit(ku), ku]; }), same = kitSame(kitPairs);
   const kits = E.kitsOf(f).map((b, n) => { const [kr, ku] = kitPairs[n];
-    return { id: b.id, name: b.name, cost: cost(ku), locked: n >= E.kitsOpen(f) ? n - 1 : 0, keys: kitKeys(kr, ku, same), rule: kr.gift?.safe ? '' : ORDER_HELP[ku.tactic ?? defaultOrder(kr)][0] }; }).filter((k) => !k.locked || inSight('calls'));
+    return { id: b.id, name: b.name, cost: cost(ku), locked: n >= E.kitsOpen(f) ? n - 1 : 0, keys: kitKeys(kr, ku, kitPairs[0][0]), rule: kr.gift?.safe ? '' : ORDER_HELP[ku.tactic ?? defaultOrder(kr)][0] }; }).filter((k) => !k.locked || inSight('calls'));
   const art = artOfFighter(f);
   // What the kit changes: the same man unarmed in light armor, against him as he stands.
   // He always wears a kit, so his first kit is his baseline: its price is his price, and the other kits are measured against it.
@@ -4347,7 +4352,7 @@ function renderFighter() {
     </div>
     ${tiles}
     <div class="frow2 kitrow${['kit', 'kit:earned'].includes(beatNow()?.need.key) ? ' beat-here' : ''}"><span>Kit</span><small style="grid-column:2;margin:0">${kits.length < 2 ? 'His only kit.' : ''}</small>
-      <div class="kits">${kits.map((k) => `<button class="kit ${k.locked ? 'locked' : ''}" data-kit="${k.id}" aria-pressed="${k.id === cur.id}" ${k.locked ? 'disabled' : ''}><b>${k.name}${k.locked ? '' : `<i class="ktg">${k.rule ? `Targets ${k.rule}` : 'Stays back'}</i>`}</b><span>${k.locked ? `Opens at ${k.locked} token${k.locked > 1 ? 's' : ''}: answer the call with ${f.name} again.` : ''}</span>${k.locked ? '' : k.keys}<em>${k.locked ? '🔒' : k.cost}</em></button>`).join('')}</div></div>
+      <div class="kits">${kits.map((k) => `<button class="kit ${k.locked ? 'locked' : ''}" data-kit="${k.id}" aria-pressed="${k.id === cur.id}" ${k.locked ? 'disabled' : ''}><b>${k.name}${k.locked ? '' : `<i class="ktg">${k.id === kits[0].id && kits.length > 1 ? 'Base · ' : ''}${k.rule ? `Targets ${k.rule}` : 'Stays back'}</i>`}</b><span>${k.locked ? `Opens at ${k.locked} token${k.locked > 1 ? 's' : ''}: answer the call with ${f.name} again.` : ''}</span>${k.locked ? '' : k.keys}<em>${k.locked ? '🔒' : k.cost}</em></button>`).join('')}</div></div>
     ${tiersOpen() ? (() => { const own = tierOwned(f), capT = E.tierCap(M(f).stars), at = Math.min(f.tier ?? 1, own), next = own < capT ? own + 1 : 0;
       return `<div class="frow2 tierrow"><span>Tier</span><div class="tiers">${Array.from({ length: own }, (_, k) => `<button data-tier="${k + 1}" aria-pressed="${k + 1 === at}">${E.TIER_NAMES[k + 1]}</button>`).join('')}${next ? `<button class="buy" data-tierbuy="${next}" ${G.denarii >= tierPrice(f, next) ? '' : 'disabled'}>${E.TIER_NAMES[next]}<i>${tierPrice(f, next)}</i></button>` : ''}</div></div>`; })() : ''}
     ${allChips.length ? `<div class="frow2 chiprow"><span>Abilities</span><div class="chips">${allChips.map((c, n) => `<button class="chip ${c.k} ${c.lent ? 'lent' : ''}" data-chip="${n}">${c.label}</button>`).join('')}</div></div>` : ''}
@@ -4451,7 +4456,7 @@ function renderGallery() {
       <div class="gsec">Kits</div>
       <div class="gtiers"><span>Tier</span>${Array.from({ length: capT }, (_, k) => `<button data-gtier="${k + 1}" aria-pressed="${k + 1 === tier}">${E.TIER_NAMES[k + 1]}</button>`).join('')}</div>
       <div class="gkits">${kits.map((b, n) => { const [kr, ku] = gPairs[n], c = cost(ku), locked = n >= open;
-        return `<button class="gkit" data-kit="${b.id}" aria-pressed="${b.id === pick}"><b>${b.name}<i>${kr.gift?.safe ? 'Stays back' : `Targets ${ORDER_HELP[ku.tactic ?? defaultOrder(kr)][0]}`}</i></b>${kitKeys(kr, ku, gSame)}<em>${c}${c !== first ? `<small>${c > first ? '+' : '−'}${Math.abs(c - first)}</small>` : ''}</em>${locked ? `<u>Opens at ${n - 1} token${n - 1 > 1 ? 's' : ''}</u>` : ''}</button>`; }).join('')}</div>
+        return `<button class="gkit" data-kit="${b.id}" aria-pressed="${b.id === pick}"><b>${b.name}<i>${n === 0 && kits.length > 1 ? 'Base · ' : ''}${kr.gift?.safe ? 'Stays back' : `Targets ${ORDER_HELP[ku.tactic ?? defaultOrder(kr)][0]}`}</i></b>${kitKeys(kr, ku, gPairs[0][0])}<em>${c}${c !== first ? `<small>${c > first ? '+' : '−'}${Math.abs(c - first)}</small>` : ''}</em>${locked ? `<u>Opens at ${n - 1} token${n - 1 > 1 ? 's' : ''}</u>` : ''}</button>`; }).join('')}</div>
       ${slots ? `<div class="gsec">Pieces beside the kit · ${worn.length} of ${slots}</div><div class="grelics">${Object.keys(E.RELIC_KINDS).map((kind) => `<div class="grk"><i>${RELIC_MARK[kind]}${E.RELIC_KINDS[kind]}</i>${E.RELICS.filter((x) => x.kind === kind).map((x) => { const on = worn.includes(x.id), add = on ? 0 : cost({ ...E.fighterUnit(f), relics: [...worn.filter((id) => E.RELIC_BY_ID[id].kind !== kind), x.id] }) - cost({ ...E.fighterUnit(f), relics: worn.filter((id) => E.RELIC_BY_ID[id].kind !== kind) }); return `<button class="grelic" data-relic="${x.id}" aria-pressed="${on}"><b>${x.name}</b><span>${x.body}</span>${on ? '' : `<em>+${add}</em>`}</button>`; }).join('')}</div>`).join('')}</div>` : ''}
       <div class="gsec">Fights under</div><p class="gunder">${leads.join(', ')}</p>`;
   }
