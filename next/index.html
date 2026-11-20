@@ -1641,6 +1641,15 @@ body.matchup .midlab { display: none; }
 @keyframes hotring { 50% { box-shadow: 0 0 0 1.5px #14110e, 0 0 0 5px var(--gold), 0 0 0 6.5px #14110e, 0 0 6px 2px rgba(240,196,70,.5); } }
 /* No separate ring under the pointed-at piece: it matched no part of the painted plinth. The halo hugs the piece's own outline instead. */
 .hp.hot::before { display: none; }
+/* The yard says one thing: who leads tonight and who he can field. The leader's band is lit and his face framed bright; the others' bands
+   are quiet, and anyone the leader cannot put on the sand steps back. Tapping a quiet band puts that doctore in charge. */
+.hrank.rest .heads { opacity: .62; } .hrank.rest .hdoc .dface { filter: saturate(.35); }
+.hrank.lead .heads { background: linear-gradient(rgba(40,24,8,.3), rgba(40,24,8,.16)) !important; }
+.hrank.lead .hdoc.on .dface { border-color: #fffbe9; outline-width: 3px; }
+.hrank .hname { cursor: pointer; } .hrank.lead .hname small { color: #2a1a08; }
+.hp.bench { opacity: .4; filter: saturate(.3); }
+.hrank .heads.hot { opacity: 1; box-shadow: inset 0 0 0 2.5px var(--gold), 0 0 12px 2px rgba(240,196,70,.8); animation: hotring2 1.3s ease-in-out infinite; }
+@keyframes hotring2 { 50% { box-shadow: inset 0 0 0 2.5px var(--gold), 0 0 3px 0 rgba(240,196,70,.4); } }
 </style>
 
 <div class="wrap">
@@ -3752,7 +3761,7 @@ function homeVoice() {
     const lost = sc.lost[b.id] ?? 0, key = b.need.key, arena = b.fight && E.LADDER_ARENAS.find((a) => a.id === b.fight.arena);
     const f = key === 'kit:earned' ? (G.fighters.find((x) => x.tokens > 0 && E.kitsOf(x).length > 2) ?? fighterById(b.focus)) : key === 'train' ? ([fighterById(b.focus), ...canDrill()].find((x) => x && E.trainsAt(x)) ?? null) : b.focus ? fighterById(b.focus) : null;
     const text = lost && b.hint ? b.hint : b.say;
-    if (arena) return { who: 'magnus', text, at: { k: 'gate', id: arena.id }, run: () => enterArena(arena.id) };
+    if (arena) return { who: 'magnus', text, at: /pick the one for this fight/i.test(text) && G.doctores.length > 1 && !HOME.picked ? { k: 'docs' } : { k: 'gate', id: arena.id }, run: () => enterArena(arena.id) };
     if (key === 'ack:dusk') return { who: 'magnus', text, at: { k: 'bar' }, run: openLedger };
     if (key.startsWith('call:')) return { who: 'magnus', text, at: { k: 'door', id: 'calls' }, run: () => show('hall') };
     if (f) return { who: 'magnus', text, at: { k: 'fighter', id: f.id }, run: () => openFighter(f.id) };
@@ -3772,11 +3781,13 @@ const POLE = '<svg class="pole" viewBox="0 0 15 42" aria-hidden="true"><ellipse 
 function yardHtml(at) {
   // Families stand in the order they arrived: a new one takes the next place down and nobody already there moves.
   const tr = inSight('training') ? G.training : null, fams = [...new Set([...G.doctores.map((id) => E.DOCTORE_BY_ID[id].faction), ...G.fighters.map((f) => M(f).faction)])].filter((k) => G.fighters.some((f) => M(f).faction === k));
-  const piece = (f) => `<button class="hp${yardNew.has(f.id) ? ' new' : ''}${onErrand(f.id) ? ' out' : ''}${at.k === 'fighter' && at.id === f.id ? ' hot' : ''}" data-f="${f.id}" aria-label="${f.name}${onErrand(f.id) ? ', out on a request' : ''}">${tokenSvg(lookOf(unitOf(f)), { side: 0, bare: true })}</button>`;
+  const lockDoc = E.scriptDoctore(SC(), HOME.arena), leader = lockDoc && G.doctores.includes(lockDoc) ? lockDoc : G.doctore, choose = G.doctores.length > 1 && !lockDoc;   /* the yard shows who leads tonight and who he can put on the sand; tapping another doctore puts him in charge */
+  const piece = (f) => `<button class="hp${G.doctores.length > 1 && !E.fieldable(leader, f.template) ? ' bench' : ''}${yardNew.has(f.id) ? ' new' : ''}${onErrand(f.id) ? ' out' : ''}${at.k === 'fighter' && at.id === f.id ? ' hot' : ''}" data-f="${f.id}" aria-label="${f.name}${onErrand(f.id) ? ', out on a request' : ''}">${tokenSvg(lookOf(unitOf(f)), { side: 0, bare: true })}</button>`;
   const hero = fams.length === 1 && G.doctores.length === 1;
   const ranks = fams.map((k) => { const docs = G.doctores.filter((id) => E.DOCTORE_BY_ID[id].faction === k);
     const men = G.fighters.filter((f) => M(f).faction === k && f.id !== tr?.fid).sort((x, y) => M(y).stars - M(x).stars || x.name.localeCompare(y.name));
-    return `<div class="hrank" data-n="${men.length}" data-docs="${docs.length}">${hero ? '' : `<span class="heads"><span class="faces">${docs.map((id) => `<button class="hdoc" data-doc="${id}" aria-label="${E.DOCTORE_BY_ID[id].name}">${docFace(id)}</button>`).join('')}</span><span class="hname">${docs.map((id) => `<b>${E.DOCTORE_BY_ID[id].name}</b>`).join('')}<small>${E.FACTIONS[k].name}</small></span></span>`}<span class="line">${men.map(piece).join('')}</span></div>`; }).join('');
+    const leads = docs.includes(leader), tag = G.doctores.length < 2 ? '' : leads ? ' · leads tonight' : choose && docs.length ? ' · tap to lead' : '';
+    return `<div class="hrank${G.doctores.length > 1 ? (leads ? ' lead' : ' rest') : ''}" data-n="${men.length}" data-docs="${docs.length}">${hero ? '' : `<span class="heads${at.k === 'docs' && !leads && docs.length ? ' hot' : ''}"><span class="faces">${docs.map((id) => `<button class="hdoc${id === leader ? ' on' : ''}" data-doc="${id}" aria-label="${E.DOCTORE_BY_ID[id].name}${id === leader ? ', leads tonight' : ''}">${docFace(id)}</button>`).join('')}</span><span class="hname" data-doc="${docs.includes(leader) ? leader : docs[0] ?? ''}">${docs.map((id) => `<b>${E.DOCTORE_BY_ID[id].name}</b>`).join('')}<small>${E.FACTIONS[k].name}${tag}</small></span></span>`}<span class="line">${men.map(piece).join('')}</span></div>`; }).join('');
   const tf = tr && fighterById(tr.fid), hotPost = at.k === 'post';
   const posts = inSight('training') ? `<div class="hposts"><small>Drill<br>post</small><button class="hpost${hotPost ? ' hot' : ''}" id="homePost" aria-label="${tf ? `${tf.name} is drilling` : 'The drill post is empty'}">${POLE}${tf ? `<span class="hp">${tokenSvg(lookOf(unitOf(tf)), { side: 0, bare: true })}</span><span class="hchip" id="yardClock">${clock(tr.doneAt - Date.now())}</span>` : `<span class="hchip${hotPost ? ' go' : ' dim'}">Empty</span>`}</button></div>` : '';
   return { html: ranks + posts, hero };
@@ -3829,7 +3840,7 @@ function renderSchool() {
   $('homeDoors').querySelectorAll('[data-door]').forEach((el) => el.onclick = () => doors.find((d) => d.id === el.dataset.door).run());
   const yard = yardHtml(at); $('homeYard').classList.toggle('hero', yard.hero); $('homeYard').innerHTML = yard.html;
   $('homeYard').querySelectorAll('[data-f]').forEach((el) => el.onclick = () => openFighter(el.dataset.f));
-  $('homeYard').querySelectorAll('[data-doc]').forEach((el) => el.onclick = () => show('rosterScr'));
+  $('homeYard').querySelectorAll('[data-doc]').forEach((el) => el.onclick = () => { const id = el.dataset.doc, lock = E.scriptDoctore(SC(), HOME.arena); if (!id || lock || G.doctores.length < 2) { show('rosterScr'); return; } HOME.picked = true; if (id === G.doctore) { renderSchool(); return; }   /* tapping the man already in charge confirms him */ putInCharge(id); renderSchool(); });
   if ($('homePost')) $('homePost').onclick = () => { const f = G.training ? fighterById(G.training.fid) : canDrill()[0]; if (f) openFighter(f.id); else show('rosterScr'); };
   $('homeGate').innerHTML = gateHtml(at);
   // While a step of the first day is waiting, the gate is shut: pressing it sends the eye back to the bar.
