@@ -3428,7 +3428,7 @@ function reveal() {
   v.querySelector('.vtx').innerHTML = `<i>${outOf()}</i>${veilName(S.opponent.name)}${foe ? foeTalk(foe.hello) : `<span>${foeLine()}</span>`}`;
   void v.offsetWidth; v.classList.add('named'); if (foe) v.classList.add('faced');
   const hold = foe ? Math.min(3000, 1300 + foe.hello.length * 26) : 0;
-  sfxPlay('herald', .5, (r, t) => { if (typeof sndClip === 'function') { const pit = ['dregs', 'cellar'].includes($('board').dataset.arena); sndClip(r, t + .1, pit ? 'bell' : 'horn', { gain: pit ? .5 : .45, jit: .02 }); } /* a handbell down in the pits, the horn in the open arenas */ sndThud(r, t + .06, { gain: .5, f: 210 }); sndNoise(r, t + .06, { type: 'lowpass', f: 700, q: .4, dur: .3, gain: .14 }); });
+  sfxPlay('herald', .5, (r, t) => { t += sfxAfterAdvance(r); if (typeof sndClip === 'function') { const pit = ['dregs', 'cellar'].includes($('board').dataset.arena); sndClip(r, t + .1, pit ? 'bell' : 'horn', { gain: pit ? .5 : .45, jit: .02 }); } /* a handbell down in the pits, the horn in the open arenas */ sndThud(r, t + .06, { gain: .5, f: 210 }); sndNoise(r, t + .06, { type: 'lowpass', f: 700, q: .4, dur: .3, gain: .14 }); });
   if (!calm) {   // they wait behind the gate, unseen
     board.classList.add('revealing');
     for (const uid of R.foes) { const el = P.els.get(uid); el.style.transition = 'none'; el.style.opacity = '0'; place(el, GATE.row, GATE.col); }
@@ -4549,7 +4549,7 @@ function sandAdd(list, m, ms) {
   requestAnimationFrame(frame);
 }
 /** The attendants rake the floor between bouts. */
-function sandRake() { SAND.pre = []; SAND.marks = []; SAND.at = new Map(); SAND.run++; SAND.bout++; SAND.turn = 0; sandPaint(); sfxPlay('rake', .5, (r, t) => sndRake(r, t)); }
+function sandRake() { SAND.pre = []; SAND.marks = []; SAND.at = new Map(); SAND.run++; SAND.bout++; SAND.turn = 0; sandPaint(); sfxPlay('rake', .5, (r, t) => sndRake(r, t + sfxAfterAdvance(r))); }
 /** A little dust, thrown the way things were moving, that hangs for half a second. */
 function sandPuff(pt, ux, uy, n = 5, big = false) {
   if (SAND.calm) return;
@@ -4899,6 +4899,8 @@ function sfxWake() {
 }
 for (const ev of ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown']) document.addEventListener(ev, sfxWake, { capture: true, passive: true });
 /** Play one sound, unless the same kind has only just played. A sound that fails must never stop a fight. */
+/* The heartbeat on the press has the floor: anything a press sets off (the rake, the herald) waits until its third beat has landed. */
+function sfxAfterAdvance(r) { return Math.max(0, .85 - (r.ac.currentTime - (SFX.last.ui ?? -9))); }
 function sfxPlay(kind, gap, fn) { const r = sfx(); if (!r) return; const now = r.ac.currentTime; if (now - (SFX.last[kind] ?? -9) < gap) return; SFX.last[kind] = now; try { fn(r, now + .008); } catch (e) { /* silence */ } }
 /** The scrape under a dragged piece follows the finger: speed in pixels per millisecond on every move, and -1 when it is let go. */
 function sfxDrag(speed) {
