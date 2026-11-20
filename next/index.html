@@ -1805,8 +1805,40 @@ body:not(.free) #meter .pick b { display: none; }
 #rite .rwho .tkbar .tkk { color: var(--ink); font-weight: 600; margin: 0 .25em; }
 /* The calls' notice board, with the cornu across it (20 Nov): the header of the Calls, the Forum's door, its row in the Forum sheet. */
 .nbwrap { display: flex; justify-content: center; margin: 2px 0 6px; } .nbwrap .nboard { width: min(78%, 300px); height: auto; filter: drop-shadow(0 6px 10px rgba(0,0,0,.55)); }
-.hdoor.board .arch img { object-fit: contain; object-position: center; padding: 2px; box-sizing: border-box; transform: scale(1.18); }
 .dpick.forum [data-room="hall"] img { object-fit: contain; background: none; }
+/* The Forum's door is the notice board itself, standing free on the dark wall: no arch, no tile, no ring. When something waits there,
+   lamplight falls on it from below; that warm light is the only signal (20 Nov). */
+#homeDoors .hdoor.nbd { padding-top: 6px; }
+#homeDoors .hdoor.nbd .arch { width: 76px; height: 58px; border-radius: 0; background: none; box-shadow: none !important; overflow: visible; }
+#homeDoors .hdoor.nbd .arch img { position: absolute; left: 0; bottom: 0; width: 76px; height: 58px; margin: 0; padding: 0; transform: none; object-fit: contain; filter: drop-shadow(0 3px 4px rgba(0,0,0,.75)); }
+#homeDoors .hdoor.nbd .dot { display: none; }
+#homeDoors .hdoor.nbd.hot .arch::before, #homeDoors .hdoor.nbd:has(.dot) .arch::before { content: ''; position: absolute; left: -14px; right: -14px; bottom: -10px; height: 46px; background: radial-gradient(closest-side, rgba(244,196,96,.55), rgba(244,196,96,0)); animation: boardLamp 2.4s ease-in-out infinite; }
+#homeDoors .hdoor.nbd b { margin-top: 6px; }
+@keyframes boardLamp { 50% { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) { #homeDoors .hdoor.nbd .arch::before { animation: none; } }
+/* Kit tokens (20 Nov): a labelled bar, the full width of its card, one segment per token the step needs. */
+.tkbar { display: grid; gap: 6px; width: 100%; margin-top: 10px; font: 500 14px/1.2 var(--f-ui); color: var(--ink-2); }
+.tkbar .tkhead { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.tkbar .tkt { font: 600 11px/1 var(--f-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); }
+.tkbar .tkl { text-align: right; } .tkbar .tkk { color: var(--ink); font-weight: 600; }
+.tkbar .tkn { display: flex; gap: 4px; width: 100%; box-sizing: border-box; padding: 3px; border-radius: 4px; background: #17110c; box-shadow: inset 0 1px 2px rgba(0,0,0,.6), 0 0 0 1px #4a3a26; }
+.tkbar .tkn i { flex: 1; width: auto; height: 12px; border-radius: 2px; background: rgba(242,234,216,.08); box-shadow: none; }
+.tkbar .tkn i.on, .tkbar.opened .tkn i.on { background: linear-gradient(#f2ead8, #cfc2a2); box-shadow: 0 0 6px rgba(242,234,216,.25); }
+/* The reveal (20 Nov): the piece on the left, who he is on the right; his kit tokens and his eight numbers below, so a scroll shows the rest. No coin. */
+#rite { justify-content: flex-start; overflow-y: auto; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 110px); }
+#rite .rbody { display: grid; grid-template-columns: 46% 1fr; align-items: end; gap: 10px; width: 100%; max-width: 440px; }
+#rite .rstage { flex: none; height: 300px; margin: 0; }
+#rite .rdisc { width: 170px; height: 46px; margin-left: -85px; }
+#rite .rpiece, #rite .rcloth { height: min(100% - 26px, 205px); }
+#rite .rflash { width: 200px; height: 200px; margin-left: -100px; }
+#rite .rwho { justify-items: start; text-align: left; padding-bottom: 12px; }
+#rite .rwho img { width: 64px; height: 64px; margin-bottom: 6px; }
+#rite .rwho b { font-size: 30px; }
+#rite .rwho p { max-width: none; min-height: 0; text-wrap: pretty; }
+#rite .rmore { width: 100%; max-width: 440px; display: grid; gap: 12px; opacity: 0; transform: translateY(14px); transition: opacity .3s .15s, transform .3s .15s; }
+#rite.known .rmore { opacity: 1; transform: none; }
+#rite .rmore .stats { margin: 0; }
+#rite .rcoin { display: none; }
 </style>
 
 <div class="wrap">
@@ -4068,7 +4100,7 @@ function renderSchool() {
       run: () => { const v = HOME.voice?.at; if (v?.k === 'door' && v.id === 'patron' && pat) return show('patronScr'); if (v?.k === 'door' && v.id === 'calls' && callsOn) return show('hall'); openForum(); } } : null,
   ], doors = slots.filter(Boolean);
   $('homeDoors').hidden = !doors.length;
-  $('homeDoors').innerHTML = slots.map((d) => d ? `<button class="hdoor${d.bust ? ' bust' : ''}${d.board ? ' board' : ''}${at.k === 'door' && d.hot.includes(at.id) ? ' hot' : ''}" data-door="${d.id}"><span class="arch">${d.art ? `<img src="${d.art}" alt="">` : ''}</span><b>${d.name}</b>${d.chip ? `<span class="hchip${d.go ? ' go' : ''}">${d.chip}</span>` : d.dot ? '<span class="dot"></span>' : ''}</button>` : '<span class="hdoor none" aria-hidden="true"></span>').join('');
+  $('homeDoors').innerHTML = slots.map((d) => d ? `<button class="hdoor${d.bust ? ' bust' : ''}${d.board ? ' nbd' : ''}${at.k === 'door' && d.hot.includes(at.id) ? ' hot' : ''}" data-door="${d.id}"><span class="arch">${d.art ? `<img src="${d.art}" alt="">` : ''}</span><b>${d.name}</b>${d.chip ? `<span class="hchip${d.go ? ' go' : ''}">${d.chip}</span>` : d.dot ? '<span class="dot"></span>' : ''}</button>` : '<span class="hdoor none" aria-hidden="true"></span>').join('');
   $('homeDoors').querySelectorAll('[data-door]').forEach((el) => el.onclick = () => doors.find((d) => d.id === el.dataset.door).run());
   const yard = yardHtml(at); $('homeYard').classList.toggle('hero', yard.hero); $('homeYard').innerHTML = yard.html;
   $('homeYard').querySelectorAll('[data-f]').forEach((el) => el.onclick = () => openFighter(el.dataset.f));
@@ -4359,8 +4391,8 @@ const tokenStep = (f, justIn) => { const now = E.kitsOpen(f), was = justIn ? E.k
   if (now > was) { const from = E.kitTokens(now - 2), need = E.kitTokens(now - 1) - from; return { kit: E.kitsOf(f)[now - 1], have: need, need, opened: true }; }
   const nx = E.nextKit(f); return nx && { ...nx, opened: false }; };
 const tokenBar = (f, justIn = false) => { const st = tokenStep(f, justIn); if (!st) return '';
-  return `<span class="tkbar${st.opened ? ' opened' : ''}" aria-label="${st.have} of ${st.need} tokens toward ${st.kit.name}"><span class="tkn">${Array.from({ length: st.need }, (_, k) => `<i class="${k < st.have ? 'on' : ''}"></i>`).join('')}</span><span class="tkl">${st.opened ? `<span class="tkk">${st.kit.name}</span> is open` : `${st.have} of ${st.need} toward <span class="tkk">${st.kit.name}</span>`}</span></span>`; };
-const tokenNews = (f) => (tokenStep(f, true)?.opened ? 'His token opens a new kit.' : 'His token goes toward his next kit.');
+  return `<div class="tkbar${st.opened ? ' opened' : ''}" aria-label="${st.have} of ${st.need} kit tokens toward ${st.kit.name}"><div class="tkhead"><span class="tkt">Kit tokens</span><span class="tkl"><span class="tkk">${st.kit.name}</span>${st.opened ? ' · open' : ` · ${st.have} of ${st.need}`}</span></div><span class="tkn">${Array.from({ length: st.need }, (_, k) => `<i class="${k < st.have ? 'on' : ''}"></i>`).join('')}</span></div>`; };
+const tokenNews = (f) => (tokenStep(f, true)?.opened ? 'Answering again opened a new kit.' : 'Answering again counts toward his next kit.');
 function renderFighter() {
   const f = fighterById(sheetFid);
   if (!f) return closeEdit();
@@ -4554,9 +4586,10 @@ function rite() {
   el.dataset.call = lastCall.call; el.dataset.stars = stars; el.className = ''; el.hidden = false;
   el.innerHTML = `<div class="rhead">${lastCall.morning ? 'The morning call' : c.name}</div>
     <div class="rstars">${'<i></i>'.repeat(sockets)}</div>
-    <div class="rstage"><span class="rrays"></span><span class="rdisc"></span><span class="rdust"></span><span class="rpiece">${tokenSvg(lookOf(unitOf(f)), { side: 0, bare: true })}</span><span class="rcloth">${RITE_CLOTH}</span><span class="rflash"></span>${dup ? '<span class="rcoin"></span>' : ''}</div>
+    <div class="rbody"><div class="rstage"><span class="rrays"></span><span class="rdisc"></span><span class="rdust"></span><span class="rpiece">${tokenSvg(lookOf(unitOf(f)), { side: 0, bare: true })}</span><span class="rcloth">${RITE_CLOTH}</span><span class="rflash"></span></div>
     <div class="rwho">${art ? `<img src="${art}" alt="">` : ''}<b>${f.name}</b><span>${t.name} · ${E.FACTIONS[t.faction]?.name ?? ''}</span>
-      <p>${dup ? `<em>You already have ${f.name}.</em> ${tokenNews(f)}` : m.line}</p>${dup ? tokenBar(f, true) : ''}</div>
+      <p>${dup ? `<em>You already have ${f.name}.</em> ${tokenNews(f)}` : m.line}</p></div></div>
+    <div class="rmore">${dup ? tokenBar(f, true) : ''}${statTiles(E.resolveUnit(unitOf(f)))}</div>
     <button class="plate" id="riteGo">Go on</button>`;
   const at = (ms, fn) => R.timers.push(setTimeout(() => { if (RITE === R && !R.over) fn(); }, ms)), on = (...k) => el.classList.add(...k), star = (k) => el.querySelectorAll('.rstars i')[k]?.classList.add('on');
   const end = () => { if (R.over) return; R.over = true; R.timers.forEach(clearTimeout); for (let k = 0; k < stars; k++) star(k); on('in', 'set', 'bare', 'known', 'token', 'done'); };
@@ -4932,7 +4965,7 @@ const CLIP = { buf: {}, last: {} };
 /* Decoding every recording at once on the first tap jammed an iPhone's sound for seconds, and while it ran every sound fell back to the old
    synthetic tones (the "harsh horn blare", 20 Nov). Now the recordings decode a few at a time, the everyday ones first, and a sound whose
    recording is still decoding is simply silent. Decoded recordings belong to no one context, so a new one can use them at once. */
-const CLIP_FIRST = ['wood', 'thwack', 'tap', 'advance', 'chalk', 'club', 'bone', 'bronze', 'marble', 'scrap', 'fall', 'miss', 'block', 'crit'];
+const CLIP_FIRST = ['wood', 'thwack', 'tap', 'advance', 'horn', 'chalk', 'club', 'bone', 'bronze', 'marble', 'scrap', 'fall', 'miss', 'block', 'crit'];
 CLIP.has = new Set(typeof SFX_CLIPS === 'undefined' ? [] : Object.keys(SFX_CLIPS).map((k) => k.split('_')[0]));
 CLIP.total = typeof SFX_CLIPS === 'undefined' ? 0 : Object.keys(SFX_CLIPS).length; CLIP.done = 0;
 function clipLoad(rig) { if (CLIP.started || typeof SFX_CLIPS === 'undefined') return; CLIP.started = true;
@@ -5391,11 +5424,16 @@ spotEnd = ((orig) => function () { orig(); if (document.body.classList.contains(
     document.documentElement.style.setProperty('--inset', `${Math.round(inset)}px`); };
   set(); window.addEventListener('resize', set); window.addEventListener('orientationchange', set);
 })();
-/* The home's height is taken once, at the first paint, and kept: the app around the page settles a moment after opening and hands it a taller
-   view, which used to stretch the yard while you watched (20 Nov). It follows the view only when the view shrinks, or the phone turns. */
-(function appHeight() { let h = window.innerHeight; const put = () => document.documentElement.style.setProperty('--appH', `${h}px`); put();
-  window.addEventListener('resize', () => { if (window.innerHeight < h - 1) { h = window.innerHeight; put(); if (S.step === 'school') layoutYard(); } });
-  window.addEventListener('orientationchange', () => setTimeout(() => { h = window.innerHeight; put(); if (S.step === 'school') layoutYard(); }, 300)); })();
+/* The home's height (20 Nov). The app around the page hands it a taller view a moment after opening, which stretched the yard while you watched;
+   freezing the first height instead left the extra room empty. So the settled height is remembered per phone width, and the home is drawn at
+   it from the first frame: the view grows into a page already its size. A first visit on a new phone still settles once. */
+(function appHeight() { const key = `ludus-viewh-${window.innerWidth}`, born = performance.now(); let saved = 0; try { saved = +localStorage.getItem(key) || 0; } catch (e) { /* none */ }
+  if (saved > (screen.height || 1e4) + 2 || saved < window.innerHeight * .8) saved = 0;
+  let h = Math.max(window.innerHeight, saved); const put = () => document.documentElement.style.setProperty('--appH', `${h}px`); put();
+  const relay = () => { put(); if (S.step === 'school') layoutYard(); };
+  window.addEventListener('resize', () => { const v = window.innerHeight; if (v > h + 1 || (v < h - 1 && performance.now() - born > 4000)) { h = v; relay(); } });
+  window.addEventListener('orientationchange', () => setTimeout(() => { h = window.innerHeight; relay(); }, 300));
+  setTimeout(() => { try { localStorage.setItem(key, String(window.innerHeight)); } catch (e) { /* kept for this visit only */ } }, 4000); })();
 // ---------- Statuses show on the piece ----------
 // No text tags over the board in the school game. A status is an effect on the piece, by family, and the detail (which
 // status, how many turns) is on the panel when you tap him. Buffs light the piece itself; debuffs mark the sand under it.
