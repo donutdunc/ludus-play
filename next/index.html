@@ -1639,6 +1639,8 @@ body.matchup .midlab { display: none; }
 @keyframes hothalo { 50% { filter: drop-shadow(0 0 1px #fff6cf) drop-shadow(0 0 2px var(--gold)) drop-shadow(0 0 4px rgba(240,196,70,.6)); } }
 .hp.hot::before { box-shadow: 0 0 0 1.5px #14110e, 0 0 0 5px var(--gold), 0 0 0 6.5px #14110e, 0 0 16px 7px rgba(240,196,70,.9); }
 @keyframes hotring { 50% { box-shadow: 0 0 0 1.5px #14110e, 0 0 0 5px var(--gold), 0 0 0 6.5px #14110e, 0 0 6px 2px rgba(240,196,70,.5); } }
+/* No separate ring under the pointed-at piece: it matched no part of the painted plinth. The halo hugs the piece's own outline instead. */
+.hp.hot::before { display: none; }
 </style>
 
 <div class="wrap">
