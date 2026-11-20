@@ -1625,6 +1625,20 @@ body.matchup .midlab { display: none; }
 /* The painted pool bars hang on the board's frame, half over its edge, so they never cover a tile, a piece or a burrow. */
 #kin1.bar, #kin1.plaque { top: -15px; } #kin0.bar, #kin0.plaque { bottom: -15px; }
 #kin1.bar.kin { top: -11px; } #kin0.bar.kin { bottom: -11px; }
+/* The piece the doctore is pointing at: painted pieces are busy, so the mark is loud. A gold halo hugging the piece, a thick ring under it, and a big arrow bobbing clear above its head. */
+.hp.hot { filter: drop-shadow(0 0 2px var(--gold)) drop-shadow(0 0 9px rgba(240,196,70,.95)); animation: hothalo 1.2s ease-in-out infinite; z-index: 3; }
+@keyframes hothalo { 50% { filter: drop-shadow(0 0 1px var(--gold)) drop-shadow(0 0 3px rgba(240,196,70,.55)); } }
+.hp.hot::before { box-shadow: 0 0 0 4px var(--gold), 0 0 16px 5px rgba(240,196,70,.9), inset 0 0 10px 2px rgba(240,196,70,.7); }
+@keyframes hotring { 50% { box-shadow: 0 0 0 4px var(--gold), 0 0 6px 1px rgba(240,196,70,.5), inset 0 0 4px 1px rgba(240,196,70,.3); } }
+.hp.hot::after { top: -4%; margin-left: -15px; border: 15px solid transparent; border-top: 21px solid var(--gold); border-bottom: 0; animation: hotmark 1.2s ease-in-out infinite; }
+@keyframes hotmark { 50% { transform: translateY(-9px); } }
+@media (prefers-reduced-motion: reduce) { .hp.hot { animation: none; } }
+/* Gold alone is lost on sand, so the others step back: they fade and grey while one piece is being pointed at, and he stands a little taller. */
+:has(> .hp.hot) > .hp:not(.hot) { opacity: .42; filter: saturate(.35); transition: opacity .25s, filter .25s; }
+.hp.hot { scale: 1.14; transform-origin: 50% 100%; filter: drop-shadow(0 0 1.5px #fff6cf) drop-shadow(0 0 3px var(--gold)) drop-shadow(0 0 10px rgba(240,196,70,.95)); }
+@keyframes hothalo { 50% { filter: drop-shadow(0 0 1px #fff6cf) drop-shadow(0 0 2px var(--gold)) drop-shadow(0 0 4px rgba(240,196,70,.6)); } }
+.hp.hot::before { box-shadow: 0 0 0 1.5px #14110e, 0 0 0 5px var(--gold), 0 0 0 6.5px #14110e, 0 0 16px 7px rgba(240,196,70,.9); }
+@keyframes hotring { 50% { box-shadow: 0 0 0 1.5px #14110e, 0 0 0 5px var(--gold), 0 0 0 6.5px #14110e, 0 0 6px 2px rgba(240,196,70,.5); } }
 </style>
 
 <div class="wrap">
