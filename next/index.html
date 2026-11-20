@@ -1748,6 +1748,15 @@ body:not(.free) #meter .pick b { display: none; }
 @keyframes pegIn { 0% { opacity: 0; transform: translate(-50%, -250%) scale(2.6); } 35% { opacity: 1; transform: translate(-50%, -190%) scale(2.6); } 85% { opacity: 1; transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 0 rgba(0,0,0,0); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1); } }
 @keyframes pegOut { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 30% { opacity: 1; transform: translate(-50%, -200%) scale(2.6); } 100% { opacity: 0; transform: translate(-50%, -330%) scale(2.2) rotate(18deg); } }
 .kinpop.peg { clip-path: circle(41% at 50% 50%); box-shadow: none; filter: drop-shadow(0 4px 4px rgba(0,0,0,.5)); }   /* only the round peg, not the slat round it */
+
+/* A doctore joining, after a win: the same speaking line as the rival above it, in the school's bronze, and his squad in one even row. */
+#spoils .gains li.joinbox { list-style: none; display: grid; gap: 8px; margin: 2px 0 10px; }
+.nc-talk.ally img, .nc-talk.ally .sig { border-radius: 8px; box-shadow: 0 0 0 1px #14110e, 0 0 0 3px #8a6a2e, 0 0 0 4px #14110e; }
+.nc-talk.ally p { background: #2a241c; color: #f1e2bd; box-shadow: inset 0 0 0 1px #8a6a2e; } .nc-talk.ally p::before { border-right-color: #2a241c; }
+.nc-talk.ally p b, .nc-talk.foe p b { display: block; font: 600 11px/1.4 var(--f-ui); letter-spacing: .14em; text-transform: uppercase; margin-bottom: 2px; } .nc-talk.ally p b { color: #d6b56a; }
+#spoils .gains li.joinbox .jsq { display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: end; gap: 0; }
+#spoils .gains li.joinbox .jsq > span:first-child { font: 600 10.5px/1.25 var(--f-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); padding-bottom: 6px; }
+#spoils .gains li.joinbox .sq { display: flex; gap: 4px; margin: 0; } #spoils .gains li.joinbox .sq svg { width: 40px !important; height: auto; }
 </style>
 
 <div class="wrap">
@@ -4566,7 +4575,8 @@ function fightDone(res) {
     const opened = openArenas().filter((x) => !openBefore.includes(x.id)).map((x) => x.name);
     const afford = inSight('calls') ? callsReady() : [], nx = beatNow(), again = !won && onBeat && !done.length;
     // One compact card. The bar above already says who won; this says what you got, what arrived, and what is next.
-    const gains = [...joined.map(({ id, brought }) => `<li class="joins">${docFace(id)}<span><b>${E.DOCTORE_BY_ID[id].name} and ${['bruna', 'skree', 'cassia'].includes(id) ? 'her' : 'his'} squad</b><i>join your school</i><span class="sq">${brought.map((f) => tokenSvg(lookOf(unitOf(f)), { side: 0, bare: true })).join('')}</span></span></li>${E.DOCTORE_HELLO[id] ? `<li class="says"><p>${E.DOCTORE_HELLO[id]}</p></li>` : ''}`), ...opened.map((n) => `<li><b>${n}</b> opens</li>`)];
+    // A doctore who joins speaks the way the beaten rival just did (face, name, his line), in the school's colours; his squad stands in a row beneath.
+    const gains = [...joined.map(({ id, brought }) => `<li class="joinbox"><div class="nc-talk ally">${docFace(id, true)}<p><b>${E.DOCTORE_BY_ID[id].name}</b>${E.DOCTORE_HELLO[id] ?? ''}</p></div><div class="jsq"><span>Joins your school with</span><span class="sq">${brought.map((f) => tokenSvg(lookOf(unitOf(f)), { side: 0, bare: true })).join('')}</span></div></li>`), ...opened.map((n) => `<li><b>${n}</b> opens</li>`)];
     P.rw = rw;
     const foe = onBeat ? foeSays(b0) : null;
     P.spoils = `      ${foe ? foeTalk(won ? foe.beaten : foe.won) : ''}
