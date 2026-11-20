@@ -809,8 +809,8 @@ body.forming #card.over, body.matchup #card.over { display: flex; position: abso
 body::before { height: var(--lintel); border-bottom: 1px solid var(--line); box-sizing: border-box; }
 body { padding-top: 26px; } html body .meter, body.fighting .spot, body.fighting .caption { top: calc(var(--lintel) + 4px) !important; }
 #toast { top: calc(var(--lintel) + 6px); }
-[data-look="lino"] body.fighting .board { width: min(100%, calc((100dvh - 276px - var(--inset, 0px)) * 0.5952)); }
-@media (max-height: 760px) { [data-look="lino"] body.fighting .board { width: min(100%, calc((100dvh - 200px - var(--inset, 0px)) * 0.5952)); } }
+[data-look="lino"] body.fighting .board { width: min(100%, calc((var(--appH, 100dvh) - 276px - var(--inset, 0px)) * 0.5952)); }
+@media (max-height: 760px) { [data-look="lino"] body.fighting .board { width: min(100%, calc((var(--appH, 100dvh) - 200px - var(--inset, 0px)) * 0.5952)); } }
 /* After a fight in the school there is one way on. No replay row, no empty card box. */
 body:not(.free) #after, body:not(.free).fighting:not(.forming) #card { display: none !important; }
 .spot .sm.won { color: #6b4a12; font-weight: 700; font-size: 14px; }
@@ -1588,8 +1588,8 @@ body.matchup #steps, body.matchup #noteBox, body.matchup .after, body.matchup #e
 .kinpool b.step { margin-right: 5px; }
 @media (prefers-reduced-motion: reduce) { .tok .sb { animation: none; } }
 /* One board size in the test arena: loadout, formation and fight all use the fight's size, so the board never jumps between steps. */
-[data-look="lino"] body.matchup .board { width: min(100%, calc((100dvh - 276px - var(--inset, 0px)) * 0.5952)); margin-left: auto; margin-right: auto; }
-@media (max-height: 760px) { [data-look="lino"] body.matchup .board { width: min(100%, calc((100dvh - 200px - var(--inset, 0px)) * 0.5952)); } }
+[data-look="lino"] body.matchup .board { width: min(100%, calc((var(--appH, 100dvh) - 276px - var(--inset, 0px)) * 0.5952)); margin-left: auto; margin-right: auto; }
+@media (max-height: 760px) { [data-look="lino"] body.matchup .board { width: min(100%, calc((var(--appH, 100dvh) - 200px - var(--inset, 0px)) * 0.5952)); } }
 .vl-shared { display: grid; gap: 4px; padding: 2px 12px 12px; margin-bottom: 10px; border-bottom: 1px solid var(--line); }
 .vl-shared b { font: 600 11px/1 var(--f-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); }
 .vl-shared span { font-size: 13px; opacity: .8; line-height: 1.35; } .vl-shared i { font-style: normal; font-weight: 600; }
@@ -5444,13 +5444,15 @@ spotEnd = ((orig) => function () { orig(); if (document.body.classList.contains(
 /* The home's height (20 Nov). The app around the page hands it a taller view a moment after opening, which stretched the yard while you watched;
    freezing the first height instead left the extra room empty. So the settled height is remembered per phone width, and the home is drawn at
    it from the first frame: the view grows into a page already its size. A first visit on a new phone still settles once. */
-(function appHeight() { const key = `ludus-viewh-${window.innerWidth}`, born = performance.now(); let saved = 0; try { saved = +localStorage.getItem(key) || 0; } catch (e) { /* none */ }
-  if (saved > (screen.height || 1e4) + 2 || saved < window.innerHeight * .8) saved = 0;
-  let h = Math.max(window.innerHeight, saved); const put = () => document.documentElement.style.setProperty('--appH', `${h}px`); put();
+(function appHeight() { const seen = () => Math.round(window.visualViewport?.height || window.innerHeight);   /* what is actually on screen, not the layout box */
+  const key = `ludus-viewh-${window.innerWidth}`, born = performance.now(); let saved = 0; try { saved = +localStorage.getItem(key) || 0; } catch (e) { /* none */ }
+  if (saved > (screen.height || 1e4) + 2 || saved < seen() * .8) saved = 0;
+  let h = Math.max(seen(), saved); const put = () => document.documentElement.style.setProperty('--appH', `${h}px`); put();
   const relay = () => { put(); if (S.step === 'school') layoutYard(); };
-  window.addEventListener('resize', () => { const v = window.innerHeight; if (v > h + 1 || (v < h - 1 && performance.now() - born > 4000)) { h = v; relay(); } });
-  window.addEventListener('orientationchange', () => setTimeout(() => { h = window.innerHeight; relay(); }, 300));
-  setTimeout(() => { try { localStorage.setItem(key, String(window.innerHeight)); } catch (e) { /* kept for this visit only */ } }, 4000); })();
+  const moved = () => { const v = seen(); if (v > h + 1 || (v < h - 1 && performance.now() - born > 4000)) { h = v; relay(); } };
+  window.addEventListener('resize', moved); window.visualViewport?.addEventListener('resize', moved);
+  window.addEventListener('orientationchange', () => setTimeout(() => { h = seen(); relay(); }, 300));
+  setTimeout(() => { try { localStorage.setItem(key, String(seen())); } catch (e) { /* kept for this visit only */ } }, 4000); })();
 // ---------- Statuses show on the piece ----------
 // No text tags over the board in the school game. A status is an effect on the piece, by family, and the detail (which
 // status, how many turns) is on the panel when you tap him. Buffs light the piece itself; debuffs mark the sand under it.
