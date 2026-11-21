@@ -1878,6 +1878,19 @@ body:not(.free) #meter .pick b { display: none; }
 @keyframes tkturn { 0% { opacity: 0; color: var(--gold); } 40% { opacity: 1; color: var(--gold); } 100% { opacity: 1; } }
 @keyframes tkopen { 0% { box-shadow: inset 0 1px 2px rgba(0,0,0,.6), 0 0 0 1px #4a3a26; } 30% { box-shadow: inset 0 1px 2px rgba(0,0,0,.6), 0 0 0 2px var(--gold), 0 0 18px 2px rgba(240,196,84,.7); } 100% { box-shadow: inset 0 1px 2px rgba(0,0,0,.6), 0 0 0 1px #4a3a26; } }
 #rite.cut .tkbar *::after { transition: none !important; }
+/* Kit / Collection tabs on the fighter sheet (20 Nov). One grid cell holds both panes, so the sheet is as tall as the taller of them on either tab. */
+.kitrow.ftabbed { grid-template-columns: minmax(0, 1fr); }
+.ftabs { display: flex; gap: 18px; border-bottom: 1px solid var(--line); margin-bottom: 2px; }
+.ftabs button { position: relative; height: 34px; min-height: 0; padding: 0 2px; border: 0; border-radius: 0; background: none; box-shadow: none; font: 600 12px/1 var(--f-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); display: inline-flex; align-items: center; gap: 6px; }
+.ftabs button i { font-style: normal; font-size: 11px; letter-spacing: 0; min-width: 18px; height: 18px; border-radius: 9px; display: inline-grid; place-items: center; background: rgba(242,234,216,.1); color: var(--ink-2); }
+.ftabs button[aria-selected="true"] { color: var(--ink); }
+.ftabs button[aria-selected="true"]::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--gold); }
+.fpanes { display: grid; } .fpane { grid-area: 1 / 1; min-width: 0; } .fpane.off { visibility: hidden; pointer-events: none; }
+.kits.coll .kit.locked { opacity: 1; cursor: default; } .kits.coll .kit.locked b { color: var(--ink-2); }
+.kits.coll .kit .kwait { font-style: normal; font: 500 14px/1.2 var(--f-ui); color: var(--ink-3); }
+.kitrow .kone { display: block; margin-top: 6px; color: var(--ink-3); }
+.kits.coll .kit { border-radius: 10px; border: 1px solid var(--line); background: rgba(0,0,0,.22); padding: 12px 14px; }
+.kits.coll .kit > span { grid-column: 1; }
 </style>
 
 <div class="wrap">
@@ -4390,7 +4403,8 @@ function frameSvg(fam, seed) {
   }
   return `<svg class="fframe" viewBox="0 0 ${W} ${H}" aria-hidden="true"><path d="M0,0 h96 v120 h-96 Z ${hole}" fill-rule="evenodd" fill="url(#g-bone0)" stroke="#150c06" stroke-width="1.6"/><rect x="3.5" y="3.5" width="89" height="113" fill="none" stroke="#b0793c" stroke-width="1"/></svg>`;
 }
-function openFighter(fid) { sheetFid = fid; S.editing = null; $('edit').hidden = false; $('scrim2').hidden = false; $('scrim2').onclick = closeEdit; renderFighter(); }
+let sheetTab = 'kit';
+function openFighter(fid) { sheetTab = 'kit'; sheetFid = fid; S.editing = null; $('edit').hidden = false; $('scrim2').hidden = false; $('scrim2').onclick = closeEdit; renderFighter(); }
 // A kit row is its name and four fixed slots, in this order: weapon, armor, off hand, family rule. No sentence fills a slot; the name carries the flavor.
 const kkey = (cls, kind, label, tag, body, num) => `<i class="kkey ${cls}" data-kk="${encodeURIComponent(JSON.stringify([kind, label, body, num ?? '']))}">${label}${tag ? `<u>${tag}</u>` : ''}</i>`;
 /** A kit has no gear to list: its row says only the numbers that differ from the fighter's other kits, then what the kit does. */
@@ -4469,8 +4483,14 @@ function renderFighter() {
       <div class="fcost"><span class="fstars">${'★'.repeat(M(f).stars)}</span><b>${total}</b></div>
     </div>
     ${tiles}
-    <div class="frow2 kitrow${['kit', 'kit:earned'].includes(beatNow()?.need.key) ? ' beat-here' : ''}"><span>Kit</span><small style="grid-column:2;margin:0">${kits.length < 2 ? 'His only kit.' : ''}</small>
-      <div class="kits">${kits.map((k) => `<button class="kit ${k.locked ? 'locked' : ''}" data-kit="${k.id}" aria-pressed="${k.id === cur.id}" ${k.locked ? 'disabled' : ''}><b>${k.name}${k.locked ? '' : `<i class="ktg">${k.id === kits[0].id && kits.length > 1 ? 'Base · ' : ''}${k.rule ? `Targets ${k.rule}` : 'Stays back'}</i>`}</b><span>${k.locked ? (k.id === E.nextKit(f)?.kit.id ? tokenBar(f, false, false) : `Opens at ${E.kitTokens(k.locked)} tokens.`) : ''}</span>${k.locked ? '' : k.keys}<em>${k.locked ? '🔒' : k.cost}</em></button>`).join('')}</div></div>
+    ${(() => { /* Kits he wears vs kits he is collecting (20 Nov): the sheet's Kit tab holds only what he can put on now; a kit still being
+         earned (its notches) lives on the Collection tab. Both panes share one grid cell, so switching tabs never changes the sheet's height. */
+      const open = kits.filter((k) => !k.locked), shut = kits.filter((k) => k.locked), tab = shut.length ? sheetTab : 'kit', nxt = E.nextKit(f)?.kit.id;
+      const kitPane = `<div class="kits">${open.map((k) => `<button class="kit" data-kit="${k.id}" aria-pressed="${k.id === cur.id}"><b>${k.name}<i class="ktg">${k.id === kits[0].id && kits.length > 1 ? 'Base · ' : ''}${k.rule ? `Targets ${k.rule}` : 'Stays back'}</i></b><span></span>${k.keys}<em>${k.cost}</em></button>`).join('')}</div>${kits.length < 2 ? '<small class="kone">His only kit.</small>' : ''}`;
+      const collPane = `<div class="kits coll">${shut.map((k) => `<div class="kit locked"><b>${k.name}</b>${k.keys}<span>${k.id === nxt ? tokenBar(f, false, false) : `<i class="kwait">Opens after ${E.kitsOf(f)[k.locked - 1]?.name ?? 'the kit before it'}.</i>`}</span><em>🔒</em></div>`).join('')}</div>`;
+      return `<div class="frow2 kitrow ftabbed${['kit', 'kit:earned'].includes(beatNow()?.need.key) ? ' beat-here' : ''}">
+        ${shut.length ? `<div class="ftabs" role="tablist"><button role="tab" data-ftab="kit" aria-selected="${tab === 'kit'}">Kit</button><button role="tab" data-ftab="coll" aria-selected="${tab === 'coll'}">Collection<i>${shut.length}</i></button></div>` : '<span>Kit</span>'}
+        <div class="fpanes"><div class="fpane${tab === 'kit' ? '' : ' off'}">${kitPane}</div>${shut.length ? `<div class="fpane${tab === 'coll' ? '' : ' off'}">${collPane}</div>` : ''}</div></div>`; })()}
     ${tiersOpen() ? (() => { const own = tierOwned(f), capT = E.tierCap(M(f).stars), at = Math.min(f.tier ?? 1, own), next = own < capT ? own + 1 : 0;
       return `<div class="frow2 tierrow"><span>Tier</span><div class="tiers">${Array.from({ length: own }, (_, k) => `<button data-tier="${k + 1}" aria-pressed="${k + 1 === at}">${E.TIER_NAMES[k + 1]}</button>`).join('')}${next ? `<button class="buy" data-tierbuy="${next}" ${G.denarii >= tierPrice(f, next) ? '' : 'disabled'}>${E.TIER_NAMES[next]}<i>${tierPrice(f, next)}</i></button>` : ''}</div></div>`; })() : ''}
     ${allChips.length ? `<div class="frow2 chiprow"><span>Abilities</span><div class="chips">${allChips.map((c, n) => `<button class="chip ${c.k} ${c.lent ? 'lent' : ''}" data-chip="${n}">${c.label}</button>`).join('')}</div></div>` : ''}
@@ -4489,6 +4509,7 @@ function renderFighter() {
   const putOn = (id) => { if (id === E.loadoutOf(f).id || !E.wear(f, id)) return; f.tier = Math.min(f.tier ?? 1, tierOwned(f, id)); scriptEvent('kit'); if (E.kitsOf(f).findIndex((l) => l.id === id) >= 1) scriptEvent('kit:earned'); after(); };
   $('fLoadout').onchange = (e) => putOn(e.target.value);
   root.querySelectorAll('[data-kit]').forEach((el) => el.onclick = () => putOn(el.dataset.kit)); bindKeys(root);
+  root.querySelectorAll('[data-ftab]').forEach((el) => el.onclick = () => { sheetTab = el.dataset.ftab; root.querySelectorAll('[data-ftab]').forEach((t) => t.setAttribute('aria-selected', String(t === el))); root.querySelectorAll('.fpane').forEach((p, n) => p.classList.toggle('off', (n === 0) !== (sheetTab === 'kit'))); });
   root.querySelectorAll('[data-train]').forEach((el) => el.onclick = () => { const st = el.dataset.train; if (G.training || !E.canStartTraining(f, st, G.denarii)) return; G.denarii -= E.trainPrice(f, st); G.training = { fid: f.id, stat: st, doneAt: Date.now() + E.trainSeconds(f, st) * 1000 }; chron(`${f.name} went into the yard to train ${STAT_LABEL[st]}.`); scriptEvent('train'); renderHud(); after(); });
   if ($('fSquad')) $('fSquad').onclick = () => { toggleSquad(f.id); after(); };
   $('edDone').onclick = closeEdit;
