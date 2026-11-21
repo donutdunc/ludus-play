@@ -1899,6 +1899,10 @@ body:not(.free) #meter .pick b { display: none; }
 #rite .rbring p { margin: 6px 0 0; font: 400 26px/1.2 var(--f-display); color: var(--ink); max-width: 320px; }
 #rite .rbring small { font: 600 12px/1 var(--f-ui); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
 #rite.intro .plate { visibility: visible; }
+/* The two doors are one size (21 Nov): both stand free on the table in the same 76 x 58 box, art sitting on the box's floor, labels on one line. */
+#homeDoors { align-items: end; }
+#homeDoors .hdoor.nbd { height: 85px; padding-top: 6px; }
+#homeDoors .hdoor.nbd .arch img { object-position: 50% 100%; }
 </style>
 
 <div class="wrap">
@@ -3901,7 +3905,7 @@ function runBring(done) {
     const step = G.bring?.[0]; if (!step || step.doc !== doc) { saveG(); renderHud(); return runBring(done); }
     G.bring.shift();
     const got = E.takeIn(G.fighters, E.CAST_BY_ID[step.cid]); dressAll();
-    const twice = E.SECOND_ANSWER[doc]; if (got.duplicate && twice?.id === step.cid && E.kitOpen(got.fighter, twice.wear)) got.fighter.loadout = twice.wear;
+    const twice = E.SECOND_ANSWER[doc]; if (got.duplicate && twice?.id === step.cid && E.kitOpen(got.fighter, twice.wear)) { got.fighter.loadout = twice.wear; got.fighter.kitsSeen = E.kitsOpen(got.fighter); }
     const sq = (G.squads[doc] ??= []); if (!got.duplicate && sq.length < 4) sq.push({ fid: got.fighter.id, pos: null, tactic: null });
     chron(got.duplicate ? `${got.fighter.name} answered ${d.name}'s call again: one notch.` : `${got.fighter.name} answered ${d.name}'s call.`);
     saveG(); lastCall = { fid: got.fighter.id, call: 'arms', duplicate: got.duplicate, by: doc }; rite(next);
@@ -4112,7 +4116,9 @@ const POLE = '<svg class="pole" viewBox="0 0 15 42" aria-hidden="true"><ellipse 
 function yardHtml(at) {
   // Families stand in the order they arrived: a new one takes the next place down and nobody already there moves.
   const tr = inSight('training') ? G.training : null; let fams = [...new Set([...G.doctores.map((id) => E.DOCTORE_BY_ID[id].faction), ...G.fighters.map((f) => M(f).faction)])].filter((k) => G.fighters.some((f) => M(f).faction === k));
-  const owed = (f) => { try { return f.tokens > 0 && typeof E.kitsOpen === 'function' && E.kitsOf(f).length > E.kitsOpen(f); } catch (e) { return false; } };   /* a kit he has earned and not yet opened: the gold dot means something is waiting on this fighter */
+  /* The gold dot under a piece: a kit his notches have opened that you have not looked at yet (21 Nov). It used to mean "has a notch and a kit
+     still locked", which was true of nearly every fighter with a notch and so said nothing. Opening his sheet clears it. */
+  const owed = (f) => { try { return E.kitsOpen(f) > (f.kitsSeen ?? E.kitsOpen(f)); } catch (e) { return false; } };
   const piece = (f) => `<button class="hp${yardNew.has(f.id) || owed(f) ? ' new' : ''}${onErrand(f.id) ? ' out' : ''}${at.k === 'fighter' && at.id === f.id ? ' hot' : ''}" data-f="${f.id}" aria-label="${f.name}${onErrand(f.id) ? ', out on a request' : ''}">${tokenSvg(lookOf(unitOf(f)), { side: 0, bare: true })}</button>`;
   // A big school would put a hundred pieces in the yard and none would read. Past forty, the yard shows who stands in a doctore's squad, who is new,
   // who is owed a kit or out on a request; the rest are in the barracks, and a line at the foot of the yard says how many.
@@ -4174,7 +4180,7 @@ function renderSchool() {
       <button type="button" data-room="patronScr">${ART.npcs?.patron ? `<img src="${ART.npcs.patron}" alt="">` : ''}<span><b>The Patron</b><i>${back ? '<em>A crew is back, and she pays.</em>' : soon ? 'A crew is out on her work.' : 'She has work for fighters who are not fighting.'}</i></span></button></div>`)
       .querySelectorAll('[data-room]').forEach((el) => el.onclick = () => { homeSheet(null); show(el.dataset.room); }); } else show(pat ? 'patronScr' : 'hall'); };
   const slots = [
-    G.doctores.length > 1 ? { id: 'cells', hot: ['cells'], name: 'The Barracks', art: ART.home?.cells, dot: yardNew.size > 0, run: () => show('rosterScr') } : null,
+    G.doctores.length > 1 ? { id: 'cells', hot: ['cells'], name: 'The Barracks', art: ART.home?.cells, board: true, dot: yardNew.size > 0, run: () => show('rosterScr') } : null,
     callsOn || pat ? { id: 'forum', hot: ['calls', 'patron'], name: 'The Forum', art: (pat && !callsOn ? ART.npcs?.patron : PIECE_ART._tuba), bust: !!(pat && !callsOn), board: !(pat && !callsOn), chip: back ? 'Paid' : soon ? `<span id="patronClock" data-ends="${soon}">${clock(soon - Date.now())}</span>` : '', go: back > 0, dot: callsDot,
       run: () => { const v = HOME.voice?.at; if (v?.k === 'door' && v.id === 'patron' && pat) return show('patronScr'); if (v?.k === 'door' && v.id === 'calls' && callsOn) return show('hall'); openForum(); } } : null,
   ], doors = slots.filter(Boolean);
@@ -4256,7 +4262,7 @@ const canField = (f) => !!E.fieldable(G.doctore, f.template);
 /** A stored fighter is just his cast id and his progress. For the screens, give him his name and current body. */
 function dress(f) { Object.defineProperties(f, { name: { get: () => E.memberOf(f).name, configurable: true }, template: { get: () => E.loadoutOf(f).template, configurable: true } }); return f; }
 // No levels: a fighter is what he is. Anything an older save earned that way is cleared.
-function dressAll() { G.fighters.forEach(dress); if (!G.noLevels) { G.fighters.forEach((f) => { f.training = {}; f.xp = 0; f.points = 0; }); G.noLevels = true; } tickTraining(); }
+function dressAll() { G.fighters.forEach(dress); G.fighters.forEach((f) => { f.kitsSeen ??= E.kitsOpen(f); }); if (!G.noLevels) { G.fighters.forEach((f) => { f.training = {}; f.xp = 0; f.points = 0; }); G.noLevels = true; } tickTraining(); }
 // Training takes denarii and time. One fighter trains at a time; he can still fight while he does.
 const clock = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return s >= 3600 ? `${Math.floor(s / 3600)}h ${Math.floor(s % 3600 / 60)}m` : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
 function tickTraining() {
@@ -4431,7 +4437,7 @@ function frameSvg(fam, seed) {
   return `<svg class="fframe" viewBox="0 0 ${W} ${H}" aria-hidden="true"><path d="M0,0 h96 v120 h-96 Z ${hole}" fill-rule="evenodd" fill="url(#g-bone0)" stroke="#150c06" stroke-width="1.6"/><rect x="3.5" y="3.5" width="89" height="113" fill="none" stroke="#b0793c" stroke-width="1"/></svg>`;
 }
 let sheetTab = 'kit';
-function openFighter(fid) { sheetTab = 'kit'; sheetFid = fid; S.editing = null; $('edit').hidden = false; $('scrim2').hidden = false; $('scrim2').onclick = closeEdit; renderFighter(); }
+function openFighter(fid) { sheetTab = 'kit'; sheetFid = fid; { const f = fighterById(fid); if (f) { f.kitsSeen = E.kitsOpen(f); saveG(); } } S.editing = null; $('edit').hidden = false; $('scrim2').hidden = false; $('scrim2').onclick = closeEdit; renderFighter(); }
 // A kit row is its name and four fixed slots, in this order: weapon, armor, off hand, family rule. No sentence fills a slot; the name carries the flavor.
 const kkey = (cls, kind, label, tag, body, num) => `<i class="kkey ${cls}" data-kk="${encodeURIComponent(JSON.stringify([kind, label, body, num ?? '']))}">${label}${tag ? `<u>${tag}</u>` : ''}</i>`;
 /** A kit has no gear to list: its row says only the numbers that differ from the fighter's other kits, then what the kit does. */
