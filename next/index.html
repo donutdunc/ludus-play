@@ -1854,6 +1854,30 @@ body:not(.free) #meter .pick b { display: none; }
 #rite[data-call="glory"] .rface img, #rite[data-stars="4"] .rface img, #rite[data-stars="5"] .rface img { box-shadow: 0 0 0 1px #14110e, 0 0 0 5px #b98a24, 0 0 0 6px #14110e, 0 10px 22px rgba(0,0,0,.7); }
 #rite .rwho { justify-items: center; text-align: center; padding: 0; max-width: 440px; }
 #rite .rwho b { font-size: 34px; }
+/* The reveal fits the screen (20 Nov). Nothing scrolls and nothing sits over anything: Go on is the last row of the column, with its place kept from
+   the first frame, and the stage and portrait give up height first on a short screen. The numbers always clear the button. */
+#rite { overflow: hidden; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px); }
+#rite .rhead, #rite .rstars, #rite .rwho, #rite .rmore { flex: none; }
+#rite .rbody { flex: 0 1 270px; min-height: 110px; grid-template-rows: minmax(0, 1fr); }
+#rite .rstage { height: 100%; min-height: 0; }
+#rite .rface { height: 100%; min-height: 0; align-items: center; container-type: size; }
+#rite .rface img { width: min(100cqw, 100cqh, 190px); height: min(100cqw, 100cqh, 190px); max-width: none; }
+#rite .plate { position: relative; left: auto; right: auto; bottom: auto; flex: none; width: 100%; max-width: 440px; margin-top: auto; }
+@media (max-height: 700px) { #rite { gap: 7px; padding-top: calc(env(safe-area-inset-top, 0px) + 12px); } #rite .rmore { gap: 8px; } #rite .rmore .stats.eight .stat { min-height: 42px; padding: 4px 2px; } #rite .rwho b { font-size: 28px; } #rite .rstars { height: 32px; } #rite .rstars i { width: 28px; height: 28px; } }
+/* A notch is seen going in (20 Nov). At the reveal the strip first shows what he had; then the new notch fills from the left, the count turns over, and
+   the notch that opens a kit lights the whole strip. Anywhere else the bar is simply as it stands. */
+.tkbar .tkwas { display: none; }
+#rite:not(.token) .tkbar .tkwas { display: inline; } #rite:not(.token) .tkbar .tknow { display: none; }
+#rite .tkbar .tkn i.new { position: relative; overflow: hidden; background: rgba(242,234,216,.08); box-shadow: none; }
+#rite .tkbar .tkn i.new::after { content: ''; position: absolute; inset: 0; background: linear-gradient(#f2ead8, #cfc2a2); transform: scaleX(0); transform-origin: 0 50%; transition: transform .6s cubic-bezier(.3, .7, .2, 1); }
+#rite.token .tkbar .tkn i.new::after { transform: none; }
+#rite.token .tkbar .tkn i.new { box-shadow: 0 0 6px rgba(242,234,216,.25); animation: tkin 1s ease-out; }
+#rite.token .tkbar .tknow { animation: tkturn .5s .3s both; }
+#rite.token .tkbar.opened .tkn { animation: tkopen 1.1s .5s ease-out; }
+@keyframes tkin { 0% { box-shadow: 0 0 0 0 rgba(255,226,140,0); } 55% { box-shadow: 0 0 14px 3px rgba(255,226,140,.85); } 100% { box-shadow: 0 0 6px rgba(242,234,216,.25); } }
+@keyframes tkturn { 0% { opacity: 0; color: var(--gold); } 40% { opacity: 1; color: var(--gold); } 100% { opacity: 1; } }
+@keyframes tkopen { 0% { box-shadow: inset 0 1px 2px rgba(0,0,0,.6), 0 0 0 1px #4a3a26; } 30% { box-shadow: inset 0 1px 2px rgba(0,0,0,.6), 0 0 0 2px var(--gold), 0 0 18px 2px rgba(240,196,84,.7); } 100% { box-shadow: inset 0 1px 2px rgba(0,0,0,.6), 0 0 0 1px #4a3a26; } }
+#rite.cut .tkbar *::after { transition: none !important; }
 </style>
 
 <div class="wrap">
@@ -3722,7 +3746,7 @@ function reveal() {
   v.querySelector('.vtx').innerHTML = `<i>${outOf()}</i>${veilName(S.opponent.name)}${foe ? foeTalk(foe.hello) : `<span>${foeLine()}</span>`}`;
   void v.offsetWidth; v.classList.add('named'); if (foe) v.classList.add('faced');
   const hold = foe ? Math.min(3000, 1300 + foe.hello.length * 26) : 0;
-  sfxPlay('herald', .5, (r, t) => { t += sfxAfterAdvance(r); if (typeof sndClip === 'function') { const pit = ['dregs', 'cellar'].includes($('board').dataset.arena); sndClip(r, t + .1, pit ? 'bell' : 'horn', { gain: pit ? .5 : .45, jit: .02 }); } /* a handbell down in the pits, the horn in the open arenas */ sndThud(r, t + .06, { gain: .5, f: 210 }); sndNoise(r, t + .06, { type: 'lowpass', f: 700, q: .4, dur: .3, gain: .14 }); });
+  sfxPlay('herald', .5, (r, t) => { t += sfxAfterAdvance(r); if (typeof sndClip === 'function') { const pit = inPit(); sndClip(r, t + .1, pit ? 'bell' : 'horn', { gain: pit ? .5 : .45, jit: .02 }); } /* a handbell down in the pits, the horn in the open arenas */ sndThud(r, t + .06, { gain: .5, f: 210 }); sndNoise(r, t + .06, { type: 'lowpass', f: 700, q: .4, dur: .3, gain: .14 }); });
   if (!calm) {   // they wait behind the gate, unseen
     board.classList.add('revealing');
     for (const uid of R.foes) { const el = P.els.get(uid); el.style.transition = 'none'; el.style.opacity = '0'; place(el, GATE.row, GATE.col); }
@@ -4406,8 +4430,9 @@ const bindKeys = (root) => root.querySelectorAll('[data-kk]').forEach((el) => el
 const tokenStep = (f, justIn) => { const now = E.kitsOpen(f), was = justIn ? E.kitsOpen({ ...f, tokens: f.tokens - 1 }) : now;
   if (now > was) { const need = E.kitTokens(now - 1); return { kit: E.kitsOf(f)[now - 1], have: need, need, opened: true }; }
   const open = E.kitsOpen(f), kits = E.kitsOf(f); if (open >= kits.length) return null; return { kit: kits[open], have: f.tokens, need: E.kitTokens(open), opened: false }; };
+/* A notch just in is marked (new), and the count before it is kept beside the count now: the reveal shows the old strip and fills the notch while you watch (20 Nov). */
 const tokenBar = (f, justIn = false, named = true) => { const st = tokenStep(f, justIn); if (!st) return '';
-  return `<div class="tkbar${st.opened ? ' opened' : ''}" aria-label="${st.have} of ${st.need} notches toward ${st.kit.name}"><div class="tkhead"><span class="tkt">Notches</span><span class="tkl">${named ? `<span class="tkk">${st.kit.name}</span> · ` : ''}${st.opened ? 'open' : `${st.have} of ${st.need}`}</span></div><span class="tkn">${Array.from({ length: st.need }, (_, k) => `<i class="${k < st.have ? 'on' : ''}"></i>`).join('')}</span></div>`; };
+  return `<div class="tkbar${st.opened ? ' opened' : ''}" aria-label="${st.have} of ${st.need} notches toward ${st.kit.name}"><div class="tkhead"><span class="tkt">Notches</span><span class="tkl">${named ? `<span class="tkk">${st.kit.name}</span> · ` : ''}<span class="tknow">${st.opened ? 'open' : `${st.have} of ${st.need}`}</span>${justIn ? `<span class="tkwas">${st.have - 1} of ${st.need}</span>` : ''}</span></div><span class="tkn">${Array.from({ length: st.need }, (_, k) => `<i class="${k < st.have ? 'on' : ''}${justIn && k === st.have - 1 ? ' new' : ''}"></i>`).join('')}</span></div>`; };
 const tokenNews = (f) => (tokenStep(f, true)?.opened ? 'He answered again: a notch, and a new kit is open.' : 'He answered again: one more notch toward his next kit.');
 function renderFighter() {
   const f = fighterById(sheetFid);
@@ -4632,8 +4657,8 @@ function rite() {
   at(when, () => { on('bare'); sfxPlay('riteBare', .1, (r, s) => { sndSwish(r, s); sndNoise(r, s + .02, { dur: .32, f: 900, f1: 3800, q: .8, curve: SND_BELL, gain: .12, top: 6500 });
     if (stars >= 3) for (const [f0, g] of [[392, .08], [587.3, .06], ...(stars >= 4 ? [[784, .06]] : []), ...(stars >= 5 ? [[1174.7, .05]] : [])]) sndTone(r, s + .12, { f: f0, dur: 1.4, gain: g, attack: .01 }); }); });
   at(when + 420, () => { on('known'); sfxPlay('riteWho', .1, (r, s) => sndThud(r, s, { gain: .35, f: 180 })); });
-  if (dup) at(when + 950, () => { on('token'); sfxPlay('riteCoin', .1, (r, s) => { sndTone(r, s, { f: 2093, dur: .5, gain: .07 }); sndTone(r, s + .012, { f: 3136, dur: .4, gain: .04 }); sndThud(r, s, { gain: .2, f: 400 }); }); });
-  at(when + (dup ? 1400 : 900), end);
+  if (dup) at(when + 1200, () => { on('token'); sfxPlay('riteCoin', .1, (r, s) => { sndTone(r, s, { f: 2093, dur: .5, gain: .07 }); sndTone(r, s + .012, { f: 3136, dur: .4, gain: .04 }); sndThud(r, s, { gain: .2, f: 400 }); }); });
+  at(when + (dup ? 2050 : 900), end);
 }
 function renderHall() {
   const glory = inSight('glory');
@@ -4958,11 +4983,11 @@ apply = ((orig) => function (e, anim) {
   const pan = (id) => (st(id) ? sfxAcross(posOf(id).col) : 0);
   if (e.kind === 'attack' && e.outcome !== 'miss' && e.outcome !== 'block' && lkA) {
     sfxPlay('strike', .04, (r, t) => sndStrike(r, t, sfxStrike(lkA), { crit: e.outcome === 'crit', pan: pan(e.tid), weight: sizeOfLook(lkA) }));
-    if (e.outcome === 'crit') sfxPlay('gasp', 2.5, (r, t) => { if (!(typeof sndClip === 'function' && sndClip(r, t + .15, 'gasp', { gain: .4 }))) sndNoise(r, t + .12, { dur: .7, f: 700, f1: 1100, q: .6, curve: SND_BELL, gain: .09, top: 4200 }); });
+    if (e.outcome === 'crit') sfxPlay('gasp', 2.5, (r, t) => { if (!(typeof sndCrowd === 'function' && sndCrowd(r, t + .15, 'gasp', .4))) sndNoise(r, t + .12, { dur: .7, f: 700, f1: 1100, q: .6, curve: SND_BELL, gain: .09, top: 4200 }); });
   } else if (e.kind === 'active' && lkA) {
     const big = typeof SAND_BIG !== 'undefined' && SAND_BIG.has(e.label);
     if (e.label === 'On guard') { sfxPlay('guard', .1, (r, t) => { if (!(typeof sndClip === 'function' && sndClip(r, t, 'brace', { gain: .5, pan: pan(e.aid) }))) sndClack(r, t, 'wood', { gain: .3, pitch: .7, pan: pan(e.aid) }); }); return d; }
-    sfxPlay('sting', .25, (r, t) => { (typeof sndVoice === 'function' ? sndVoice(r, t, lkA, pan(e.aid)) : sndSting(r, t, lkA.faction, { pan: pan(e.aid) })); if (big) { sndBoom(r, t + .05); if (typeof sndClip === 'function') sndClip(r, t + .2, 'roar', { gain: .35 }); } });
+    sfxPlay('sting', .25, (r, t) => { (typeof sndVoice === 'function' ? sndVoice(r, t, lkA, pan(e.aid)) : sndSting(r, t, lkA.faction, { pan: pan(e.aid) })); if (big) { sndBoom(r, t + .05); if (typeof sndCrowd === 'function') sndCrowd(r, t + .2, 'roar', .35); } });
   } else if (e.kind === 'move' && typeof SAND_UP !== 'undefined' && SAND_UP.has(e.note)) sfxPlay('boom', .5, (r, t) => sndBoom(r, t, { gain: .35 }));
   else if (e.kind === 'heal' && st(e.tid)) sfxPlay('heal', .2, (r, t) => { sndNoise(r, t, { dur: .28, f: 900, f1: 1800, q: .7, curve: SND_BELL, gain: .05, pan: pan(e.tid), top: 4000 }); });   // a breath, not a chime
   else if (e.kind === 'status' && st(e.tid) && e.note) {
@@ -4992,10 +5017,31 @@ function clipLoad(rig) { if (CLIP.started || typeof SFX_CLIPS === 'undefined') r
     const kind = k.split('_')[0], fin = () => { CLIP.done++; sfxDiag(); next(); };
     try { const pr = rig.ac.decodeAudioData(u8.buffer, (buf) => { (CLIP.buf[kind] ??= []).push(buf); fin(); }, fin); pr?.catch?.(() => {}); } catch (e) { fin(); } };
   for (let n = 0; n < 3; n++) next(); }
-function sndClip(rig, t, kind, { gain = .6, pan = 0, rate = 1, jit = .05 } = {}) { clipLoad(rig); const list = CLIP.buf[kind]; if (!list?.length) return CLIP.has.has(kind);   /* recorded but still decoding: silent, never the synthetic stand-in */
+function sndClip(rig, t, kind, { gain = .6, pan = 0, rate = 1, jit = .05, room = null } = {}) { clipLoad(rig); const list = CLIP.buf[kind]; if (!list?.length) return CLIP.has.has(kind);   /* recorded but still decoding: silent, never the synthetic stand-in */
   let i = Math.floor(Math.random() * list.length); if (list.length > 1 && i === CLIP.last[kind]) i = (i + 1) % list.length; CLIP.last[kind] = i;
   const src = rig.ac.createBufferSource(), amp = rig.ac.createGain(); src.buffer = list[i]; src.playbackRate.value = rate * (1 - jit + Math.random() * 2 * jit); amp.gain.value = gain;
+  if (room) return sndRoom(rig, t, src, amp, pan, room);
   src.connect(amp); sfxPan(rig, amp, pan).connect(rig.out); src.start(Math.max(t, rig.ac.currentTime)); return true; }
+/* THE ROOM THE CROWD IS IN (20 Nov). The recorded roar is an arena: thousands of people in the open air, with a long wash after it. The Dregs and the
+   Tavern Cellar are a couple of dozen men under a low ceiling. Until the pits have a recording of their own (ui/sfx/cheer_<n>.mp3: once it is there it is
+   simply used), the arena take is cut down to fit the room: only its middle is kept, so the airy top and the stadium rumble go; it is cut short, since a
+   cellar has no tail; it comes back twice off near walls, close and boxy; and the men bang the tables. Quieter, too: a room, not the stands. */
+const inPit = () => ['dregs', 'cellar'].includes($('board')?.dataset.arena);
+function sndRoom(rig, t, src, amp, pan, { low = 1500, high = 320, dur = 1.2 }) {
+  const { ac } = rig, hp = ac.createBiquadFilter(), lp = ac.createBiquadFilter(), env = ac.createGain(), t0 = Math.max(t, ac.currentTime);
+  hp.type = 'highpass'; hp.frequency.value = high; hp.Q.value = .5; lp.type = 'lowpass'; lp.frequency.value = low; lp.Q.value = .7;
+  env.gain.setValueAtTime(1, t0); env.gain.setValueAtTime(1, t0 + dur * .45); env.gain.exponentialRampToValueAtTime(.001, t0 + dur);
+  src.connect(hp); hp.connect(lp); lp.connect(env); env.connect(amp); const dry = sfxPan(rig, amp, pan); dry.connect(rig.out);
+  for (const [d, g] of [[.021, .42], [.037, .3]]) { const dl = ac.createDelay(.1), dg = ac.createGain(), df = ac.createBiquadFilter(); dl.delayTime.value = d; dg.gain.value = g; df.type = 'lowpass'; df.frequency.value = 900; dry.connect(dl); dl.connect(df); df.connect(dg); dg.connect(rig.out); }
+  src.start(t0); src.stop(t0 + dur + .05); return true; }
+/** The crowd's voice, in whatever room this fight is in: 'roar' when a side wins or a great blow lands, 'gasp' at a crit. */
+function sndCrowd(rig, t, kind, gain) {
+  if (!inPit()) return sndClip(rig, t, kind, { gain });
+  if (kind === 'roar' && CLIP.has.has('cheer')) return sndClip(rig, t, 'cheer', { gain: gain * 1.1 });
+  const ok = sndClip(rig, t, kind, { gain: gain * .6, rate: 1.1, room: kind === 'roar' ? { dur: 1.25 } : { dur: .7, low: 1300 } });
+  if (kind === 'roar') for (let k = 0; k < 5; k++) { const at = t + .12 + k * .19 + Math.random() * .06, side = Math.random() * 1.4 - .7;   // fists and mugs on the tables
+    if (!sndClip(rig, at, 'woodsmall', { gain: .2 + .05 * k, rate: .78, pan: side, jit: .08 })) sndThud(rig, at, { gain: .16, f: 150, pan: side }); }
+  return ok; }
 // What each material is a recording of, and how far its pitch is shifted to stand apart from its neighbour.
 const CLIP_MAT = { bone: ['bone', 1], horn: ['bone', .8], wood: ['wood', 1], cork: ['wood', 1.25], tin: ['scrap', 1.2], scrap: ['scrap', 1], bronze: ['bronze', 1], steel: ['bronze', 1.3], marble: ['marble', 1], stone: ['marble', .8] };
 // The default blow is a club on a wooden shelf: a solid woody thock. Claws and arrows keep their own; a blade only rings on a crit.
@@ -5028,7 +5074,7 @@ sndSwish = ((orig) => function (rig, t, o = {}) { if (!sndClip(rig, t, 'miss', {
 function sndVoice(rig, t, lk, pan) { const v = BEAST_VOICE(lk); if (!v || !sndClip(rig, t, v, { gain: .5, pan, jit: .08 })) sndSting(rig, t, lk.faction, { pan }); }
 sfxWake = ((orig) => function () { orig(); if (SFX.rig) clipLoad(SFX.rig); })(sfxWake);
 // The stands: a roar when you win, and the horn that opens a fight.
-spotEnd = ((orig) => function () { const first = P.res && !P.res._heard; if (P.res) P.res._heard = true; orig(); if (first && P.res.winner === 0) sfxPlay('won', 1, (r, t) => sndClip(r, t + .15, 'roar', { gain: .5 })); })(spotEnd);
+spotEnd = ((orig) => function () { const first = P.res && !P.res._heard; if (P.res) P.res._heard = true; orig(); if (first && P.res.winner === 0) sfxPlay('won', 1, (r, t) => sndCrowd(r, t + .15, 'roar', .5)); })(spotEnd);
 // ---------- Big moments: the sand goes up ----------
 // Most of a fight is quiet sand: tracks, a little spray. A handful of moments throw it: the warren emptying, the fortieth knife,
 // a champion's top form, something coming up out of the ground, and the blow that ends the fight. Those get a ring of sand
@@ -5344,7 +5390,8 @@ const openVs = (v) => setTimeout(() => { try { matchup(...v); } catch (e) { cons
 /* The typefaces load from the web without holding up the first paint (which would show a blank page); text set before they land reflows when they do, so the screen waits for them (at most 1.2 s), lays the yard out again, then shows (20 Nov). */
 { const reveal = () => requestAnimationFrame(() => { try { if (S.step === 'school') { layoutYard(); fitSay(); } } catch (e) { console.error(e); } requestAnimationFrame(() => document.documentElement.classList.add('ready')); });
   const late = new Promise((r) => setTimeout(r, 1200)); Promise.race([new Promise((r) => { const css = document.getElementById('fontCss'); if (!css || window.__fontCss) r(); else { css.addEventListener('load', r); css.addEventListener('error', r); } }).then(() => document.fonts?.ready), late]).then(reveal, reveal); }
-if (vsOf()) openVs(vsOf()); else if (lastVs()) openVs(lastVs()); else if (location.hash === '#battle' || /\/battle\/?$/.test(location.pathname)) freeBattle(); else { draftRival(); show('school'); }
+/* Boot once the whole script has run (20 Nov): the test-squad helpers below this line were not yet defined, so the tester link (#battle) died on load. */
+queueMicrotask(() => { if (vsOf()) openVs(vsOf()); else if (lastVs()) openVs(lastVs()); else if (location.hash === '#battle' || /\/battle\/?$/.test(location.pathname)) freeBattle(); else { draftRival(); show('school'); } });
 window.addEventListener('hashchange', () => { if (vsOf()) matchup(...vsOf()); else if (location.hash === '#battle' && !FREE) freeBattle(); });
 $('toVs').onclick = () => matchup(...(lastVs() ?? ['show', 'pack']));
 /** Leave the test matchups for the school; the game opens at the school again next time. */
@@ -5436,11 +5483,44 @@ spotEnd = ((orig) => function () { orig(); if (document.body.classList.contains(
 (function lintel() {
   const probe = document.createElement('div'); probe.style.cssText = 'position:fixed;top:env(safe-area-inset-top,0px);left:0;width:1px;height:1px;visibility:hidden';
   document.body.appendChild(probe);
-  const set = () => { const b = document.body, pad = parseFloat(getComputedStyle(b).paddingTop) || 0;
+  /* An installed app can report no safe area for its first moments and never send a resize after (20 Nov): the strip vanished and every
+     screen sized from it grew under the clock. So the deepest inset seen is kept (per orientation), and it is looked for again as the view settles. */
+  let best = 0, turned = innerWidth > innerHeight;
+  const set = () => { const b = document.body, pad = parseFloat(getComputedStyle(b).paddingTop) || 0, t = innerWidth > innerHeight; if (t !== turned) { turned = t; best = 0; }
     const inset = Math.max(0, probe.getBoundingClientRect().top, b.getBoundingClientRect().top + window.scrollY + pad - 26);   // 26 is the page's own top padding
-    document.documentElement.style.setProperty('--inset', `${Math.round(inset)}px`); };
-  set(); window.addEventListener('resize', set); window.addEventListener('orientationchange', set);
+    const was = best; best = Math.max(best, Math.round(inset)); document.documentElement.style.setProperty('--inset', `${best}px`); if (best !== was && typeof fitBoard === 'function') fitBoard(); };
+  set(); for (const ev of ['resize', 'orientationchange', 'pageshow', 'load']) window.addEventListener(ev, set); window.visualViewport?.addEventListener('resize', set);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) set(); }); for (const ms of [120, 600, 1500, 3500]) setTimeout(set, ms);
 })();
+/* THE BOARD FITS WHAT IS ON SCREEN (20 Nov). The formation, fight and result boards were sized by formulas that guessed how much of the screen
+   everything else takes (100dvh − 276px − inset…), and every new bar, a strip that came out a few pixels taller, or a phone reporting its insets
+   late broke the guess: the board ran under the status bar or pushed the button off the bottom. Now nothing is guessed. The bar above is measured
+   where it actually sits, the board starts below it with its frame clear, and its height is what is left above one button's room at the bottom.
+   The board's size never depends on which step you are on, so it stays put from formation to fight to result. */
+const BOARD_FRAME = 11, BOARD_GAP = 12, BOARD_DOCK = 48 + 24;   /* the one button row under the board (the plates are 48 tall), and the gap that keeps the frame off it */
+let fitQueued = 0;
+function fitBoard() { cancelAnimationFrame(fitQueued); fitQueued = requestAnimationFrame(fitBoardNow); }
+function fitBoardNow() {
+  const b = $('board'), arena = $('arena'); if (!b) return;
+  if (!arena || arena.hidden || !document.body.matches('.fighting, .forming, .matchup')) { b.style.width = ''; b.style.marginTop = ''; return; }
+  b.style.width = ''; b.style.marginTop = '';
+  const cs = getComputedStyle(b), [aw, ah] = (cs.aspectRatio || '').split('/').map(parseFloat), ratio = aw && ah ? aw / ah : b.offsetWidth / Math.max(1, b.offsetHeight);
+  const vh = Math.round(window.visualViewport?.height || innerHeight), top0 = b.getBoundingClientRect().top + scrollY, mt = parseFloat(cs.marginTop) || 0;
+  const bar = [$('spot')].filter((e) => e && e.offsetHeight && getComputedStyle(e).display !== 'none').map((e) => e.getBoundingClientRect().bottom + scrollY);
+  const lintel = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--inset')) + 22 || 0;
+  const want = Math.max(top0, (bar.length ? Math.max(...bar) : lintel) + BOARD_GAP + BOARD_FRAME), shift = Math.max(0, Math.round(want - top0));
+  // Whatever the page keeps under its last row (padding on the arena and everything around it) is measured, not assumed.
+  let under = 0; for (let e = arena; e && e !== document.documentElement; e = e.parentElement) { const c = getComputedStyle(e); under += (parseFloat(c.paddingBottom) || 0) + (parseFloat(c.borderBottomWidth) || 0) + (e === arena ? 0 : parseFloat(c.marginBottom) || 0); }
+  const room = vh - want - BOARD_DOCK - under;
+  const w = Math.floor(Math.min(b.parentElement.clientWidth - 2 * BOARD_FRAME, room * ratio));
+  b.style.width = `${Math.max(160, w)}px`; if (shift) b.style.marginTop = `${mt + shift}px`;
+}
+(function boardWatch() { const pb = document.createElement('div'); pb.style.cssText = 'position:fixed;bottom:0;left:0;width:1px;height:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none'; document.body.appendChild(pb);
+  const safe = () => { document.documentElement.style.setProperty('--safeB', `${Math.round(pb.offsetHeight)}px`); fitBoard(); };
+  safe(); window.addEventListener('resize', safe); window.visualViewport?.addEventListener('resize', safe); window.addEventListener('orientationchange', () => setTimeout(safe, 300)); window.addEventListener('pageshow', safe);
+  if (window.ResizeObserver) new ResizeObserver(fitBoard).observe($('spot')); document.fonts?.ready?.then(fitBoard); })();
+go = ((orig) => function (step) { const r = orig(step); fitBoard(); return r; })(go);
+show = ((orig) => function (name) { const r = orig(name); fitBoard(); return r; })(show);
 /* The home's height (20 Nov). The app around the page hands it a taller view a moment after opening, which stretched the yard while you watched;
    freezing the first height instead left the extra room empty. So the settled height is remembered per phone width, and the home is drawn at
    it from the first frame: the view grows into a page already its size. A first visit on a new phone still settles once. */
