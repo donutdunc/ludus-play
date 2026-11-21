@@ -1905,6 +1905,26 @@ body:not(.free) #meter .pick b { display: none; }
 #homeDoors .hdoor.nbd .arch img { object-position: 50% 100%; }
 /* The Barracks' block is drawn a little smaller in its picture than the Forum's: scaled so the two blocks match (21 Nov). */
 #homeDoors .hdoor.nbd[data-door="cells"] .arch img { transform: scale(1.15); transform-origin: 50% 100%; }
+/* Pools are inlays in the frame rail (21 Nov): centred on their side's end of the frame, a recessed slot in the wood, the same for every family. */
+.kinpool.inlay { left: 50% !important; right: auto; transform: translateX(-50%); height: 17px !important; padding: 0 10px 0 9px; display: flex; align-items: center; gap: 8px;
+  border: 0 !important; border-radius: 4px; background: linear-gradient(#1f150c, #160f08); box-shadow: inset 0 1px 3px rgba(0,0,0,.85), inset 0 -1px 0 rgba(255,220,160,.06), 0 0 0 1px #6a4524, 0 0 0 2px #1a120b, 0 1px 2px 2px rgba(0,0,0,.35); overflow: visible; }
+#kin1.inlay { top: -14px !important; bottom: auto; } #kin0.inlay { bottom: -14px !important; top: auto; }   /* centred on the 11px rail */
+.kinpool.inlay.pulse { animation: inlaypulse .35s ease-out; }
+@keyframes inlaypulse { 0% { filter: brightness(1.6); } 100% { filter: none; } }
+.kinpool.inlay.bump { animation: inlaypulse .45s ease-out; }
+.kinpool.inlay i { font: 600 8.5px/1 var(--f-ui); font-style: normal; letter-spacing: .18em; text-transform: uppercase; color: #b9a172 !important; text-shadow: 0 1px 0 #000; }
+.kinpool.inlay .lpegs { display: flex; gap: 3px; min-height: 0; }
+.kinpool.inlay .lpegs b { width: 6px; height: 6px; border-radius: 50%; background: #0b0704; box-shadow: inset 0 1px 1px rgba(0,0,0,.9), 0 1px 0 rgba(255,220,160,.08); }
+.kinpool.inlay .lpegs b.on { background: radial-gradient(circle at 35% 30%, #fff1c0, #e2b53e 55%, #8a5e12); box-shadow: 0 0 0 1px #14110e, 0 0 4px rgba(240,196,84,.45); }
+.kinpool.inlay[data-pool="Spectacle"] .lpegs b.on { background: radial-gradient(circle at 35% 30%, #ffd0b8, #d8623a 55%, #7a2a12); box-shadow: 0 0 0 1px #14110e, 0 0 4px rgba(216,98,58,.5); }
+.kinpool.inlay[data-pool="Spite"] .lpegs b.on { background: radial-gradient(circle at 35% 30%, #e0f5c0, #8fbf5a 55%, #3f5e1c); box-shadow: 0 0 0 1px #14110e, 0 0 4px rgba(143,191,90,.5); }
+.kinpool.inlay[data-pool="Ferocity"] .lpegs b.on { background: radial-gradient(circle at 35% 30%, #e8f0c0, #a3b862 55%, #4a5a1c); }
+.kinpool.inlay .ltally { height: 11px; display: block; overflow: visible; }
+.kinpool.inlay .ltally path { fill: none; stroke: #efe3c8; stroke-width: 1.5; stroke-linecap: round; filter: drop-shadow(0 1px 0 #000); }
+.kinpool.inlay em { font: 500 10px/1 var(--f-ui); font-style: normal; color: #6f6046; }
+.kinpool.inlay em.lnum { font: 700 13px/1 var(--f-ui); color: #efe3c8; margin-left: -2px; }
+/* The rail's inlay needs room under the board: the row of controls sits clear of the frame (the board's fit already keeps this room). */
+body.fighting #transport { margin-top: 10px; }
 </style>
 
 <div class="wrap">
@@ -3583,6 +3603,19 @@ function kinShow(side, n, anim, pool = 'Kinship') {
   // Kinship is only shown to a side that can do something with it: Old Magnus's men hit harder for every point held, and a spender (a pitchfork,
   // a brace, a street rat, or a mender) uses it. A side that only makes it would watch a slat fill up for nothing.
   if (pool === 'Kinship' && !kinMatters(side)) { el.hidden = true; return; }
+  /* EVERY POOL IS AN INLAY IN ITS SIDE'S RAIL (21 Nov). The frame round the sand carries the pools: yours set into the rail at your end, theirs at
+     theirs, centred, each the same small recessed slot with its name and its marks. A count (Swarm) is cut in as tally strokes, as the bill is
+     chalked; a pool that is spent (Kinship, Spectacle, Spite) is a row of ten peg holes, a peg in for each point. Nothing floats over the board. */
+  { const counted = pool === 'Swarm', cap = counted ? 15 : 10, shown = Math.max(0, Math.min(n, cap));
+    let marks = '';
+    if (counted) { let g = '', x = 0; for (let i = 0; i < shown; i++) { const k = i % 5; if (k < 4) g += `<path d="M${x + 2.4 + k * 2.6} ${2.2 + (k % 2) * .6}l${k % 2 ? -.4 : .5} 9"/>`; else g += `<path d="M${x + .6} 9.4L${x + 12.6} 4"/>`; if (k === 4) x += 16; }
+      const w = Math.max(1, x + (shown % 5 ? 3 + (shown % 5) * 2.6 : -3));
+      marks = shown ? `<svg class="ltally" viewBox="0 0 ${w} 13" style="width:${w * 1.35}px" aria-hidden="true">${g}</svg>` : '<em>none</em>'; }
+    else marks = `<span class="lpegs">${Array.from({ length: cap }, (_, k) => `<b${k < shown ? ' class="on"' : ''}></b>`).join('')}</span>`;
+    el.hidden = false; el.dataset.pool = pool; el.className = 'kinpool inlay'; el.setAttribute('aria-label', `${pool} ${n}`);
+    el.innerHTML = `<i>${pool}</i>${marks}${n > cap ? `<em class="lnum">${n}</em>` : ''}`;
+    if (anim && !SAND.calm) { el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse'); }
+    return; }
   if (pool === 'Kinship' && typeof PIECE_ART !== 'undefined' && PIECE_ART._kinship_full) {   // a tavern tally slat: ten wooden plugs, paint on for each point
     const k = Math.max(0, Math.min(10, n));
     el.hidden = false; el.dataset.pool = pool; el.classList.remove('plaque'); el.classList.add('bar', 'kin'); el.setAttribute('aria-label', `Kinship ${n}`);
