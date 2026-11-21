@@ -4750,6 +4750,18 @@ $('draftMe').onclick = () => {
   const asked = (mine?.want ?? []).map((id) => pool.find((f) => f.id === id)).filter(Boolean);
   const fam = E.DOCTORE_BY_ID[S.myDoc]?.faction, price = new Map(pool.map((f) => [f.id, cost(unitOf(f))]));
   const rest = pool.filter((f) => !asked.includes(f)).sort((x, y) => (famOf(y) === fam) - (famOf(x) === fam) || M(y).stars - M(x).stars || price.get(y.id) - price.get(x.id) || x.name.localeCompare(y.name));
+  /* The squad he named comes whole (21 Nov). If it is over the bill as dressed, the men he named are put back in cheaper kits they already own,
+     the biggest saving first, until it fits: Snagtooth asks for Hask and all four kobolds, which fits only with Rask back in his first kit,
+     and Auto pick used to drop Hask instead. Nobody he did not name is touched. */
+  const total = () => asked.reduce((n, f) => n + cost(unitOf(f)), 0);
+  if (asked.length && total() > S.bill) {
+    const cheaper = (f) => { const was = f.loadout, now = cost(unitOf(f)); let best = null;
+      for (const k of E.kitsOf(f)) { if (!E.kitOpen(f, k.id)) continue; f.loadout = k.id; const c = cost(unitOf(f)); if (c < now && (!best || c < best.c)) best = { id: k.id, c }; }
+      f.loadout = was; return best && { f, id: best.id, save: now - best.c }; };
+    let swaps = asked.map(cheaper).filter(Boolean).sort((x, y) => y.save - x.save);
+    while (total() > S.bill && swaps.length) { const sw = swaps.shift(); sw.f.loadout = sw.id; }
+    dressAll(); saveG();
+  }
   S.mine.units = [];
   for (const f of [...asked, ...rest]) { const u = unitOf(f); if (spent(S.mine) + cost(u) > S.bill) continue; S.mine.units.push(u); if (E.lineupProblems(S.mine).length) S.mine.units.pop(); }
   renderMuster(false);
