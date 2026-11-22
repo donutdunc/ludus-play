@@ -1929,6 +1929,9 @@ body.fighting #transport { margin-top: 10px; }
 body.locked #draftMe2, body.locked #clearMe2, body.locked #autoArrange { display: none !important; }
 body.locked #roster [data-toggle] { pointer-events: none; opacity: .35; }
 body.locked #docPick { pointer-events: none; }
+
+.rcard button .coin { display: inline-flex; align-items: center; font: 600 17px/1 var(--f-ui); font-variant-numeric: tabular-nums; }
+.rcard button:disabled .cico { opacity: .45; filter: grayscale(.6); }
 </style>
 
 <div class="wrap">
@@ -4519,7 +4522,7 @@ const tokenStep = (f, justIn) => { const now = E.kitsOpen(f), was = justIn ? E.k
 /* A notch just in is marked (new), and the count before it is kept beside the count now: the reveal shows the old strip and fills the notch while you watch (20 Nov). */
 const tokenBar = (f, justIn = false, named = true) => { const st = tokenStep(f, justIn); if (!st) return '';
   return `<div class="tkbar${st.opened ? ' opened' : ''}" aria-label="${st.have} of ${st.need} notches toward ${st.kit.name}"><div class="tkhead"><span class="tkt">Notches</span><span class="tkl">${named ? `<span class="tkk">${st.kit.name}</span> · ` : ''}<span class="tknow">${st.opened ? 'open' : `${st.have} of ${st.need}`}</span>${justIn ? `<span class="tkwas">${st.have - 1} of ${st.need}</span>` : ''}</span></div><span class="tkn">${Array.from({ length: st.need }, (_, k) => `<i class="${k < st.have ? 'on' : ''}${justIn && k === st.have - 1 ? ' new' : ''}"></i>`).join('')}</span></div>`; };
-const tokenNews = (f) => (tokenStep(f, true)?.opened ? 'He answered again: a notch, and a new kit is open.' : 'He answered again: one more notch toward his next kit.');
+const tokenNews = (f) => (tokenStep(f, true)?.opened ? 'A notch, and a new kit opens.' : 'A notch toward his next kit.');
 function renderFighter() {
   const f = fighterById(sheetFid);
   if (!f) return closeEdit();
@@ -4723,7 +4726,7 @@ function rite(onDone) {
     <div class="rbody"><div class="rstage"><span class="rrays"></span><span class="rdisc"></span><span class="rdust"></span><span class="rpiece">${tokenSvg(lookOf(unitOf(f)), { side: 0, bare: true })}</span><span class="rcloth">${RITE_CLOTH}</span><span class="rflash"></span></div>
     <div class="rface">${art ? `<img src="${art}" alt="">` : ''}</div></div>
     <div class="rwho"><b>${f.name}</b><span>${t.name} · ${E.FACTIONS[t.faction]?.name ?? ''}</span>
-      <p>${dup ? `<em>You already have ${f.name}.</em> ${tokenNews(f)}` : m.line}</p></div>
+      <p>${dup ? `<em>Already yours.</em> ${tokenNews(f)}` : m.line}</p></div>
     <div class="rmore">${dup ? tokenBar(f, true) : ''}${statTiles(E.resolveUnit(unitOf(f)))}</div>
     <button class="plate" id="riteGo">Go on</button>`;
   const at = (ms, fn) => R.timers.push(setTimeout(() => { if (RITE === R && !R.over) fn(); }, ms)), on = (...k) => el.classList.add(...k), star = (k) => el.querySelectorAll('.rstars i')[k]?.classList.add('on');
@@ -4762,7 +4765,7 @@ function renderHall() {
   $('callList').innerHTML = (G.morning && E.scriptOver(SC()) ? `<div class="rcard morning"><div class="rn">The morning call</div><div class="rb">It goes out once a day at first light, and costs you nothing.</div><div class="rm">${odds(E.CALLS.arms)}</div><button class="primary" data-morning="1">Free</button></div>` : '')
     + Object.entries(E.CALLS).filter(([id]) => id !== 'glory' || glory).map(([id, c]) => { const held = callHeld(id), can = !held && G[c.currency] >= c.cost;
     return `<div class="rcard${held ? ' held' : ''}"><div class="rn">${c.name}</div><div class="rb">${held ? 'Not yet. Magnus will say when.' : c.line}</div><div class="rm">${odds(c)}</div>
-      <button class="${can ? 'primary' : ''}" data-call="${id}" ${can ? '' : 'disabled'}>${c.cost} ${c.currency}</button></div>`; }).join('')
+      <button class="${can ? 'primary' : ''}" data-call="${id}" ${can ? '' : 'disabled'} aria-label="${c.cost} ${c.currency}"><span class="coin">${c.currency === 'renown' ? ICON_REN : ICON_DEN}${c.cost}</span></button></div>`; }).join('')
     + `<p class="hint" style="margin:0">Every fighter is one of a kind. If someone you already have answers, he gets a notch instead, and notches open his kits.${glory ? ' Renown comes one per win.' : ''}${!G.morning && E.scriptOver(SC()) ? ' The morning call goes out again at first light.' : ''}</p>`;
   $('callList').querySelectorAll('[data-call]').forEach((el) => el.onclick = () => { if (callHeld(el.dataset.call)) return; const was = lastCall; soundCall(el.dataset.call); renderHall(); renderHud(); if (lastCall !== was) rite(); });
   $('callList').querySelectorAll('[data-morning]').forEach((el) => el.onclick = () => { soundCall('arms', 'morning'); renderHall(); renderHud(); rite(); });
@@ -4770,10 +4773,10 @@ function renderHall() {
   $('callResult').hidden = !f;
   if (f) { const t = E.UNITS[f.template], u = unitOf(f), r = E.resolveUnit(u), mine = G.doctores.filter((d) => E.fieldableBy(d, f.id)).map((d) => E.DOCTORE_BY_ID[d].name);
     const callName = lastCall.morning ? 'morning call' : E.CALLS[lastCall.call].name;
-    $('callResult').innerHTML = `<div class="answer"><span class="sub">${lastCall.duplicate ? `Answering the ${callName}: a familiar face` : `Answering the ${callName}`}</span>
+    $('callResult').innerHTML = `<div class="answer"><span class="sub">Answering the ${callName}</span>
       <div class="head">${faceOf(f)}<div class="who"><div class="name">${f.name}</div><div class="meta">${t.name} · ${E.FACTIONS[t.faction]?.name ?? ''}</div></div><div class="stars">${'★'.repeat(M(f).stars)}</div></div>
       ${lastCall.duplicate
-        ? `<div class="pk"><b style="color:var(--gold)">You already have ${f.name}.</b> ${tokenNews(f)}</div>${tokenBar(f, true)}`
+        ? tokenBar(f, true)
         : `${statLine(r)}<div class="pk">${M(f).line}</div><div class="pk">Wears: ${M(f).loadouts.map((l) => l.name).join(', ')}.</div><div class="pk">Fights under ${mine.join(', ')}.</div>`}
       <button data-f="${f.id}">Open ${f.name}'s sheet</button></div>`;
     $('callResult').querySelector('[data-f]').onclick = () => openFighter(f.id); }
