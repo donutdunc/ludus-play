@@ -3418,7 +3418,7 @@ renderReport = ((orig) => function () {
 const DOT_NAME = { bleed: 'Bleeding', burn: 'Burning', poison: 'Poison', thorns: 'Thorns' };
 /** A reaction the engine reports as a sentence ("goes berserk as Nib falls"), as a headline and the rest. */
 function trigWords(note) {
-  for (const [re, head] of [[/^goes berserk (.*)$/, 'Berserk'], [/^swears vengeance (.*)$/, 'Vengeance'], [/^drops (.*)$/, 'Dropped'], [/^shrugs off (.*)$/, 'Shrugs it off'], [/^grows restless: (.*)$/, 'Restless']]) { const m = re.exec(note ?? ''); if (m) return [head, m[1]]; }
+  for (const [re, head] of [[/^goes berserk (.*)$/, 'Berserk'], [/^swears vengeance (.*)$/, 'Vengeance'], [/^drops (.*)$/, 'Dropped'], [/^shrugs off (.*)$/, 'Shrugs it off'], [/^grows restless: (.*)$/, 'Restless'], [/^has caught fleas: (.*)$/, 'Fleas']]) { const m = re.exec(note ?? ''); if (m) return [head, m[1]]; }
   const w = String(note ?? '').split(' '); return [w.slice(0, 2).join(' ').replace(/^./, (c) => c.toUpperCase()), w.slice(2).join(' ')];
 }
 /** Reactions that fire together (everyone who swears vengeance for the same man) are one line and one beat, not one each. */
@@ -3519,7 +3519,7 @@ apply = ((orig) => function (e, anim) {
   // What has come over a man and stays: vengeance sworn, a berserk rage, restlessness. Kept so his card can show it.
   else if (e.kind === 'trigger' && e.aid != null) { const st = P.state.get(e.aid), [head, rest] = trigWords(e.note); if (st && LASTING[head]) { const m = (st.trig ??= {}); m[head] = { n: (m[head]?.n ?? 0) + 1, rest }; } }
   const d = orig(e, anim); spotEvent(e, !anim); return d; })(apply);
-const LASTING = { Vengeance: (x) => `+${Math.round(Math.min(E.BALANCE.vengefulCap, x.n * E.BALANCE.vengefulPerDeath) * 100)}% damage, sworn for the fallen (most ${Math.round(E.BALANCE.vengefulCap * 100)}%).`, Berserk: (x) => `Berserk ${x.rest}`.trim() + '.', Restless: (x) => x.rest.replace(/^./, (c) => c.toUpperCase()) + '.' };
+const LASTING = { Vengeance: (x) => `+${Math.round(Math.min(E.BALANCE.vengefulCap, x.n * E.BALANCE.vengefulPerDeath) * 100)}% damage, sworn for the fallen (most ${Math.round(E.BALANCE.vengefulCap * 100)}%).`, Berserk: (x) => `Berserk ${x.rest}`.trim() + '.', Restless: (x) => x.rest.replace(/^./, (c) => c.toUpperCase()) + '.', Fleas: (x) => `Fleas: ${x.rest} for the rest of the fight.` };
 resetState = ((orig) => function () { orig(); P.aim = null; P.hpSeen = new Map(); spotLast = null; spotNow = { a: null, t: null }; for (const st of P.state.values()) { st.tgt = null; st.why = ''; st.fresh = false; st.trig = {}; } })(resetState);
 
 // ---------- The crowd ----------
