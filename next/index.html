@@ -2002,6 +2002,25 @@ body.fighting #transport #playPause small { font: 600 10.5px/1 var(--f-ui); lett
 /* Purses are shown with the coin and the laurel, never the words (23 Nov). */
 .spot .sm .coin { display: inline-flex; align-items: center; gap: 3px; margin: 0 6px; font-weight: 700; } .spot .sm .coin .cico { width: 17px; height: 17px; }
 .pq-f .coin, [data-collect] .coin, #patronNote .coin { display: inline-flex; align-items: center; gap: 3px; vertical-align: -2px; } .pq-f .coin .cico, [data-collect] .coin .cico { width: 15px; height: 15px; }
+
+/* The reveal, fourth pass (23 Nov). The piece and the portrait stand as equals; under the name there is one block, the same size either way:
+   four numbers for a new man, his notches and the kit they open for one you already have. */
+#rite .rhead { font-size: 15px; letter-spacing: .22em; color: #a8966c; }
+#rite .rbody { flex: 0 1 250px; }
+#rite .rface img { width: min(100cqw, 170px); height: min(100cqh, 214px); border-radius: 12px; }
+#rite .rwho p { font-size: 17px; margin-top: 8px; }
+#rite .rfour { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+#rite .rfour div { display: grid; justify-items: center; gap: 4px; padding: 10px 0 8px; border-radius: 10px; background: rgba(0,0,0,.45); border: 1px solid var(--line); }
+#rite .rfour b { font: 700 22px/1 var(--f-ui); color: var(--ink); } #rite .rfour span { font: 600 10.5px/1 var(--f-ui); letter-spacing: .12em; color: var(--ink-3); }
+#rite .rmore .tkbar { margin-top: 0; }
+#rite .rkit { display: grid; gap: 8px; pointer-events: none; }
+#rite .rkit small { text-align: center; font: 600 12px/1 var(--f-ui); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+#rite .rkit .kit { border-radius: 10px; border: 1px solid var(--line); background: rgba(0,0,0,.3); padding: 12px 14px; opacity: .6; }
+#rite .rkit.opened small { font: 400 15px/1 var(--f-display); letter-spacing: .14em; color: var(--gold); opacity: 0; transition: opacity .4s .5s; }
+#rite .rkit.opened .kit { transition: opacity .4s .5s, border-color .4s .5s, box-shadow .4s .5s; }
+#rite.token .rkit.opened small { opacity: 1; }
+#rite.token .rkit.opened .kit { opacity: 1; border-color: var(--gold); box-shadow: 0 0 18px rgba(226,181,62,.25); }
+#rite .rpiece svg { transform: scale(1.1); }
 </style>
 
 <div class="wrap">
@@ -4834,6 +4853,15 @@ function sndHorn(rig, t, { f, dur, gain = .12 }) {
   for (const k of [1, 1.007]) { const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(f * k * .965, t); o.frequency.linearRampToValueAtTime(f * k, t + .08); o.connect(flt); o.start(t); o.stop(t + dur + .05); }
   flt.connect(amp); amp.connect(rig.out);
 }
+/* The reveal's last block (23 Nov): a new man shows four numbers in one row; a repeat shows his notch going in and the kit it opens, or the
+   kit it is working toward, in the same place. The kit is the card from his sheet. */
+const riteStats = (r) => `<div class="rfour">${[['HP', Math.round(r.stats.hp)], ['DMG', r.gift?.safe ? '–' : Math.round(r.stats.atk + r.weapon.damage)], ['SPD', Math.round(r.stats.spd)], ['REACH', r.weapon.range]].map(([k, v]) => `<div><b>${v}</b><span>${k}</span></div>`).join('')}</div>`;
+function riteNotch(f) {
+  const st = tokenStep(f, true); if (!st) return '';
+  const all = E.kitsOf(f), unit = (b) => { const ku = E.fighterUnit({ ...f, loadout: b.id, tier: Math.min(f.tier ?? 1, tierOwned(f, b.id)) }); return [E.resolveUnit(ku), ku]; };
+  const [kr, ku] = unit(st.kit), rule = kr.gift?.safe ? '' : ORDER_HELP[ku.tactic ?? defaultOrder(kr)][0];
+  return `${tokenBar(f, true, false)}<div class="rkit${st.opened ? ' opened' : ''}"><small>${st.opened ? 'A new kit opens' : `${st.need - st.have} more to open`}</small><div class="kit"><b>${st.kit.name}<i class="ktg">${rule ? `Targets ${rule}` : 'Stays back'}</i></b><span></span>${kitKeys(kr, ku, unit(all[0])[0])}<em>${cost(ku)}</em></div></div>`;
+}
 /** Play the answer to the call just sounded (lastCall). */
 function rite(onDone) {
   if (lastCall?.doc) return riteDoctore(onDone);
@@ -4847,8 +4875,8 @@ function rite(onDone) {
     <div class="rbody"><div class="rstage"><span class="rrays"></span><span class="rdisc"></span><span class="rdust"></span><span class="rpiece">${tokenSvg(lookOf(unitOf(f)), { side: 0, bare: true })}</span><span class="rcloth">${RITE_CLOTH}</span><span class="rflash"></span></div>
     <div class="rface">${art ? `<img src="${art}" alt="">` : ''}</div></div>
     <div class="rwho"><b>${f.name}</b><span>${t.name} · ${E.FACTIONS[t.faction]?.name ?? ''}</span>
-      <p>${dup ? `<em>Already yours.</em> ${tokenNews(f)}` : m.line}</p>${lastCall.brings ? `<p class="rbrings"><em>${E.DOCTORE_BY_ID[lastCall.brings].name} came too.</em> ${E.FACTIONS[E.DOCTORE_BY_ID[lastCall.brings].faction]?.name ?? ''} can fight for you now.</p>` : ''}</div>
-    <div class="rmore">${dup ? tokenBar(f, true) : ''}${statTiles(E.resolveUnit(unitOf(f)))}</div>
+      <p>${dup ? '<em>Already yours</em>' : m.line}</p>${lastCall.brings ? `<p class="rbrings"><em>${E.DOCTORE_BY_ID[lastCall.brings].name} came too.</em> ${E.FACTIONS[E.DOCTORE_BY_ID[lastCall.brings].faction]?.name ?? ''} can fight for you now.</p>` : ''}</div>
+    <div class="rmore">${dup ? riteNotch(f) : riteStats(E.resolveUnit(unitOf(f)))}</div>
     <button class="plate" id="riteGo">Go on</button>`;
   const at = (ms, fn) => R.timers.push(setTimeout(() => { if (RITE === R && !R.over) fn(); }, ms)), on = (...k) => el.classList.add(...k), star = (k) => el.querySelectorAll('.rstars i')[k]?.classList.add('on');
   const end = () => { if (R.over) return; R.over = true; R.timers.forEach(clearTimeout); for (let k = 0; k < stars; k++) star(k); on('in', 'set', 'bare', 'known', 'token', 'done'); };
