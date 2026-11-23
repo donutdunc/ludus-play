@@ -1981,6 +1981,23 @@ body.fighting #transport #playPause small { font: 600 10.5px/1 var(--f-ui); lett
 .rcard .rfav { grid-column: 1; font: 500 12px/1.35 var(--f-ui); color: var(--ink-3); display: flex; flex-wrap: wrap; gap: 2px 10px; } .rcard .rfav span { white-space: nowrap; color: var(--gold); } .rcard .rfav b { color: var(--ink); font-weight: 600; }
 #rite .rtwist { font: 500 14px/1.4 var(--f-ui); color: var(--ink-2); max-width: 30ch; margin: 10px auto 0; } #rite .rtwist b { color: var(--gold); }
 #rite .rbrings { margin-top: 6px; } #rite .rbrings em { color: var(--gold); font-style: normal; font-weight: 600; }
+
+/* The horn is the call (23 Nov). Tap it; one line says what that costs. The collection fills the room between calls. */
+.hornwrap { display: grid; justify-items: center; gap: 2px; margin: 0 0 6px; }
+.hornwrap .horn { background: none; border: 0; padding: 0; width: min(76%, 300px); cursor: pointer; transition: transform .12s ease; -webkit-tap-highlight-color: transparent; }
+.hornwrap .horn img { width: 100%; height: auto; display: block; filter: drop-shadow(0 6px 10px rgba(0,0,0,.55)); }
+.hornwrap .horn.ready img { filter: drop-shadow(0 6px 10px rgba(0,0,0,.55)) drop-shadow(0 0 14px rgba(226,181,62,.35)); animation: hornGlow 2.6s ease-in-out infinite; }
+@keyframes hornGlow { 50% { filter: drop-shadow(0 6px 10px rgba(0,0,0,.55)) drop-shadow(0 0 22px rgba(226,181,62,.55)); } }
+.hornwrap .horn:active, .hornwrap .horn.blown { transform: scale(.96) rotate(-2deg); }
+.hornwrap .horn:disabled { cursor: default; opacity: .75; } .hornwrap .horn:disabled img { animation: none; }
+.hornsay { margin: 4px 0 0; font: 500 16px/1.3 var(--f-ui); color: var(--ink); text-align: center; }
+.hornodds, .hornfav { margin: 0; font: 500 13px/1.4 var(--f-ui); color: var(--ink-3); text-align: center; } .hornodds b { color: var(--gold); } .hornfav span { white-space: nowrap; color: var(--gold); margin: 0 4px; } .hornfav b { color: var(--ink); font-weight: 600; }
+.rcard.glory { margin-top: 4px; }
+.collhead { margin: 12px 0 2px; font: 400 17px/1.1 var(--f-display); letter-spacing: .05em; color: var(--ink-2); }
+.coll { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.coll button { display: grid; grid-template-columns: 30px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 8px; align-items: center; text-align: left; padding: 9px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--stone-2); color: var(--ink); font: inherit; min-height: 54px; }
+.coll .mark { grid-row: 1 / 3; width: 28px; height: 28px; color: var(--gold); } .coll b { font: 400 14px/1.1 var(--f-display); letter-spacing: .03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .coll i { font: 600 11.5px/1.1 var(--f-ui); font-style: normal; color: var(--ink-3); }
+.coll button.dark { opacity: .55; border-style: dashed; } .coll button.dark .mark { color: var(--ink-3); }
 </style>
 
 <div class="wrap">
@@ -4859,23 +4876,27 @@ function rite(onDone) {
 function renderHall() {
   const glory = inSight('glory'), over = E.scriptOver(SC()); if (over) grantCall('morning');
   $('hallNote').innerHTML = `<span class="coin">${ICON_HORN}${G.calls ?? 0}</span>${glory ? ` <span class="coin">${ICON_REN}${G.renown}</span>` : ''}`;
-  /* No herald (20 Nov): the calls are sounded on the bronze tuba, set down on its stone. */
-  $('hallSpeak').innerHTML = PIECE_ART._tuba ? `<img class="nboard" src="${PIECE_ART._tuba}" alt="">` : ''; $('hallSpeak').className = 'nbwrap';
   const pct = (p) => `${Math.round(p * 100)}%`, odds = (c) => c.odds.map(([st, p]) => `${'★'.repeat(st)} <b>${pct(p)}</b>`).join(' · ');
-  // Who answers the horn: every family, lit once the school has its doctore. One horn, so nothing here is pressed.
-  const have = (k) => { const all = E.CAST.filter((c) => c.faction === k), got = all.filter((c) => G.fighters.some((f) => f.id === c.id)); return `${got.length} of ${all.length}`; };
-  const row = !over ? '' : `<div class="houses" aria-label="The families that answer the horn">${E.CALL_FAMILIES.map((k) => `<span class="${hasFamily(k) ? 'lit' : 'dark'}" data-fam="${k}">${FAM_MARK[k] ?? ''}<b>${E.FACTIONS[k]?.name ?? k}</b><i>${hasFamily(k) ? have(k) : 'not yet yours'}</i></span>`).join('')}</div>`;
-  // The day's favoured fighter at each star level a call can roll: three times as likely as anyone else of his stars.
-  const fav = (c) => !over ? '' : `<div class="rfav">Favoured today: ${c.odds.map(([st]) => { const m = E.favoured(today(), st); return m ? `<span>${'★'.repeat(st)} <b>${m.name}</b></span>` : ''; }).join('')}</div>`;
+  const fav = (c) => c.odds.map(([st]) => { const m = E.favoured(today(), st); return m ? `<span>${'★'.repeat(st)} <b>${m.name}</b></span>` : ''; }).join('');
+  // The horn is the call (23 Nov): tap it to sound a Call to Arms. One line under it says what that costs, or why it can't be sounded yet;
+  // the odds and the day's favoured fighters come in once there is a bank of calls to spend.
+  const arms = E.CALLS.arms, held = callHeld('arms'), free = callFree('arms'), can = callCan('arms');
   const next = over ? E.CALL_GRANTS.filter((w) => !callDay().got[w]).map((w) => CALL_WHY[w]) : [];
-  const cards = Object.entries(E.CALLS).filter(([id]) => id !== 'glory' || glory).map(([id, c]) => { const held = callHeld(id), free = callFree(id), can = callCan(id);
-    return `<div class="rcard${held ? ' held' : ''}"><div class="rn">${c.name}</div><div class="rb">${held ? 'Not yet. Magnus will say when.' : c.line}</div><div class="rm">${odds(c)}</div>${fav(c)}
-      <button class="${can ? 'primary' : ''}" data-call="${id}" ${can ? '' : 'disabled'} aria-label="${free ? 'free' : `${c.cost} ${c.currency}`}"><span class="coin">${free ? 'Free' : `${c.currency === 'renown' ? ICON_REN : ICON_HORN}${c.cost}`}</span></button></div>`; }).join('');
-  const waiting = over && glory ? E.doctoresOnCall(G.doctores).length : 0;
-  $('callList').innerHTML = row + cards
-    + `<p class="hint" style="margin:0">${over ? `You hold ${G.calls ?? 0} of ${E.CALL_BANK} Calls to Arms.${next.length ? ` The next comes with ${next[0]}.` : ' No more come today.'} ` : ''}Every fighter is one of a kind. If someone you already have answers, he gets a notch instead, and notches open his kits.${over ? ' The first fighter of a new family brings its doctore.' : ''}${waiting ? ` ${waiting === 1 ? 'One more doctore' : `${waiting} more doctores`} of your families may answer a Call to Glory.` : ''}${glory ? ' Renown comes one per win.' : ''}</p>`;
-  $('callList').querySelectorAll('[data-call]').forEach((el) => el.onclick = () => { if (callHeld(el.dataset.call)) return; const was = lastCall; soundCall(el.dataset.call); renderHall(); renderHud(); if (lastCall !== was) rite(); });
-  const f = lastCall && fighterById(lastCall.fid);
+  const say = held ? 'Not yet. Magnus will say when.' : free ? 'Tap the horn to sound a Call to Arms.' : can ? `Tap the horn to sound a Call to Arms. You hold ${G.calls} of ${E.CALL_BANK}.` : `No Calls to Arms left.${next.length ? ` The next comes with ${next[0]}.` : ' More come tomorrow.'}`;
+  $('hallSpeak').className = 'hornwrap';
+  $('hallSpeak').innerHTML = `<button class="horn${can ? ' ready' : ''}" data-call="arms" ${can ? '' : 'disabled'} aria-label="Sound a Call to Arms">${PIECE_ART._tuba ? `<img src="${PIECE_ART._tuba}" alt="">` : ''}</button>
+    <p class="hornsay">${say}</p>${over ? `<p class="hornodds">${odds(arms)}</p><p class="hornfav">Favoured today: ${fav(arms)}</p>` : ''}`;
+  // The Call to Glory: its own short row once it is in sight. Renown, not the horn's bank.
+  const gc = E.CALLS.glory, gheld = callHeld('glory'), gcan = callCan('glory');
+  const gloryRow = !glory ? '' : `<div class="rcard glory${gheld ? ' held' : ''}"><div class="rn">${gc.name}</div><div class="rb">${gheld ? 'Not yet. Magnus will say when.' : gc.line}</div><div class="rm">${odds(gc)}</div>${over ? `<div class="rfav">Favoured today: ${fav(gc)}</div>` : ''}
+    <button class="${gcan ? 'primary' : ''}" data-call="glory" ${gcan ? '' : 'disabled'} aria-label="${gc.cost} renown"><span class="coin">${ICON_REN}${gc.cost}</span></button></div>`;
+  // The collection: every family, how many of it the school has, and a door into its page of the gallery. It gives the room a use between calls.
+  const all = (k) => E.CAST.filter((c) => c.faction === k), got = (k) => all(k).filter((c) => G.fighters.some((f) => f.id === c.id)).length;
+  const coll = !over ? '' : `<h3 class="collhead">Your collection</h3><div class="coll">${E.CALL_FAMILIES.map((k) => `<button class="${hasFamily(k) ? 'lit' : 'dark'}" data-gal="${k}" data-fam="${k}">${FAM_MARK[k] ?? ''}<b>${E.FACTIONS[k]?.name ?? k}</b><i>${hasFamily(k) ? `${got(k)} of ${all(k).length}` : 'not yet yours'}</i></button>`).join('')}</div>`;
+  $('callList').innerHTML = gloryRow + coll;
+  document.querySelectorAll('#hall [data-call]').forEach((el) => el.onclick = () => { if (callHeld(el.dataset.call)) return; const was = lastCall; el.classList.add('blown'); soundCall(el.dataset.call); renderHall(); renderHud(); if (lastCall !== was) rite(); });
+  $('callList').querySelectorAll('[data-gal]').forEach((el) => el.onclick = () => { const list = galList(); openGallery(Math.max(0, list.findIndex((x) => x.fam === el.dataset.gal && !x.id))); });
+  const f = lastCall && !lastCall.doc && fighterById(lastCall.fid);
   $('callResult').hidden = !f;
   if (f) { const t = E.UNITS[f.template], u = unitOf(f), r = E.resolveUnit(u), mine = G.doctores.filter((d) => E.fieldableBy(d, f.id)).map((d) => E.DOCTORE_BY_ID[d].name);
     const callName = E.CALLS[lastCall.call].name;
