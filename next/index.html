@@ -1932,37 +1932,34 @@ body.locked #docPick { pointer-events: none; }
 
 .rcard button .coin { display: inline-flex; align-items: center; font: 600 17px/1 var(--f-ui); font-variant-numeric: tabular-nums; }
 .rcard button:disabled .cico { opacity: .45; filter: grayscale(.6); }
-/* The ledge (22 Nov). The controls under the board are carved into the board's own frame: its bronze runs on down past a crossbar and closes
-   round them, so the plaque, the board and the controls read as one object. The ledge is the same height in setup and in the fight (only what
-   sits in it changes), takes the board's width, and its crossbar is exactly the gap that was there before, so nothing above it moves.
-   Its face is the plaque's: the same dark, the same smoke for the place, the same rivets and gold lettering. */
-#arena { --plaque: radial-gradient(80% 130% at 50% -35%, rgba(226,160,60,.16), transparent 62%), #0f0b08; }
-#arena[data-arena="dregs"] { --plaque:
-    radial-gradient(60% 90% at 6% 0%, rgba(74,84,40,.26), transparent 70%), radial-gradient(40% 80% at 97% 100%, rgba(4,3,2,.8), transparent 70%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='110'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .09' numOctaves='2' seed='5'/%3E%3CfeColorMatrix values='0 0 0 0 .42  0 0 0 0 .3  0 0 0 0 .14  0 0 0 -2.2 1.0'/%3E%3C/filter%3E%3Crect width='400' height='110' filter='url(%23s)'/%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='110'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9 .55' numOctaves='3' seed='9'/%3E%3CfeColorMatrix values='0 0 0 0 .08  0 0 0 0 .05  0 0 0 0 .02  0 0 0 -1.5 1.05'/%3E%3C/filter%3E%3Crect width='220' height='110' filter='url(%23n)'/%3E%3C/svg%3E"),
-    radial-gradient(80% 130% at 50% -35%, rgba(196,120,40,.16), transparent 62%), #17110b; }
-body.forming .fightbar, body.fighting #transport { --ledge: 64px; position: relative; box-sizing: border-box; height: var(--ledge); min-height: var(--ledge); margin: 0 auto !important; padding: 8px 18px !important; gap: 6px !important;
-  align-items: center; background: var(--plaque); border-radius: 0 0 3px 3px; box-shadow: 0 0 0 3px #14110e, 0 0 0 9px #5a3a1c, 0 0 0 11px #14110e, 0 14px 26px rgba(0,0,0,.55); }
-body.forming .fightbar::before, body.forming .fightbar::after, body.fighting #transport::before, body.fighting #transport::after { content: ''; position: absolute; top: 7px; bottom: 7px; width: 5px; pointer-events: none;
-  background: radial-gradient(circle 2.5px at 50% 2.5px, #c9a24a 60%, transparent 62%), radial-gradient(circle 2.5px at 50% calc(100% - 2.5px), #c9a24a 60%, transparent 62%); }
-body.forming .fightbar::before, body.fighting #transport::before { left: 6px; } body.forming .fightbar::after, body.fighting #transport::after { right: 6px; }
-#arena[data-arena="dregs"] .fightbar::before, #arena[data-arena="dregs"] .fightbar::after, #arena[data-arena="dregs"] #transport::before, #arena[data-arena="dregs"] #transport::after { filter: saturate(.5) brightness(.6); }
-body.forming .board, body.fighting .board { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
-/* What sits in it is lettered on the plaque, not set on it: no boxes, gold type, a fine gold rule between neighbours. The one plate stays. */
-body.forming .fightbar > button:not(.primary):not(.plate), body.fighting #transport > button:not(.primary):not(.plate) { height: 44px !important; min-height: 0 !important; min-width: 0 !important; width: auto !important; padding: 0 4px !important;
-  background: transparent !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; color: #d9bd78 !important; text-shadow: 0 1px 0 #000; font: 400 16px/1 var(--f-display) !important; letter-spacing: .05em; }
-#arena[data-arena="dregs"] .fightbar > button:not(.primary):not(.plate), #arena[data-arena="dregs"] #transport > button:not(.primary):not(.plate) { color: #c9ac6a !important; }
-body.forming .fightbar > button:not(.primary):not(.plate) + button:not(.primary):not(.plate), body.fighting #transport > button:not(.primary):not(.plate) + button:not(.primary):not(.plate) { background: linear-gradient(transparent, rgba(233,205,132,.4), transparent) 0 50% / 1px 60% no-repeat !important; }
-body.forming .fightbar > #formBack, body.fighting #transport > #exitFight { font: 600 22px/1 var(--f-ui) !important; padding-bottom: 3px !important; }
-body.fighting #transport > #stepBack, body.fighting #transport > #stepFwd { font-size: 15px !important; }
-body.fighting #transport > button:not(.plate) svg { color: #d9bd78; }
-body.forming .fightbar { grid-template-columns: 30px auto minmax(0, 1fr) 40px !important; }
-body.forming .fightbar #fight { height: 46px; padding: 0 24px 0 26px !important; font-size: 16px !important; letter-spacing: .03em !important; }
-body.fighting #transport { display: grid; grid-template-columns: 30px 1fr minmax(0, 2fr) 1fr 40px 36px !important; }
-body.fighting #transport #playPause { height: 46px; min-height: 0; padding: 0 12px; font: 400 18px/1 var(--f-display); letter-spacing: .04em; gap: 0; }
+/* The foot (23 Nov). The controls under the board sit on a bronze foot the board stands on: the same metal as the board's frame, a plain face, the
+   lettering pressed into it. It answers the plaque instead of copying it: the plaque names the place and carries the smoke; the foot holds the board up.
+   One height in setup and in the fight, and exactly the board's frame wide (fitBoard sets it), so nothing moves when the fight starts. */
+body.forming .fightbar, body.fighting #transport { --foot: 60px; position: relative; box-sizing: border-box; height: var(--foot); min-height: var(--foot); margin: 0 auto !important; padding: 7px 14px !important; gap: 4px !important;
+  align-items: center; background: linear-gradient(180deg, #8a5e30 0%, #6b4520 45%, #4d3115 100%); border-radius: 4px 4px 14px 14px; container-type: inline-size;
+  box-shadow: 0 0 0 2px #14110e, inset 0 1px 0 rgba(255,214,150,.45), inset 0 -3px 4px rgba(0,0,0,.45), 0 16px 26px rgba(0,0,0,.55); }
+/* What sits on it is pressed in, not set on: no boxes, dark lettering with a lit lower lip, a groove between neighbours. The one plate stays. */
+body.forming .fightbar > button:not(.primary):not(.plate), body.fighting #transport > button:not(.primary):not(.plate) { height: 44px !important; min-height: 0 !important; min-width: 0 !important; width: auto !important; padding: 0 3px !important;
+  background: transparent !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; color: #1c1005 !important; text-shadow: 0 1px 0 rgba(255,222,170,.5); font: 400 16px/1 var(--f-display) !important; letter-spacing: .02em; white-space: nowrap; }
+body.forming .fightbar > button:not(.primary):not(.plate) + button:not(.primary):not(.plate), body.fighting #transport > button:not(.primary):not(.plate) + button:not(.primary):not(.plate) { box-shadow: inset 1px 0 0 rgba(0,0,0,.35), inset 2px 0 0 rgba(255,214,160,.18) !important; padding-left: 7px !important; }
+body.forming .fightbar > #formBack, body.fighting #transport > #exitFight { font: 700 22px/1 var(--f-ui) !important; padding-bottom: 2px !important; }
+body.forming .fightbar > #speedPick, body.fighting #transport > #speedCycle { font: 700 15px/1 var(--f-ui) !important; }
+body.fighting #transport > #stepBack, body.fighting #transport > #stepFwd { font: 700 15px/1 var(--f-ui) !important; }
+body.fighting #transport > button:not(.plate) svg { color: #1c1005; filter: drop-shadow(0 1px 0 rgba(255,214,160,.35)); }
+body.forming .fightbar { grid-template-columns: 26px auto minmax(0, 1fr) 30px !important; }
+body.forming .fightbar #fight, body.fighting #transport #playPause { height: 44px; min-height: 0; padding: 0 12px !important; font-size: 15px !important; letter-spacing: .02em !important; white-space: nowrap; overflow: hidden; text-overflow: clip;
+  box-shadow: 0 0 0 1.5px #2b1a09, inset 0 1px 0 rgba(255,245,200,.7), 0 2px 0 rgba(0,0,0,.35) !important; }
+body.forming .fightbar #fight::before, body.forming .fightbar #fight::after { margin: 0 3px; }
+body.fighting #transport { display: grid; grid-template-columns: 26px 1fr minmax(0, 2fr) 1fr 30px 30px !important; }
 body.fighting #transport #playPause::after { content: none; }
-body.fighting #transport #playPause small { font: 600 10.5px/1 var(--f-ui); letter-spacing: .02em; margin-left: 7px; opacity: .75; }
-
+/* A short phone narrows the board, and the foot with it: the lettering and the plate tighten to fit rather than the foot outgrowing the board. */
+@container (max-width: 310px) {
+  body.forming .fightbar > button:not(.primary):not(.plate), body.fighting #transport > button:not(.primary):not(.plate) { font-size: 13px !important; }
+  body.forming .fightbar #fight, body.fighting #transport #playPause { font-size: 13px !important; padding: 0 6px !important; }
+  body.forming .fightbar #fight::before, body.forming .fightbar #fight::after { display: none; }
+  body.fighting #transport #playPause small { display: none; }
+}
+body.fighting #transport #playPause small { font: 600 10.5px/1 var(--f-ui); letter-spacing: .02em; margin-left: 6px; opacity: .75; }
 /* Training is one track (22 Nov): a single wide button with the whole track as pips, what the next drill adds, and its price and time. */
 .train.one { display: block; } .train.one button { width: 100%; min-height: 64px; gap: 6px; } .train.one .pips { flex-wrap: wrap; justify-content: center; gap: 5px; }
 .train.one button > span:nth-child(2) { font: 600 14px/1.1 var(--f-ui); } .train.one small { display: inline-flex; align-items: center; white-space: normal; } .train.one small .cico { width: 13px; height: 13px; margin-right: 3px; }
@@ -5749,7 +5746,7 @@ spotEnd = ((orig) => function () { orig(); if (document.body.classList.contains(
    late broke the guess: the board ran under the status bar or pushed the button off the bottom. Now nothing is guessed. The bar above is measured
    where it actually sits, the board starts below it with its frame clear, and its height is what is left above one button's room at the bottom.
    The board's size never depends on which step you are on, so it stays put from formation to fight to result. */
-const BOARD_FRAME = 11, BOARD_GAP = 12, BOARD_DOCK = 64 + 12 + 11;   /* the ledge under the board (64 tall, see app.css), the crossbar that joins it to the board, and its frame below */
+const BOARD_FRAME = 11, BOARD_GAP = 12, BOARD_DOCK = 60 + 12 + 2;   /* the foot under the board (60 tall, see app.css), the gap above it, and its outline */
 let fitQueued = 0;
 function fitBoard() { cancelAnimationFrame(fitQueued); fitQueued = requestAnimationFrame(fitBoardNow); }
 function fitBoardNow() {
@@ -5766,9 +5763,8 @@ function fitBoardNow() {
   const room = vh - want - BOARD_DOCK - under;
   const w = Math.floor(Math.min(b.parentElement.clientWidth - 2 * BOARD_FRAME, room * ratio));
   b.style.width = `${Math.max(160, w)}px`; if (shift) b.style.marginTop = `${mt + shift}px`;
-  // The ledge is carved from the same frame, so it is the board's width. On a short phone the board narrows below what the ledge's controls
-  // need; there the ledge keeps its own width and the board stands on it like a plinth.
-  const bw = `${Math.max(b.offsetWidth, Math.min(b.parentElement.clientWidth - 2 * BOARD_FRAME, 336))}px`; for (const l of [document.querySelector('.fightbar'), $('transport')]) if (l) l.style.width = bw;
+  // The foot is exactly as wide as the board's frame: the board's width and its ring either side.
+  const bw = `${b.offsetWidth + 2 * BOARD_FRAME}px`; for (const l of [document.querySelector('.fightbar'), $('transport')]) if (l) l.style.width = bw;
 }
 (function boardWatch() { const pb = document.createElement('div'); pb.style.cssText = 'position:fixed;bottom:0;left:0;width:1px;height:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none'; document.body.appendChild(pb);
   const safe = () => { document.documentElement.style.setProperty('--safeB', `${Math.round(pb.offsetHeight)}px`); fitBoard(); };
