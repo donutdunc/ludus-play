@@ -2074,6 +2074,31 @@ body.fighting #transport[hidden]:not(#_):not(#__), body.forming .fightbar[hidden
 #tut .tb { position: fixed; left: 16px; right: 16px; max-width: 420px; margin: 0 auto; transition: top .35s ease, bottom .35s ease; pointer-events: none; }
 #tut .tb p { font-size: 16px; } #tut .tb p b { display: block; font: 700 12px/1 var(--f-ui); letter-spacing: .14em; text-transform: uppercase; color: #7a5a2c; margin-bottom: 5px; }
 #tut .tb p small { display: block; margin-top: 7px; font: 600 11px/1 var(--f-ui); letter-spacing: .1em; text-transform: uppercase; color: #8a7a5c; }
+
+/* The result on the board (24 Nov): dark as before the fight, the word in the middle, a laurel for a win, the spoils as tiles. */
+.board > #spoils.crestcard { inset: 0; left: 0; right: 0; top: 0; max-height: none; border: 0; border-radius: 0; padding: 22px 18px; box-shadow: none; gap: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: safe center; text-align: center;
+  background: radial-gradient(ellipse 70% 40% at 50% 38%, rgba(70,48,20,.55), transparent 70%), rgba(10,7,4,.9); }
+.board.result > :not(#spoils) { filter: none; }
+#spoils .crest { display: flex; flex-direction: column; align-items: center; flex: none; }
+#spoils .crest .cw { position: relative; display: grid; place-items: center; }
+#spoils .crest.won .cw { width: 300px; height: 230px; max-width: 100%; }
+#spoils .crest .laurel { position: absolute; inset: 0; width: 100%; height: 100%; color: #b99448; }
+#spoils .crest b { position: relative; top: 4px; font: 400 42px/1 var(--f-display); letter-spacing: .02em; color: #f1cf72; text-shadow: 0 0 22px rgba(241,207,114,.35), 0 2px 0 #3a2508; }
+#spoils .crest.lost b { font-size: 48px; color: #c9493a; text-shadow: 0 2px 0 #2a0a06; } #spoils .crest.draw b { font-size: 44px; color: #e4d6b4; text-shadow: none; }
+#spoils .crest:not(.won) .cw { margin: 6px 0 4px; }
+#spoils .crest .cfoe { margin-top: 6px; font: 500 17px/1.2 var(--f-ui); color: #cdbd98; }
+#spoils .crest .cspo { display: flex; gap: 12px; margin-top: 18px; }
+#spoils .crest .cspo div { display: flex; align-items: center; gap: 8px; padding: 9px 15px; border-radius: 12px; background: rgba(0,0,0,.45); box-shadow: 0 0 0 1px #5a4a2c; font: 700 25px/1 var(--f-ui); color: #f0dfb4; }
+#spoils .crest .cspo svg { width: 28px; height: 28px; }
+#spoils.crestcard .rest { width: 100%; max-width: 340px; margin-top: 18px; display: flex; flex-direction: column; gap: 8px; text-align: left; }
+#spoils.crestcard .rest > .gains { align-items: center; text-align: center; } #spoils.crestcard .rest > .gains li.joinbox, #spoils.crestcard .rest > .gains li.joins { text-align: left; align-self: stretch; }
+#spoils.crestcard #lookBack { margin-top: 22px; flex: none; background: none; border: 0; box-shadow: none; padding: 6px 10px; min-height: 0; height: auto; font: 600 13.5px/1 var(--f-ui); letter-spacing: .08em; text-transform: uppercase; color: #a8966c; text-decoration: underline; text-underline-offset: 4px; }
+/* The way on from a result is the same oxblood plate as Fight. */
+#resultRow .plate { color: var(--plate-ink); text-shadow: 0 1px 0 rgba(0,0,0,.5); background: linear-gradient(var(--plate-hi), var(--plate-mid) 55%, var(--plate-lo)) !important; box-shadow: 0 0 0 1.5px #1a0805, inset 0 0 0 2.5px var(--plate-rim), inset 0 1px 0 rgba(255,190,160,.35), 0 3px 0 rgba(0,0,0,.4) !important; }
+#resultRow .plate::before, #resultRow .plate::after { display: none; content: none; }
+#spoils.crestcard #lookBack { align-self: center; }
+body.looking #resultRow { display: none !important; }
 </style>
 
 <div class="wrap">
@@ -3037,7 +3062,7 @@ function loadG() {
   // A school that has (or had) the first-day script gets its doctores from the script; an older school gets them by wins, as before.
   if (G) G.doctores = [...new Set([...(G.doctores ?? []), ...(G.script ? [] : E.doctoresAt(winsOf())), G.doctore])];
   // What the game has shown once (24 Nov): the setup walkthrough, and the speed button that appears after the first fight. A school that has fought already knows both.
-  if (G && !G.taught) { const old = (G.wins ?? 0) > 0 || (G.script?.log?.length ?? 0) > 1; G.taught = { board: old, speed: old }; }
+  if (G && !G.taught) { const old = (G.wins ?? 0) > 0 || (G.script?.log?.length ?? 0) > 1; G.taught = { board: old, speed: old, drag: old }; }
   if (G) { G.day ??= 1; G.dayDate ??= today(); G.chron ??= []; G.seen ??= G.fighters.map((f) => f.id); G.morning = false; }
   if (!LOOKS.some((l) => l[0] === lookNow)) lookNow = 'lino';
 }
@@ -3945,29 +3970,33 @@ renderFormation = ((orig) => function () {
   $('billline').hidden = hideRival();
   renderVeil();
   if ($('speedPick')) $('speedPick').hidden = !!G && !G.taught?.speed;
-  if (G && !G.taught?.board && S.step === 'formation' && hideRival()) setTimeout(teachBoard, 450);
+  if (G && S.step === 'formation' && hideRival() && (!G.taught?.board || (!G.taught?.drag && !lockNow()))) setTimeout(teachBoard, 450);
 })(renderFormation);
 // ---------- The first setup, taught once (24 Nov) ----------
 // Four taps, Magnus talking: your half, a piece, the dark, the plate. Everything but the thing he is talking about goes dim. Never again after.
 const TUT = [
   { at: () => { const t = [...document.querySelectorAll('#board .tile.zone-me')].map((d) => d.getBoundingClientRect()); return t.length ? { left: Math.min(...t.map((r) => r.left)), top: Math.min(...t.map((r) => r.top)), right: Math.max(...t.map((r) => r.right)), bottom: Math.max(...t.map((r) => r.bottom)) } : null; }, pad: 0, up: 40, rad: 6,
-    line: 'This half is yours. Your fighters start where you put them.' },
-  { at: () => $('tokens')?.querySelector('.tok[aria-label$="yours"]')?.getBoundingClientRect(), pad: 8, up: 44, rad: 26, line: 'Drag to move him. Tap him to see who he is.' },
+    line: () => lockNow() ? 'This half is yours. Tonight I have set them where they stand.' : 'This half is yours. Your fighters start where you put them.' },
+  { at: () => $('tokens')?.querySelector('.tok[aria-label$="yours"]')?.getBoundingClientRect(), pad: 8, up: 44, rad: 26, line: () => lockNow() ? 'Tap him to see who he is. When the squad is yours to set, you drag them.' : 'Drag to move him. Tap him to see who he is.' },
   { at: () => { const v = $('veil'); return v && !v.hidden ? v.getBoundingClientRect() : null; }, pad: 0, rad: 6, line: 'Their squad waits in the dark. You see them when the fight starts.' },
-  { at: () => $('fight')?.getBoundingClientRect(), pad: 5, rad: 999, line: 'When you are set, Fight. After that, you watch.' },
+  { at: () => $('fight')?.getBoundingClientRect(), pad: 5, rad: 999, line: 'Fight when you are ready. After that, you watch.' },
 ];
+// The first fights are set by Magnus and nothing on the board moves, so dragging is taught the first time a squad is yours to place.
+const TUT_DRAG = [{ at: () => TUT[1].at(), pad: 8, up: 44, rad: 26, line: 'This squad is yours to set. Drag a piece to move it. Where they stand is where they start.' }];
 function teachBoard() {
-  if (!G || G.taught?.board || S.step !== 'formation' || !hideRival() || $('tut') || document.querySelector('.sheet:not([hidden])')) return;
+  if (!G || S.step !== 'formation' || !hideRival() || $('tut') || document.querySelector('.sheet:not([hidden])')) return;
+  const key = !G.taught?.board ? 'board' : !G.taught?.drag && !lockNow() ? 'drag' : null; if (!key) return;
+  const steps = key === 'board' ? TUT : TUT_DRAG;
   const el = document.createElement('div'); el.id = 'tut';
   el.innerHTML = `<div class="th"></div><div class="tb nc-talk">${docFace('magnus')}<p><b>Magnus</b><span></span><small></small></p></div>`;
   document.body.appendChild(el);
   let k = -1;
-  const end = () => { el.remove(); (G.taught ??= {}).board = true; saveG(); };
+  const end = () => { el.remove(); const t = (G.taught ??= {}); t[key] = true; if (key === 'board' && !lockNow()) t.drag = true; saveG(); };
   const next = () => {
-    for (k++; k < TUT.length; k++) { const t = TUT[k], r = t.at(); if (!r) continue;
+    for (k++; k < steps.length; k++) { const t = steps[k], r = t.at(); if (!r) continue;
       const h = el.querySelector('.th'), tb = el.querySelector('.tb'), p = t.pad, up = t.up ?? 0;   // up: room over the bases for the pieces standing on them
       Object.assign(h.style, { left: `${r.left - p}px`, top: `${r.top - p - up}px`, width: `${r.right - r.left + 2 * p}px`, height: `${r.bottom - r.top + 2 * p + up}px`, borderRadius: `${t.rad}px` });
-      tb.querySelector('span').textContent = t.line; tb.querySelector('small').textContent = k < TUT.length - 1 ? `${k + 1} of ${TUT.length} · tap to go on` : `${k + 1} of ${TUT.length} · tap to start`;
+      tb.querySelector('span').textContent = typeof t.line === 'function' ? t.line() : t.line; tb.querySelector('small').textContent = steps.length === 1 ? 'tap to go on' : k < steps.length - 1 ? `${k + 1} of ${steps.length} · tap to go on` : `${k + 1} of ${steps.length} · tap to start`;
       const below = (r.top + r.bottom) / 2 < innerHeight / 2;
       tb.style.top = below ? `${r.bottom + p + 16}px` : ''; tb.style.bottom = below ? '' : `${innerHeight - (r.top - p - up) + 16}px`;
       el.dataset.at = k; return; }
@@ -3989,7 +4018,7 @@ function renderVeil() {
   const a = arenaNow(); v.dataset.kind = VEIL_KIND[a.id] ?? 'shadow';
   // The place is named on the plaque above; the dark side only says what to do while it is shut.
   const [says, plate] = VEIL_SAYS[v.dataset.kind];
-  v.querySelector('.vtx').innerHTML = `<i>${says}</i>`;   // how to move a piece is taught once, by the walkthrough (24 Nov)
+  v.querySelector('.vtx').innerHTML = `<i>${says}</i>${lockNow() ? '<span>Magnus has set this squad. Tap a piece for its card.</span>' : ''}`;   // how to move a piece is taught once, by the walkthrough (24 Nov)
   $('fight').textContent = plate;
 }
 /** One line, whatever the length: the name is sized to the board so it never wraps into the pieces. */
@@ -4488,7 +4517,7 @@ function renderTesters() {
   $('skipBeat').hidden = !b;
   // The clocks are short while testing, and this makes them shorter: everything that is waiting on time moves ten minutes on.
   $('testClock').innerHTML = '<button id="reteach" class="grow">Show the setup walkthrough again</button>' + (patronOpen() || G.training ? '<button id="passTime" class="grow">Let ten minutes pass</button>' : '') + (G.training ? '<button id="endDrill" class="grow">Finish the drill</button>' : '');
-  $('reteach').onclick = () => { G.taught = { board: false, speed: false }; saveG(); renderTesters(); };
+  $('reteach').onclick = () => { G.taught = { board: false, speed: false, drag: false }; saveG(); renderTesters(); };
   if ($('endDrill')) $('endDrill').onclick = () => { G.training.doneAt = Date.now(); tickTraining(); saveG(); show('school'); };
   if ($('passTime')) $('passTime').onclick = () => { const d = 600000; if (G.under) G.under.from -= d; for (const e of G.patron?.out ?? []) e.ends -= d; if (G.training) G.training.doneAt -= d; tickTraining(); saveG(); show('school'); };
   if (b) $('skipBeat').textContent = `Skip this step (${b.title})`;
@@ -5084,6 +5113,24 @@ function lossRead(beat, why, lockedLoss = false) {
   if (lockedLoss) facts.length = 0;
   return `${facts.length ? `<ul class="read">${facts.slice(0, 3).map((f) => `<li>${f}</li>`).join('')}</ul>` : ''}<div class="hh nc-talk">${face}<p>${fix}</p></div>`;
 }
+/* The result, on the board (24 Nov): the board goes dark as it was before the fight, and the word stands in the middle of it.
+   A win wears the laurel; a loss is the word alone, in red. Under it, what you came away with in big tiles. */
+const LAUREL = (() => { let leaves = '', stems = ''; const cx = 170, cy = 128, R = 118;
+  for (const side of [-1, 1]) { let d = `M${cx + side * 8} ${cy + R}`;
+    for (let k = 0; k <= 10; k++) { const t = (90 + side * (14 + k * 12)) * Math.PI / 180, x = cx + R * Math.cos(t), y = cy + R * Math.sin(t), up = Math.atan2(Math.cos(t) * side, -Math.sin(t) * side) * 180 / Math.PI;
+      d += ` L${x.toFixed(1)} ${y.toFixed(1)}`;
+      for (const out of [1, -1]) { const lx = x + Math.cos(t) * out * 9, ly = y + Math.sin(t) * out * 9, sz = 1 - k * .035;
+        leaves += `<ellipse cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" rx="${(13 * sz).toFixed(1)}" ry="${(5 * sz).toFixed(1)}" transform="rotate(${(up + out * 32 * side).toFixed(0)} ${lx.toFixed(1)} ${ly.toFixed(1)})"/>`; } }
+    stems += `<path d="${d}"/>`; }
+  return `<svg class="laurel" viewBox="0 0 340 260" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.5">${stems}</g><g fill="currentColor">${leaves}</g></svg>`; })();
+/** While the result is on the board the plaque names the place, as it did before the fight. */
+function placePlaque() { const bar = $('spot'); bar.classList.remove('more', 'lit'); bar.classList.add('lintel'); bar.innerHTML = `<div class="shade"><i>Tonight</i><b>${arenaNow().name}</b></div>`; }
+spotEnd = ((orig) => function () { if (document.body.classList.contains('resulted') && !document.body.classList.contains('looking')) return placePlaque(); $('spot').classList.remove('lintel'); return orig(); })(spotEnd);
+function crest(res) {
+  const won = res.winner === 0, draw = res.winner === null, who = S.opponent?.name ?? '', rw = P.rw;
+  const tiles = rw && (rw.denarii || rw.renown) ? `<div class="cspo">${rw.denarii ? `<div aria-label="${rw.denarii} denarii">${ICON_DEN}+${rw.denarii}</div>` : ''}${rw.renown ? `<div aria-label="${rw.renown} renown">${ICON_REN}+${rw.renown}</div>` : ''}</div>` : '';
+  return `<div class="crest ${won ? 'won' : draw ? 'draw' : 'lost'}"><div class="cw">${won ? LAUREL : ''}<b>${won ? 'Victory' : draw ? 'A draw' : 'Defeat'}</b></div>${who ? `<div class="cfoe">${won ? 'over' : draw ? 'with' : 'to'} ${who}</div>` : ''}${tiles}</div>`;
+}
 function fightDone(res) {
   if (FREE || !G) { $('spoils').hidden = true; return; }
   const fresh = !P.paid;
@@ -5132,13 +5179,18 @@ function fightDone(res) {
   const sp = $('spoils'), board = $('board'), has = P.spoils.length > 0;
   let row = $('resultRow'); if (!row) { row = document.createElement('div'); row.id = 'resultRow'; board.after(row); }
   if (sp.parentElement !== board) board.appendChild(sp);
-  sp.innerHTML = `${P.spoils}<button id="lookBack">Watch it again</button>`; sp.hidden = false; sp.classList.toggle('bare', !has);
+  sp.innerHTML = `${crest(res)}${has ? `<div class="rest">${P.spoils}</div>` : ''}<button id="lookBack">Watch it again</button>`; sp.hidden = false; sp.classList.remove('bare'); sp.classList.add('crestcard');
+  // The plaque goes back to the place while the result is on the board; it shows the play again if you watch it again.
+  placePlaque();
   const bring = !P.again && G.bring?.length;
   row.innerHTML = P.again ? '<button id="toSchool">School</button><button class="plate grow" id="tryAgain">Change the squad</button>' : bring ? '<button class="plate grow" id="toSchool">See who he brought</button>' : '<button class="plate grow" id="toSchool">Back to the school</button>';
   row.hidden = false; document.body.classList.add('resulted'); document.body.classList.remove('looking'); board.classList.add('result');
   $('toSchool').onclick = () => (G.bring?.length ? runBring(() => { const el = riteEl(); el.hidden = true; el.innerHTML = ''; show('school'); }) : show('school'));
   if ($('tryAgain')) $('tryAgain').onclick = () => enterArena(arenaNow().id);
-  $('lookBack').onclick = () => { document.body.classList.add('looking'); board.classList.remove('result'); };
+  $('lookBack').onclick = () => { document.body.classList.add('looking'); board.classList.remove('result'); $('spot').classList.remove('lintel'); spotEnd(); };
+  // Watching it again, the X goes back to the result rather than out to the formation (24 Nov).
+  if (!$('exitFight').dataset.back) { $('exitFight').dataset.back = '1'; const out = $('exitFight').onclick;
+    $('exitFight').onclick = (ev) => { if (!document.body.classList.contains('looking')) return out?.(ev); if (P.playing) $('playPause').click(); document.body.classList.remove('looking'); $('board').classList.add('result'); placePlaque(); }; }
   renderHud();
 }
 
