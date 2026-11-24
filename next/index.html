@@ -2021,6 +2021,40 @@ body.fighting #transport #playPause small { font: 600 10.5px/1 var(--f-ui); lett
 #rite.token .rkit.opened small { opacity: 1; }
 #rite.token .rkit.opened .kit { opacity: 1; border-color: var(--gold); box-shadow: 0 0 18px rgba(226,181,62,.25); }
 #rite .rpiece svg { transform: scale(1.1); }
+
+/* The foot, second pass (24 Nov). No slab: round studs ringed in bronze sit on the wall under the board, and the way on is an oxblood plate
+   between them. Gold is kept for what you win. The plate's colours are variables so each arena can set its own later. */
+body { --plate-hi: #9a2c20; --plate-mid: #74190f; --plate-lo: #521009; --plate-ink: #f3dfae; --plate-rim: rgba(214,170,80,.55); }
+body.forming .fightbar, body.fighting #transport { background: none !important; box-shadow: none !important; border-radius: 0; padding: 0 2px !important; gap: 8px !important; }
+body.forming .fightbar { grid-template-columns: 46px 46px minmax(0, 1fr) 46px !important; }
+body.fighting #transport { grid-template-columns: 42px 42px minmax(0, 1fr) 42px 42px 42px !important; gap: 6px !important; }
+body.forming .fightbar > button:not(.primary):not(.plate), body.fighting #transport > button:not(.primary):not(.plate),
+body.forming .fightbar > button:not(.primary):not(.plate) + button:not(.primary):not(.plate), body.fighting #transport > button:not(.primary):not(.plate) + button:not(.primary):not(.plate) {
+  display: inline-flex !important; align-items: center; justify-content: center; width: 46px !important; height: 46px !important; padding: 0 !important; border-radius: 50% !important;
+  color: #e9d8a6 !important; text-shadow: none; font: 700 15px/1 var(--f-ui) !important; letter-spacing: 0;
+  background: radial-gradient(circle at 50% 35%, #3a2b1c, #1a120b 70%) !important;
+  box-shadow: 0 0 0 1.5px #0d0907, 0 0 0 4px #8a5e30, 0 0 0 5.5px #0d0907, 0 6px 10px rgba(0,0,0,.6) !important; }
+body.fighting #transport > button:not(.primary):not(.plate), body.fighting #transport > button:not(.primary):not(.plate) + button:not(.primary):not(.plate) { width: 42px !important; height: 42px !important; }
+body.forming .fightbar > button:not(.plate):active, body.fighting #transport > button:not(.plate):active { transform: translateY(1px); }
+body.forming .fightbar > button:not(.plate):disabled, body.fighting #transport > button:not(.plate):disabled { opacity: .45; }
+body.fighting #transport > button:not(.plate) svg, body.forming .fightbar > button:not(.plate) svg { width: 20px; height: 20px; color: #e9d8a6; filter: none; }
+body.forming .fightbar #fight, body.fighting #transport #playPause {
+  height: 46px !important; border-radius: 23px; padding: 0 12px !important; color: var(--plate-ink); text-shadow: 0 1px 0 rgba(0,0,0,.5); font-size: 16px !important;
+  background: linear-gradient(var(--plate-hi), var(--plate-mid) 55%, var(--plate-lo)) !important;
+  box-shadow: 0 0 0 1.5px #1a0805, inset 0 0 0 2.5px var(--plate-rim), inset 0 1px 0 rgba(255,190,160,.35), 0 3px 0 rgba(0,0,0,.4) !important; }
+body.forming .fightbar #fight::before, body.forming .fightbar #fight::after, body.fighting #transport #playPause::before { display: none; content: none; }
+body.forming .fightbar #fight:disabled, body.fighting #transport #playPause:disabled { background: linear-gradient(#4a2a24, #35201b) !important; color: rgba(243,223,174,.45); text-shadow: none; }
+body.fighting #transport #playPause small { color: var(--plate-ink); opacity: .7; }
+@container (max-width: 310px) { body.forming .fightbar #fight, body.fighting #transport #playPause { font-size: 13px !important; } }
+/* A short phone narrows the board: the studs shrink before the plate does. */
+@container (max-width: 310px) {
+  body.forming .fightbar { grid-template-columns: 40px 40px minmax(0, 1fr) 40px !important; }
+  body.fighting #transport { grid-template-columns: repeat(2, 34px) minmax(0, 1fr) repeat(3, 34px) !important; gap: 5px !important; }
+  body.forming .fightbar > button:not(.primary):not(.plate), body.forming .fightbar > button:not(.primary):not(.plate) + button:not(.primary):not(.plate) { width: 40px !important; height: 40px !important; }
+  body.fighting #transport > button:not(.primary):not(.plate), body.fighting #transport > button:not(.primary):not(.plate) + button:not(.primary):not(.plate) { width: 34px !important; height: 34px !important; }
+  body.fighting #transport > button:not(.plate) svg { width: 16px; height: 16px; }
+  body.forming .fightbar #fight, body.fighting #transport #playPause { height: 40px !important; padding: 0 8px !important; }
+}
 </style>
 
 <div class="wrap">
@@ -4018,7 +4052,7 @@ function formBar() {
   bar.classList.remove('more', 'lit'); bar.classList.add('lintel');
   bar.innerHTML = `<div class="shade"><i>Tonight</i><b>${a.name}</b><span>${a.line ?? ''}</span></div>`;
   // The way back is with the other controls under the board, first in the row, so the plaque is only a plaque.
-  let back = $('formBack'); if (!back) { back = document.createElement('button'); back.id = 'formBack'; back.setAttribute('aria-label', 'Back to the squad'); back.textContent = '‹'; $('autoArrange').before(back); }
+  let back = $('formBack'); if (!back) { back = document.createElement('button'); back.id = 'formBack'; back.setAttribute('aria-label', 'Back to the squad'); back.innerHTML = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M12.5 4 6.5 10l6 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'; $('autoArrange').before(back); }
   back.onclick = () => go('muster');
 }
 function newSchool() {
@@ -5631,6 +5665,8 @@ function sfxToggle() {
 }
 renderHud = ((orig) => function () { orig(); $('fbOpen')?.insertAdjacentHTML('beforebegin', '<button class="sndbtn" type="button"></button>'); sfxButtons(); })(renderHud);
 $('transport').insertAdjacentHTML('beforeend', '<button class="sndbtn" type="button"></button>'); sfxButtons();
+/* Arrange is a stud like the others (24 Nov): a mark, not a word. */
+$('autoArrange').setAttribute('aria-label', 'Arrange the squad'); $('autoArrange').innerHTML = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><g fill="currentColor"><circle cx="5" cy="6" r="2.2"/><circle cx="10" cy="6" r="2.2"/><circle cx="15" cy="6" r="2.2"/><circle cx="7.5" cy="14" r="2.2"/><circle cx="12.5" cy="14" r="2.2"/></g></svg>';
 
 // A board, not a document: no pinch or double-tap zoom (two quick taps on a step button used to zoom the page and leave it scrolling sideways).
 { const vp = document.querySelector('meta[name="viewport"]'); if (vp && !/maximum-scale/.test(vp.content)) vp.content += ', maximum-scale=1, user-scalable=no'; }
