@@ -2066,6 +2066,14 @@ body.forming .fightbar > *, body.fighting #transport > * { flex: none; }
 body.forming .fightbar #fight, body.fighting #transport #playPause { flex: 1 1 0; min-width: 0; }
 body.forming .fightbar > button[hidden]:not(#_):not(#__), body.fighting #transport > button[hidden]:not(#_):not(#__), body.forming .fightbar > .speed.row { display: none !important; }
 body.fighting #transport[hidden]:not(#_):not(#__), body.forming .fightbar[hidden]:not(#_):not(#__) { display: none !important; }
+
+/* The setup walkthrough (24 Nov): the screen goes dim around one thing, and Magnus says what it is. A tap anywhere goes on. */
+#tut { position: fixed; inset: 0; z-index: 900; cursor: pointer; -webkit-tap-highlight-color: transparent; animation: tutIn .3s ease-out; }
+@keyframes tutIn { from { opacity: 0; } }
+#tut .th { position: fixed; box-shadow: 0 0 0 200vmax rgba(8,6,4,.78), inset 0 0 0 2px rgba(243,223,174,.75), 0 0 24px 4px rgba(243,223,174,.35); transition: left .35s ease, top .35s ease, width .35s ease, height .35s ease, border-radius .35s ease; pointer-events: none; }
+#tut .tb { position: fixed; left: 16px; right: 16px; max-width: 420px; margin: 0 auto; transition: top .35s ease, bottom .35s ease; pointer-events: none; }
+#tut .tb p { font-size: 16px; } #tut .tb p b { display: block; font: 700 12px/1 var(--f-ui); letter-spacing: .14em; text-transform: uppercase; color: #7a5a2c; margin-bottom: 5px; }
+#tut .tb p small { display: block; margin-top: 7px; font: 600 11px/1 var(--f-ui); letter-spacing: .1em; text-transform: uppercase; color: #8a7a5c; }
 </style>
 
 <div class="wrap">
@@ -3028,6 +3036,8 @@ function loadG() {
   if (G) dressAll();
   // A school that has (or had) the first-day script gets its doctores from the script; an older school gets them by wins, as before.
   if (G) G.doctores = [...new Set([...(G.doctores ?? []), ...(G.script ? [] : E.doctoresAt(winsOf())), G.doctore])];
+  // What the game has shown once (24 Nov): the setup walkthrough, and the speed button that appears after the first fight. A school that has fought already knows both.
+  if (G && !G.taught) { const old = (G.wins ?? 0) > 0 || (G.script?.log?.length ?? 0) > 1; G.taught = { board: old, speed: old }; }
   if (G) { G.day ??= 1; G.dayDate ??= today(); G.chron ??= []; G.seen ??= G.fighters.map((f) => f.id); G.morning = false; }
   if (!LOOKS.some((l) => l[0] === lookNow)) lookNow = 'lino';
 }
@@ -3525,6 +3535,9 @@ go = ((orig) => function (step) {
   hideToast(); $('steps').hidden = false; paintFloor(); orig(step); renderHud();
 })(go);
 setFightUi = ((orig) => function () { orig();
+  // The speed button waits until a fight has been watched through once (24 Nov).
+  if (G && !G.taught?.speed && S.step === 'fight' && S.mode === 'done') { (G.taught ??= {}).speed = true; saveG(); }
+  if (G) $('speedCycle').hidden = !G.taught?.speed;
   /* No way out mid-fight (24 Nov): a fight counts once it starts. The X comes back when it is over, to leave the replay. */
   { const live = S.step === 'fight' && S.mode !== 'done' && !document.body.classList.contains('resulted'); $('exitFight').hidden = live; $('transport').classList.toggle('live', live); } const done = S.step === 'fight' && S.mode === 'done' && !FREE && !!G; $('spoils').hidden = !done; if (!done) { document.body.classList.remove('resulted', 'looking'); $('board').classList.remove('result'); if ($('resultRow')) $('resultRow').hidden = true; } })(setFightUi);
 // When the fight is over nobody is aiming at anybody: the last aim line and its target ring go with the last blow.
@@ -3931,7 +3944,38 @@ renderFormation = ((orig) => function () {
   dragify();
   $('billline').hidden = hideRival();
   renderVeil();
+  if ($('speedPick')) $('speedPick').hidden = !!G && !G.taught?.speed;
+  if (G && !G.taught?.board && S.step === 'formation' && hideRival()) setTimeout(teachBoard, 450);
 })(renderFormation);
+// ---------- The first setup, taught once (24 Nov) ----------
+// Four taps, Magnus talking: your half, a piece, the dark, the plate. Everything but the thing he is talking about goes dim. Never again after.
+const TUT = [
+  { at: () => { const t = [...document.querySelectorAll('#board .tile.zone-me')].map((d) => d.getBoundingClientRect()); return t.length ? { left: Math.min(...t.map((r) => r.left)), top: Math.min(...t.map((r) => r.top)), right: Math.max(...t.map((r) => r.right)), bottom: Math.max(...t.map((r) => r.bottom)) } : null; }, pad: 0, up: 40, rad: 6,
+    line: 'This half is yours. Your fighters start where you put them.' },
+  { at: () => $('tokens')?.querySelector('.tok[aria-label$="yours"]')?.getBoundingClientRect(), pad: 8, up: 44, rad: 26, line: 'Drag to move him. Tap him to see who he is.' },
+  { at: () => { const v = $('veil'); return v && !v.hidden ? v.getBoundingClientRect() : null; }, pad: 0, rad: 6, line: 'Their squad waits in the dark. You see them when the fight starts.' },
+  { at: () => $('fight')?.getBoundingClientRect(), pad: 5, rad: 999, line: 'When you are set, Fight. After that, you watch.' },
+];
+function teachBoard() {
+  if (!G || G.taught?.board || S.step !== 'formation' || !hideRival() || $('tut') || document.querySelector('.sheet:not([hidden])')) return;
+  const el = document.createElement('div'); el.id = 'tut';
+  el.innerHTML = `<div class="th"></div><div class="tb nc-talk">${docFace('magnus')}<p><b>Magnus</b><span></span><small></small></p></div>`;
+  document.body.appendChild(el);
+  let k = -1;
+  const end = () => { el.remove(); (G.taught ??= {}).board = true; saveG(); };
+  const next = () => {
+    for (k++; k < TUT.length; k++) { const t = TUT[k], r = t.at(); if (!r) continue;
+      const h = el.querySelector('.th'), tb = el.querySelector('.tb'), p = t.pad, up = t.up ?? 0;   // up: room over the bases for the pieces standing on them
+      Object.assign(h.style, { left: `${r.left - p}px`, top: `${r.top - p - up}px`, width: `${r.right - r.left + 2 * p}px`, height: `${r.bottom - r.top + 2 * p + up}px`, borderRadius: `${t.rad}px` });
+      tb.querySelector('span').textContent = t.line; tb.querySelector('small').textContent = k < TUT.length - 1 ? `${k + 1} of ${TUT.length} · tap to go on` : `${k + 1} of ${TUT.length} · tap to start`;
+      const below = (r.top + r.bottom) / 2 < innerHeight / 2;
+      tb.style.top = below ? `${r.bottom + p + 16}px` : ''; tb.style.bottom = below ? '' : `${innerHeight - (r.top - p - up) + 16}px`;
+      el.dataset.at = k; return; }
+    end();
+  };
+  el.onclick = (ev) => { ev.stopPropagation(); ev.preventDefault(); next(); };
+  next();
+}
 // ---------- The far side: until the gates open it is the arena's name over whatever hides the other gate. Lifting it is the start of the fight. ----------
 const VEIL_KIND = { dregs: 'shadow', proving: 'gate', provincial: 'dust' };
 // What hides the far side is the place's own: a cellar has no gate. Each says what it is, and the plate says how it ends.
@@ -3945,7 +3989,7 @@ function renderVeil() {
   const a = arenaNow(); v.dataset.kind = VEIL_KIND[a.id] ?? 'shadow';
   // The place is named on the plaque above; the dark side only says what to do while it is shut.
   const [says, plate] = VEIL_SAYS[v.dataset.kind];
-  v.querySelector('.vtx').innerHTML = `<i>${says}</i><span>Drag a piece to move it. Tap it for its card.</span>`;
+  v.querySelector('.vtx').innerHTML = `<i>${says}</i>`;   // how to move a piece is taught once, by the walkthrough (24 Nov)
   $('fight').textContent = plate;
 }
 /** One line, whatever the length: the name is sized to the board so it never wraps into the pieces. */
@@ -4443,7 +4487,8 @@ function renderTesters() {
   const sc = SC(), b = beatNow();
   $('skipBeat').hidden = !b;
   // The clocks are short while testing, and this makes them shorter: everything that is waiting on time moves ten minutes on.
-  $('testClock').innerHTML = (patronOpen() || G.training ? '<button id="passTime" class="grow">Let ten minutes pass</button>' : '') + (G.training ? '<button id="endDrill" class="grow">Finish the drill</button>' : '');
+  $('testClock').innerHTML = '<button id="reteach" class="grow">Show the setup walkthrough again</button>' + (patronOpen() || G.training ? '<button id="passTime" class="grow">Let ten minutes pass</button>' : '') + (G.training ? '<button id="endDrill" class="grow">Finish the drill</button>' : '');
+  $('reteach').onclick = () => { G.taught = { board: false, speed: false }; saveG(); renderTesters(); };
   if ($('endDrill')) $('endDrill').onclick = () => { G.training.doneAt = Date.now(); tickTraining(); saveG(); show('school'); };
   if ($('passTime')) $('passTime').onclick = () => { const d = 600000; if (G.under) G.under.from -= d; for (const e of G.patron?.out ?? []) e.ends -= d; if (G.training) G.training.doneAt -= d; tickTraining(); saveG(); show('school'); };
   if (b) $('skipBeat').textContent = `Skip this step (${b.title})`;
