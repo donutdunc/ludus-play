@@ -2059,6 +2059,13 @@ body.fighting #transport #playPause small { color: var(--plate-ink); opacity: .7
 body.fighting #transport > button#exitFight[hidden] { display: none !important; }
 body.fighting #transport.live { grid-template-columns: 42px minmax(0, 1fr) 42px 42px 42px !important; }
 @container (max-width: 310px) { body.fighting #transport.live { grid-template-columns: 34px minmax(0, 1fr) repeat(3, 34px) !important; } }
+/* The foot lays out in a row, not a grid (24 Nov): a stud that a step hides (Arrange in a set lesson, the X mid-fight) just drops out, and
+   the plate takes whatever is left. */
+body.forming .fightbar, body.fighting #transport { display: flex !important; justify-content: center; }
+body.forming .fightbar > *, body.fighting #transport > * { flex: none; }
+body.forming .fightbar #fight, body.fighting #transport #playPause { flex: 1 1 0; min-width: 0; }
+body.forming .fightbar > button[hidden]:not(#_):not(#__), body.fighting #transport > button[hidden]:not(#_):not(#__), body.forming .fightbar > .speed.row { display: none !important; }
+body.fighting #transport[hidden]:not(#_):not(#__), body.forming .fightbar[hidden]:not(#_):not(#__) { display: none !important; }
 </style>
 
 <div class="wrap">
@@ -3965,7 +3972,7 @@ function reveal() {
   const at = (ms, fn) => R.timers.push(setTimeout(() => { if (REVEAL === R) fn(); }, ms));
   const begin = () => { revealEnd(); if (S.step === 'fight' && !S.manual) playLoop(false); };
   // The bar already holds who is coming; over it lies the dark plaque with the name of the place, which goes up with the dark.
-  bar.classList.remove('more', 'lit'); bar.classList.add('lintel'); bar.innerHTML = `${foePlate()}<div class="shade held"><i>Tonight</i><b>${a.name}</b><span>${a.line ?? ''}</span></div>`;
+  bar.classList.remove('more', 'lit'); bar.classList.add('lintel'); bar.innerHTML = `${foePlate()}<div class="shade held"><i>Tonight</i><b>${a.name}</b></div>`;
   v.dataset.kind = kind; v.className = ''; v.hidden = false;
   // A named rival on her own beat is seen and heard as the gates open: her face, and what she has to say to you this time.
   const foe = foeSays();
@@ -4057,7 +4064,7 @@ function formBar() {
   // The same plaque that hangs over the gate when the fight starts, so nothing changes up here when it does. 
   const a = arenaNow(), bar = $('spot');
   bar.classList.remove('more', 'lit'); bar.classList.add('lintel');
-  bar.innerHTML = `<div class="shade"><i>Tonight</i><b>${a.name}</b><span>${a.line ?? ''}</span></div>`;
+  bar.innerHTML = `<div class="shade"><i>Tonight</i><b>${a.name}</b></div>`;
   // The way back is with the other controls under the board, first in the row, so the plaque is only a plaque.
   let back = $('formBack'); if (!back) { back = document.createElement('button'); back.id = 'formBack'; back.setAttribute('aria-label', 'Back to the squad'); back.innerHTML = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M12.5 4 6.5 10l6 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'; $('autoArrange').before(back); }
   back.onclick = () => go('muster');
