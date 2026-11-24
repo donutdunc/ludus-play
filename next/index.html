@@ -2055,6 +2055,10 @@ body.fighting #transport #playPause small { color: var(--plate-ink); opacity: .7
   body.fighting #transport > button:not(.plate) svg { width: 16px; height: 16px; }
   body.forming .fightbar #fight, body.fighting #transport #playPause { height: 40px !important; padding: 0 8px !important; }
 }
+/* Mid-fight the X is gone (24 Nov), and the plate takes its column. */
+body.fighting #transport > button#exitFight[hidden] { display: none !important; }
+body.fighting #transport.live { grid-template-columns: 42px minmax(0, 1fr) 42px 42px 42px !important; }
+@container (max-width: 310px) { body.fighting #transport.live { grid-template-columns: 34px minmax(0, 1fr) repeat(3, 34px) !important; } }
 </style>
 
 <div class="wrap">
@@ -3513,7 +3517,9 @@ go = ((orig) => function (step) {
   document.body.classList.remove('athome'); homeSheet(null);
   hideToast(); $('steps').hidden = false; paintFloor(); orig(step); renderHud();
 })(go);
-setFightUi = ((orig) => function () { orig(); const done = S.step === 'fight' && S.mode === 'done' && !FREE && !!G; $('spoils').hidden = !done; if (!done) { document.body.classList.remove('resulted', 'looking'); $('board').classList.remove('result'); if ($('resultRow')) $('resultRow').hidden = true; } })(setFightUi);
+setFightUi = ((orig) => function () { orig();
+  /* No way out mid-fight (24 Nov): a fight counts once it starts. The X comes back when it is over, to leave the replay. */
+  { const live = S.step === 'fight' && S.mode !== 'done' && !document.body.classList.contains('resulted'); $('exitFight').hidden = live; $('transport').classList.toggle('live', live); } const done = S.step === 'fight' && S.mode === 'done' && !FREE && !!G; $('spoils').hidden = !done; if (!done) { document.body.classList.remove('resulted', 'looking'); $('board').classList.remove('result'); if ($('resultRow')) $('resultRow').hidden = true; } })(setFightUi);
 // When the fight is over nobody is aiming at anybody: the last aim line and its target ring go with the last blow.
 finish = ((orig) => function () { orig(); document.querySelectorAll('.aim').forEach((x) => x.remove()); document.querySelectorAll('.tok.aimed').forEach((x) => x.classList.remove('aimed')); fightDone(P.res); spotEnd(); })(finish);
 
@@ -3922,7 +3928,8 @@ renderFormation = ((orig) => function () {
 // ---------- The far side: until the gates open it is the arena's name over whatever hides the other gate. Lifting it is the start of the fight. ----------
 const VEIL_KIND = { dregs: 'shadow', proving: 'gate', provincial: 'dust' };
 // What hides the far side is the place's own: a cellar has no gate. Each says what it is, and the plate says how it ends.
-const VEIL_SAYS = { shadow: ['The far end is dark', 'Light the lamps'], gate: ['The far gate is shut', 'Open the gates'], dust: ['Dust hangs over the far side', 'Sound the horns'] };
+// The plate is plain in every arena (24 Nov): the dark side sets the mood, the button says what happens.
+const VEIL_SAYS = { shadow: ['The far end is dark', 'Fight'], gate: ['The far gate is shut', 'Fight'], dust: ['Dust hangs over the far side', 'Fight'] };
 const outOf = () => ({ shadow: 'Out of the dark', gate: 'Out of the far gate', dust: 'Out of the dust' })[VEIL_KIND[arenaNow().id] ?? 'shadow'];
 function veilEl() { let v = $('veil'); if (!v) { v = document.createElement('div'); v.id = 'veil'; v.innerHTML = '<div class="vbg"></div><div class="vfl"></div><div class="vtx"></div>'; $('board').appendChild(v); } return v; }
 function renderVeil() {
