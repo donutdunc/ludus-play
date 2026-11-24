@@ -2102,6 +2102,18 @@ body.looking #resultRow { display: none !important; }
 /* The walkthrough lets taps through the hole; the blocks around it catch the rest, and nothing scrolls under it. */
 #tut { pointer-events: none; touch-action: none; }
 #tut .bk { position: fixed; pointer-events: auto; touch-action: none; cursor: pointer; }
+
+/* The place Magnus is pointing at, louder (24 Nov): the art itself glows and lifts, a gold ring pulses out from under it, the name lights,
+   and a gold chevron bobs over it. */
+#homeDoors .hdoor.hot { position: relative; }
+#homeDoors .hdoor.hot .arch img { animation: hotlift 1.4s ease-in-out infinite; filter: drop-shadow(0 0 4px rgba(255,214,120,.95)) drop-shadow(0 0 14px rgba(244,196,96,.85)) drop-shadow(0 3px 4px rgba(0,0,0,.75)); }
+@keyframes hotlift { 50% { transform: translateY(-4px); filter: drop-shadow(0 0 6px rgba(255,226,150,1)) drop-shadow(0 0 22px rgba(244,196,96,.95)) drop-shadow(0 7px 6px rgba(0,0,0,.6)); } }
+#homeDoors .hdoor.hot .arch::after { content: ''; position: absolute; left: 50%; bottom: -8px; width: 96px; height: 26px; margin-left: -48px; border-radius: 50%; border: 2px solid rgba(244,206,120,.9); box-shadow: 0 0 10px rgba(244,196,96,.8); animation: hotring 1.4s ease-out infinite; pointer-events: none; }
+@keyframes hotring { from { transform: scale(.6); opacity: 1; } to { transform: scale(1.35); opacity: 0; } }
+#homeDoors .hdoor.hot b { color: #ffe29a; text-shadow: 0 0 10px rgba(244,196,96,.9); }
+#homeDoors .hdoor.hot::before { content: ''; position: absolute; left: 50%; top: -18px; width: 14px; height: 14px; margin-left: -7px; border-right: 3.5px solid #f1cf72; border-bottom: 3.5px solid #f1cf72; transform: rotate(45deg); filter: drop-shadow(0 0 6px rgba(244,196,96,.9)); animation: hotpoint 1.4s ease-in-out infinite; z-index: 4; }
+@keyframes hotpoint { 50% { top: -11px; } }
+@media (prefers-reduced-motion: reduce) { #homeDoors .hdoor.hot .arch img, #homeDoors .hdoor.hot .arch::after, #homeDoors .hdoor.hot::before { animation: none; } }
 </style>
 
 <div class="wrap">
