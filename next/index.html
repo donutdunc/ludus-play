@@ -6010,14 +6010,17 @@ show = ((orig) => function (name) { const r = orig(name); fitBoard(); if (name =
    freezing the first height instead left the extra room empty. So the settled height is remembered per phone width, and the home is drawn at
    it from the first frame: the view grows into a page already its size. A first visit on a new phone still settles once. */
 (function appHeight() { const seen = () => Math.round(window.visualViewport?.height || window.innerHeight);   /* what is actually on screen, not the layout box */
-  const key = `ludus-viewh-${window.innerWidth}`, born = performance.now(); let saved = 0; try { saved = +localStorage.getItem(key) || 0; } catch (e) { /* none */ }
+  const key = `ludus-viewh-${window.innerWidth}`; let saved = 0; try { saved = +localStorage.getItem(key) || 0; } catch (e) { /* none */ }
   if (saved > (screen.height || 1e4) + 2 || saved < seen() * .8) saved = 0;
   let h = Math.max(seen(), saved); const put = () => document.documentElement.style.setProperty('--appH', `${h}px`); put();
   const relay = () => { put(); if (S.step === 'school') layoutYard(); };
-  const moved = () => { const v = seen(); if (v > h + 1 || (v < h - 1 && performance.now() - born > 4000)) { h = v; relay(); } };
+  /* It only ever grows (24 Nov). It used to give room back when the view reported less after the first four seconds, and another
+     screen (the Calls) could report a shorter view for a moment: the home came back short and then stretched while you watched.
+     Nothing in the game opens a keyboard, so a smaller view is only a passing report; turning the phone still measures afresh. */
+  const moved = () => { const v = seen(); if (v > h + 1) { h = v; relay(); } };
   window.addEventListener('resize', moved); window.visualViewport?.addEventListener('resize', moved);
   window.addEventListener('orientationchange', () => setTimeout(() => { h = seen(); relay(); }, 300));
-  setTimeout(() => { try { localStorage.setItem(key, String(seen())); } catch (e) { /* kept for this visit only */ } }, 4000); })();
+  setTimeout(() => { try { localStorage.setItem(key, String(h)); } catch (e) { /* kept for this visit only */ } }, 4000); })();
 // ---------- Statuses show on the piece ----------
 // No text tags over the board in the school game. A status is an effect on the piece, by family, and the detail (which
 // status, how many turns) is on the panel when you tap him. Buffs light the piece itself; debuffs mark the sand under it.
