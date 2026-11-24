@@ -4146,6 +4146,7 @@ function newSchool() {
   const id = E.DEFAULT_DOCTORE;
   G = { doctore: id, doctores: [id], denarii: E.START_DENARII, renown: 0, fighters: E.startingFighters(), beaten: {}, arenaWins: {}, billWins: {}, v: 3, calls: 0, pity: 0, met: [], wins: 0, fights: 0, script: E.newScript(), day: 1, dayDate: today(), morning: false, chron: [] };
   G.seen = G.fighters.map((f) => f.id);
+  G.taught = { board: false, speed: false, drag: false };   // a new school is taught everything again
   dressAll();
   S.myDoc = id; S.mine = { name: 'Yours', doctore: id, units: [] }; saveG();
 }
