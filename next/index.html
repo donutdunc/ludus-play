@@ -2099,6 +2099,9 @@ body.fighting #transport[hidden]:not(#_):not(#__), body.forming .fightbar[hidden
 #resultRow .plate::before, #resultRow .plate::after { display: none; content: none; }
 #spoils.crestcard #lookBack { align-self: center; }
 body.looking #resultRow { display: none !important; }
+/* The walkthrough lets taps through the hole; the blocks around it catch the rest, and nothing scrolls under it. */
+#tut { pointer-events: none; touch-action: none; }
+#tut .bk { position: fixed; pointer-events: auto; touch-action: none; cursor: pointer; }
 </style>
 
 <div class="wrap">
@@ -3977,32 +3980,50 @@ renderFormation = ((orig) => function () {
 const TUT = [
   { at: () => { const t = [...document.querySelectorAll('#board .tile.zone-me')].map((d) => d.getBoundingClientRect()); return t.length ? { left: Math.min(...t.map((r) => r.left)), top: Math.min(...t.map((r) => r.top)), right: Math.max(...t.map((r) => r.right)), bottom: Math.max(...t.map((r) => r.bottom)) } : null; }, pad: 0, up: 40, rad: 6,
     line: () => lockNow() ? 'This half is yours. Tonight I have set them where they stand.' : 'This half is yours. Your fighters start where you put them.' },
-  { at: () => $('tokens')?.querySelector('.tok[aria-label$="yours"]')?.getBoundingClientRect(), pad: 8, up: 44, rad: 26, line: () => lockNow() ? 'Tap him to see who he is. When the squad is yours to set, you drag them.' : 'Drag to move him. Tap him to see who he is.' },
+  { at: () => $('tokens')?.querySelector('.tok[aria-label$="yours"]')?.getBoundingClientRect(), pad: 8, up: 44, rad: 26, live: () => !lockNow(), line: () => lockNow() ? 'Tap him to see who he is. When the squad is yours to set, you drag them.' : 'Drag to move him. Tap him to see who he is.' },
   { at: () => { const v = $('veil'); return v && !v.hidden ? v.getBoundingClientRect() : null; }, pad: 0, rad: 6, line: 'Their squad waits in the dark. You see them when the fight starts.' },
   { at: () => $('fight')?.getBoundingClientRect(), pad: 5, rad: 999, line: 'Fight when you are ready. After that, you watch.' },
 ];
 // The first fights are set by Magnus and nothing on the board moves, so dragging is taught the first time a squad is yours to place.
-const TUT_DRAG = [{ at: () => TUT[1].at(), pad: 8, up: 44, rad: 26, line: 'This squad is yours to set. Drag a piece to move it. Where they stand is where they start.' }];
+const TUT_DRAG = [{ at: () => TUT[1].at(), pad: 8, up: 44, rad: 26, live: () => true, line: 'This squad is yours to set. Drag a piece to move it. Where they stand is where they start.' }];
 function teachBoard() {
   if (!G || S.step !== 'formation' || !hideRival() || $('tut') || document.querySelector('.sheet:not([hidden])')) return;
   const key = !G.taught?.board ? 'board' : !G.taught?.drag && !lockNow() ? 'drag' : null; if (!key) return;
   const steps = key === 'board' ? TUT : TUT_DRAG;
+  // The dim is drawn by the ring; taps are caught by four blocks around the hole (and a fifth over it, unless the step lets you
+  // use what it shows). So on the piece step the piece really drags, and a drag or a look at his card is how you go on (24 Nov).
   const el = document.createElement('div'); el.id = 'tut';
-  el.innerHTML = `<div class="th"></div><div class="tb nc-talk">${docFace('magnus')}<p><b>Magnus</b><span></span><small></small></p></div>`;
+  el.innerHTML = `<div class="th"></div>${'<i class="bk"></i>'.repeat(5)}<div class="tb nc-talk">${docFace('magnus')}<p><b>Magnus</b><span></span><small></small></p></div>`;
   document.body.appendChild(el);
-  let k = -1;
-  const end = () => { el.remove(); const t = (G.taught ??= {}); t[key] = true; if (key === 'board' && !lockNow()) t.drag = true; saveG(); };
+  const bks = [...el.querySelectorAll('.bk')];
+  let k = -1, watch = null;
+  const stop = () => { clearInterval(watch); watch = null; el.style.visibility = ''; };
+  const end = () => { stop(); el.remove(); const t = (G.taught ??= {}); t[key] = true; if (key === 'board' && !lockNow()) t.drag = true; saveG(); };
   const next = () => {
+    stop();
     for (k++; k < steps.length; k++) { const t = steps[k], r = t.at(); if (!r) continue;
-      const h = el.querySelector('.th'), tb = el.querySelector('.tb'), p = t.pad, up = t.up ?? 0;   // up: room over the bases for the pieces standing on them
-      Object.assign(h.style, { left: `${r.left - p}px`, top: `${r.top - p - up}px`, width: `${r.right - r.left + 2 * p}px`, height: `${r.bottom - r.top + 2 * p + up}px`, borderRadius: `${t.rad}px` });
-      tb.querySelector('span').textContent = typeof t.line === 'function' ? t.line() : t.line; tb.querySelector('small').textContent = steps.length === 1 ? 'tap to go on' : k < steps.length - 1 ? `${k + 1} of ${steps.length} · tap to go on` : `${k + 1} of ${steps.length} · tap to start`;
+      const h = el.querySelector('.th'), tb = el.querySelector('.tb'), p = t.pad, up = t.up ?? 0, live = !!t.live?.();
+      const L = r.left - p, T = r.top - p - up, R = r.right + p, B = r.bottom + p;
+      Object.assign(h.style, { left: `${L}px`, top: `${T}px`, width: `${R - L}px`, height: `${B - T}px`, borderRadius: `${t.rad}px` });
+      const box = (i, x, y, w, hh) => Object.assign(bks[i].style, { left: `${x}px`, top: `${y}px`, width: `${Math.max(0, w)}px`, height: `${Math.max(0, hh)}px` });
+      box(0, 0, 0, innerWidth, T); box(1, 0, B, innerWidth, innerHeight - B); box(2, 0, T, L, B - T); box(3, R, T, innerWidth - R, B - T);
+      if (live) box(4, 0, 0, 0, 0); else box(4, L, T, R - L, B - T);
+      tb.querySelector('span').textContent = typeof t.line === 'function' ? t.line() : t.line;
+      tb.querySelector('small').textContent = live ? 'try it, or tap anywhere to go on' : steps.length === 1 ? 'tap to go on' : k < steps.length - 1 ? `${k + 1} of ${steps.length} · tap to go on` : `${k + 1} of ${steps.length} · tap to start`;
       const below = (r.top + r.bottom) / 2 < innerHeight / 2;
-      tb.style.top = below ? `${r.bottom + p + 16}px` : ''; tb.style.bottom = below ? '' : `${innerHeight - (r.top - p - up) + 16}px`;
-      el.dataset.at = k; return; }
+      tb.style.top = below ? `${B + 16}px` : ''; tb.style.bottom = below ? '' : `${innerHeight - T + 16}px`;
+      el.dataset.at = k;
+      if (live) { const was = JSON.stringify(S.mine.units.map((u) => u.pos)); let looked = false;
+        watch = setInterval(() => {
+          if (S.step !== 'formation') return end();
+          if (JSON.stringify(S.mine.units.map((u) => u.pos)) !== was && !document.querySelector('.tok.drag')) { stop(); return setTimeout(next, 350); }
+          // A tap opens his card: Magnus steps aside until it is closed again.
+          if (S.sel) { looked = true; el.style.visibility = 'hidden'; } else if (looked) next();
+        }, 200); }
+      return; }
     end();
   };
-  el.onclick = (ev) => { ev.stopPropagation(); ev.preventDefault(); next(); };
+  bks.forEach((x) => { x.onclick = (ev) => { ev.stopPropagation(); ev.preventDefault(); next(); }; });
   next();
 }
 // ---------- The far side: until the gates open it is the arena's name over whatever hides the other gate. Lifting it is the start of the fight. ----------
