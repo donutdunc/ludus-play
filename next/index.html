@@ -2178,6 +2178,9 @@ body.drilling .kinpool { display: none !important; }
 #kin0.painted b.cut, #kin1.painted b.cut { font-family: var(--f-ui); font-weight: 700; font-style: normal; line-height: 1; }
 #kin0.painted.kin b.cut, #kin1.painted.kin b.cut { font-size: 21px; top: 87.5%; }
 #kin0.painted.swarm b.cut, #kin1.painted.swarm b.cut { font-size: 25px; }
+/* The studs' bronze rings reach 5.5px past them: the gap between buttons is wide enough that no two rings touch (24 Nov). */
+body.forming .fightbar, body.fighting #transport { gap: 13px !important; }
+@container (max-width: 310px) { body.forming .fightbar, body.fighting #transport { gap: 9px !important; } }
 </style>
 
 <div class="wrap">
@@ -6200,7 +6203,8 @@ setupFight = ((orig) => function (res) { orig(res); P.stops = beatStops(res.even
 /** Play on from here: to the end, or (a step) to the end of the next beat. A step moves through the lead-in briskly and does not wait after its last event. */
 playLoop = async function (step) {
   revealEnd(true);
-  const tok = ++P.token; P.playing = true; S.mode = 'playing'; $('banner').hidden = true; setFightUi();
+  // A single step is not playing (24 Nov): the plate keeps saying Play while the step runs, instead of flashing Pause.
+  const tok = ++P.token; P.playing = true; P.stepping = !!step; S.mode = 'playing'; $('banner').hidden = true; setFightUi();
   const ev = P.res.events, until = step ? P.stops.find((x) => x > P.cursor) ?? ev.length : ev.length; let played = false;
   while (P.cursor < until) {
     // What happens before the first turn is the set-up (kits taking effect, leashes, the pools at their start). It is not part of the fight:
@@ -6213,7 +6217,7 @@ playLoop = async function (step) {
     if (d && !(step && P.cursor >= until)) await sleep((more ? 30 : step && lead ? d * .45 : d) * BASE / S.speed);
     if (tok !== P.token) return;
   }
-  P.playing = false;
+  P.playing = false; P.stepping = false;
   // A step that lands on the last beat stops there, so the last blow can be read; the next step or Play closes the fight.
   if (P.cursor >= ev.length && !(step && played)) finish(); else setFightUi();
 };
@@ -6240,9 +6244,11 @@ stepBack = function () {
 };
 $('stepBack').onclick = () => stepBack();
 $('stepFwd').onclick = () => { pause(); playLoop(true); };
+// During a step the plate says Play, so a tap on it plays on from there rather than pausing the step.
+$('playPause').onclick = () => (P.playing && !P.stepping ? pause() : (pause(), playLoop(false)));
 $('stepBack').setAttribute('aria-label', 'Back one step'); $('stepFwd').setAttribute('aria-label', 'Forward one step');
 // After a step onto the last beat the fight is not closed yet: Play and the step forward stay live until it is.
-setFightUi = ((orig) => function () { orig(); if (S.step !== 'fight' || !P.res) return; const open = S.mode !== 'done'; if (open && !P.playing) $('playPause').disabled = false; if (open) $('stepFwd').disabled = false; })(setFightUi);
+setFightUi = ((orig) => function () { orig(); if (P.stepping && P.playing && S.step === 'fight' && P.res) { const pp = $('playPause'); pp.innerHTML = pp.innerHTML.replace(/^Pause/, 'Play'); } if (S.step !== 'fight' || !P.res) return; const open = S.mode !== 'done'; if (open && !P.playing) $('playPause').disabled = false; if (open) $('stepFwd').disabled = false; })(setFightUi);
 </script>
 
 <script>if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));</script>
