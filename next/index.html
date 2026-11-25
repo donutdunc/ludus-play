@@ -2131,6 +2131,8 @@ body.looking #resultRow { display: none !important; }
 #rite .rkit.base .kit { opacity: 1; }
 /* A piece's card opens over the dark far end, not under it (24 Nov). */
 body.forming #card.over, body.matchup #card.over { z-index: 45; }
+/* A piece's drill-down card covers the rail; the pool inlay steps out of its way (24 Nov). */
+body.drilling .kinpool { display: none !important; }
 </style>
 
 <div class="wrap">
