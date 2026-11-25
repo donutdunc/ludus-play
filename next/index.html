@@ -2188,6 +2188,7 @@ html.floors-painted .hyard::after { display: none; }
 html.floors-painted .board[data-arena="dregs"] { background-image: linear-gradient(rgba(214,178,110,.12), rgba(214,178,110,.12)), var(--floor-cellar) !important; background-size: cover !important; background-position: center !important; background-blend-mode: normal !important; }
 html.floors-painted .board[data-arena="dregs"]::before { display: none; }
 html.floors-painted .board[data-arena="dregs"]::after { background: radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(40,22,6,.35)); }
+html.floors-painted .board[data-arena="dregs"] #sandFloor { mix-blend-mode: multiply; }
 </style>
 
 <div class="wrap">
@@ -5388,7 +5389,40 @@ function sandDig(g, path, tint, wide = true) {
 }
 /** The berm thrown up along an edge: lit on the side that faces the light, shadowed on the other. */
 function sandBerm(g, edge, k) { const sd = sawdust(); g.lineWidth = sd ? 2.6 : 1.3; g.lineJoin = g.lineCap = 'round'; g.translate(-.6, -.6); g.strokeStyle = sd ? `rgba(236,200,132,${.55 * k})` : `rgba(255,245,216,${.3 * k})`; g.stroke(edge); g.translate(1.2, 1.2); g.strokeStyle = `rgba(62,34,8,${.21 * k})`; g.stroke(edge); g.translate(-.6, -.6); }
+/* Sawdust is not sand (24 Nov). It does not hold a clean channel or a combed ridge: a base shoves it, so it heaps up loose and lumpy in front,
+   spills off to the sides in clumps and curls, and the track behind is a ragged, half-filled scuff where the floor shows through in patches. */
+function sawTrack(m, done = true) {
+  const A = sandPt(m.a), B = sandPt(m.b), rx = SAND_FOOT[2] * SAND.tw, ry = SAND_FOOT[3] * SAND.tw, deep = m.deep ? 1.4 : 1;
+  const dx = B[0] - A[0], dy = B[1] - A[1], len = Math.hypot(dx, dy), ux = len ? dx / len : 0, uy = len ? dy / len : 1, nx = -uy, ny = ux;
+  // The scuff: a run of overlapping, uneven blots along the way, so its edge is ragged and its floor patchy.
+  const blots = (rnd) => { const path = new Path2D(); for (let d = 0; d <= len; d += 2.5) { const w = .55 + rnd() * .55, cx = A[0] + ux * d + nx * (rnd() - .5) * rx * .6, cy = A[1] + uy * d + ny * (rnd() - .5) * rx * .6;
+    path.moveTo(cx + rx * w, cy); path.ellipse(cx, cy, rx * w, ry * (.85 + rnd() * .4), 0, 0, 6.29); } if (len < 2.5) { path.moveTo(A[0] + rx, A[1]); path.ellipse(A[0], A[1], rx, ry, 0, 0, 6.29); } return path; };
+  // The scuff goes on the floor layer, which is multiplied into the sawdust: it darkens the grain under it instead of painting over it.
+  for (const [g, k] of [[SAND.floor, 1], [SAND.ctx, 0]]) {
+    const path = blots(seedOf(m.seed)); g.save();
+    if (k) { g.globalCompositeOperation = 'destination-out'; g.fill(path); g.globalCompositeOperation = 'source-over';
+      g.filter = 'blur(1.8px)'; g.fillStyle = `rgba(168,112,62,${Math.min(.8, .62 * deep).toFixed(2)})`; g.fill(path); g.filter = 'none'; }
+    if (!k && len >= 2) { g.clip(path); const rnd = seedOf(`${m.seed}f`);   // what fell back in: loose pale crumbs on the scuffed floor
+      for (let d = 0; d <= len; d += 3.2) { const o = (rnd() - .5) * 2 * rx * .8, s = .5 + rnd() * 1.1, x = A[0] + ux * d + nx * o, y = A[1] + uy * d + ny * o * (ry / rx);
+        g.fillStyle = `rgba(242,214,158,${(.25 + rnd() * .3).toFixed(2)})`; g.beginPath(); g.ellipse(x, y, s * 1.3, s, rnd() * 3, 0, 6.29); g.fill(); } }
+    g.restore();
+  }
+  if (!done || len < 1) return;
+  // What it shoved aside: clumps and curls off both sides, and a loose heap where it stopped. Each has its own small shadow.
+  const g = SAND.ctx, rnd = seedOf(`${m.seed}c`);
+  const clump = (x, y, s, a) => { g.fillStyle = `rgba(70,42,16,${(.32 * deep).toFixed(2)})`; g.beginPath(); g.ellipse(x + .7, y + .9, s * 1.35, s, a, 0, 6.29); g.fill();
+    g.fillStyle = `rgba(${236 + Math.round(rnd() * 14)},${206 + Math.round(rnd() * 16)},${148 + Math.round(rnd() * 20)},.92)`; g.beginPath(); g.ellipse(x, y, s * 1.35, s, a, 0, 6.29); g.fill(); };
+  const curl = (x, y, r, a) => { g.lineWidth = .8; g.strokeStyle = 'rgba(250,228,180,.9)'; g.beginPath(); g.arc(x, y, r, a, a + 4.2); g.stroke(); g.strokeStyle = 'rgba(90,56,22,.35)'; g.beginPath(); g.arc(x + .5, y + .6, r, a + 2, a + 4.2); g.stroke(); };
+  g.save();
+  for (let d = 0; d <= len; d += 2.2) for (const side of [1, -1]) { if (rnd() < .35) continue;
+    const o = side * rx * (.95 + rnd() * .6), x = A[0] + ux * d + nx * o, y = A[1] + uy * d + ny * o * (ry / rx);
+    if (rnd() < .12) curl(x, y, 1.2 + rnd() * 1.2, rnd() * 6.3); else clump(x, y, .7 + rnd() * 1.3, rnd() * 3); }
+  if (!m.open) for (let i = 0; i < 22; i++) { const a = (rnd() - .5) * 2.3, r = 1 + rnd() * .55, x = B[0] + (ux * Math.cos(a) - uy * Math.sin(a)) * rx * r, y = B[1] + (uy * Math.cos(a) + ux * Math.sin(a)) * ry * r * 1.6;
+    if (rnd() < .15) curl(x, y, 1.4 + rnd(), rnd() * 6.3); else clump(x, y, 1 + rnd() * 1.8, rnd() * 3); }
+  g.restore();
+}
 function sandTrack(m, done = true) {
+  if (sawdust()) return sawTrack(m, done);
   const A = sandPt(m.a), B = sandPt(m.b), hull = sandHull(A, B), rx = SAND_FOOT[2] * SAND.tw, ry = SAND_FOOT[3] * SAND.tw;
   const dx = B[0] - A[0], dy = B[1] - A[1], len = Math.hypot(dx, dy), ux = len ? dx / len : 0, uy = len ? dy / len : 1, deep = m.deep ? 1.5 : 1;
   const hw = Math.hypot(rx * uy, ry * ux), n = Math.max(2, Math.round(hw / 1.5));
@@ -5440,7 +5474,7 @@ function sandPaint() {
   const g = SAND.floor; if (!g || !SAND.w) return;
   g.clearRect(0, 0, SAND.w, SAND.h); SAND.ctx.clearRect(0, 0, SAND.w, SAND.h);
   const rnd = seedOf(`rake${SAND.bout}`); g.lineWidth = 1;
-  for (let y0 = -6 + rnd() * 4; y0 < SAND.h; y0 += 35 + rnd() * 3) { const ph = rnd() * 6.3, amp = .8 + rnd() * 1.4, wl = 46 + rnd() * 30;
+  if (!sawdust()) for (let y0 = -6 + rnd() * 4; y0 < SAND.h; y0 += 35 + rnd() * 3) { const ph = rnd() * 6.3, amp = .8 + rnd() * 1.4, wl = 46 + rnd() * 30;
     for (let k = 0; k < 8; k++) for (const [dy, col] of [[0, 'rgba(74,42,10,.055)'], [1, 'rgba(255,245,216,.08)']]) { g.strokeStyle = col; g.beginPath();
       for (let x = -4; x <= SAND.w + 8; x += 8) { const yy = y0 + k * 4.4 + dy + Math.sin(x / wl + ph) * amp; if (x > -4) g.lineTo(x, yy); else g.moveTo(x, yy); } g.stroke(); } }
   // The rake stops where the sand does: the lines fade out toward the walls, as the sand wash does.
