@@ -5759,7 +5759,14 @@ const holesOf = (team) => { const us = team?.units ?? [], kob = us.some((u) => E
   return { warren: true, tunnel: us.some((u) => { try { return (E.resolveUnit(u).skills?.tunnel ?? 0) > 0; } catch { return false; } }) }; };
 renderFormation = ((orig) => function () { orig(); if (S.step !== 'formation') return;
   const me = holesOf(S.mine), them = holesOf(S.theirs);
-  if (me.warren) holeTile(H - 1, 3, 'warren'); if (me.tunnel) holeTile(0, 4, 'tunnel'); if (them.warren) holeTile(0, 3, 'warren'); if (them.tunnel) holeTile(H - 1, 4, 'tunnel'); })(renderFormation);
+  // (24 Nov) Before the fight only your own warren shows. Their holes are theirs to keep in the dark, and a tunnel is not there until somebody
+  // digs it: it opens in the fight, the first time a tunneller comes up through it.
+  if (me.warren) holeTile(H - 1, 3, 'warren'); if (them.warren && !hideRival()) holeTile(0, 3, 'warren'); })(renderFormation);
+apply = ((orig) => function (e, anim) {
+  if (e.kind === 'hole' && e.what === 'tunnel') { (P.tunnels ??= []).push(e); return 0; }   // kept back until it is dug
+  if (e.kind === 'move' && /^tunnels up/.test(e.note ?? '') && P.tunnels?.length) { const st = P.state.get(e.aid), h = P.tunnels.find((t) => t.side === st?.side); if (h) { P.tunnels = P.tunnels.filter((t) => t !== h); document.querySelector(`.tile[data-row="${H - 1 - h.x}"][data-col="${h.y}"]`)?.classList.add('hole', 'tunnel'); } }
+  return orig(e, anim); })(apply);
+resetState = ((orig) => function () { orig(); P.tunnels = []; document.querySelectorAll('.tile.hole.tunnel').forEach((t) => t.classList.remove('hole', 'tunnel')); })(resetState);
 
 // ---------- Sound: sand, and the knock of the pieces ----------
 // Nothing here is a recording. Sand is shaped noise; each family's set knocks like what it is made of (turned wood, sawn bone, struck stone).
