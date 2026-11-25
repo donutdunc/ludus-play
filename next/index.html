@@ -2189,6 +2189,8 @@ html.floors-painted .board[data-arena="dregs"] { background-image: linear-gradie
 html.floors-painted .board[data-arena="dregs"]::before { display: none; }
 html.floors-painted .board[data-arena="dregs"]::after { background: radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(40,22,6,.35)); }
 html.floors-painted .board[data-arena="dregs"] #sandFloor { mix-blend-mode: multiply; }
+/* Sawdust puffs (24 Nov): soft, warm, a little bigger, and slow to fall. */
+.dust.saw { background: radial-gradient(circle, rgba(246,214,156,.85), rgba(232,190,120,.35) 60%, transparent 72%); box-shadow: none; filter: blur(.4px); animation-duration: .85s; transform-origin: center; }
 </style>
 
 <div class="wrap">
@@ -5391,35 +5393,39 @@ function sandDig(g, path, tint, wide = true) {
 function sandBerm(g, edge, k) { const sd = sawdust(); g.lineWidth = sd ? 2.6 : 1.3; g.lineJoin = g.lineCap = 'round'; g.translate(-.6, -.6); g.strokeStyle = sd ? `rgba(236,200,132,${.55 * k})` : `rgba(255,245,216,${.3 * k})`; g.stroke(edge); g.translate(1.2, 1.2); g.strokeStyle = `rgba(62,34,8,${.21 * k})`; g.stroke(edge); g.translate(-.6, -.6); }
 /* Sawdust is not sand (24 Nov). It does not hold a clean channel or a combed ridge: a base shoves it, so it heaps up loose and lumpy in front,
    spills off to the sides in clumps and curls, and the track behind is a ragged, half-filled scuff where the floor shows through in patches. */
+let SAW_MODE = 'scuff';   // (24 Nov) chosen: a soft scuff, and a puff of sawdust as the piece goes. Kept for trial: plow | grain | heap
+let sawPat = null;
+const sawPattern = (g) => { if (sawPat !== null) return sawPat; const src = typeof PIECE_ART !== 'undefined' && PIECE_ART._floor_cellar; if (!src) return (sawPat = false);
+  const im = new Image(); im.src = src; sawPat = false; im.onload = () => { const c = document.createElement('canvas'); c.width = SAND.w; c.height = SAND.h; c.getContext('2d').drawImage(im, 0, 0, SAND.w, SAND.h); sawPat = c; sandPaint(); }; return false; };
 function sawTrack(m, done = true) {
   const A = sandPt(m.a), B = sandPt(m.b), rx = SAND_FOOT[2] * SAND.tw, ry = SAND_FOOT[3] * SAND.tw, deep = m.deep ? 1.4 : 1;
   const dx = B[0] - A[0], dy = B[1] - A[1], len = Math.hypot(dx, dy), ux = len ? dx / len : 0, uy = len ? dy / len : 1, nx = -uy, ny = ux;
-  // The scuff: a run of overlapping, uneven blots along the way, so its edge is ragged and its floor patchy.
-  const blots = (rnd) => { const path = new Path2D(); for (let d = 0; d <= len; d += 2.5) { const w = .55 + rnd() * .55, cx = A[0] + ux * d + nx * (rnd() - .5) * rx * .6, cy = A[1] + uy * d + ny * (rnd() - .5) * rx * .6;
-    path.moveTo(cx + rx * w, cy); path.ellipse(cx, cy, rx * w, ry * (.85 + rnd() * .4), 0, 0, 6.29); } if (len < 2.5) { path.moveTo(A[0] + rx, A[1]); path.ellipse(A[0], A[1], rx, ry, 0, 0, 6.29); } return path; };
-  // The scuff goes on the floor layer, which is multiplied into the sawdust: it darkens the grain under it instead of painting over it.
-  for (const [g, k] of [[SAND.floor, 1], [SAND.ctx, 0]]) {
-    const path = blots(seedOf(m.seed)); g.save();
-    if (k) { g.globalCompositeOperation = 'destination-out'; g.fill(path); g.globalCompositeOperation = 'source-over';
-      g.filter = 'blur(1.8px)'; g.fillStyle = `rgba(168,112,62,${Math.min(.8, .62 * deep).toFixed(2)})`; g.fill(path); g.filter = 'none'; }
-    if (!k && len >= 2) { g.clip(path); const rnd = seedOf(`${m.seed}f`);   // what fell back in: loose pale crumbs on the scuffed floor
-      for (let d = 0; d <= len; d += 3.2) { const o = (rnd() - .5) * 2 * rx * .8, s = .5 + rnd() * 1.1, x = A[0] + ux * d + nx * o, y = A[1] + uy * d + ny * o * (ry / rx);
-        g.fillStyle = `rgba(242,214,158,${(.25 + rnd() * .3).toFixed(2)})`; g.beginPath(); g.ellipse(x, y, s * 1.3, s, rnd() * 3, 0, 6.29); g.fill(); } }
-    g.restore();
-  }
-  if (!done || len < 1) return;
-  // What it shoved aside: clumps and curls off both sides, and a loose heap where it stopped. Each has its own small shadow.
-  const g = SAND.ctx, rnd = seedOf(`${m.seed}c`);
-  const clump = (x, y, s, a) => { g.fillStyle = `rgba(70,42,16,${(.32 * deep).toFixed(2)})`; g.beginPath(); g.ellipse(x + .7, y + .9, s * 1.35, s, a, 0, 6.29); g.fill();
-    g.fillStyle = `rgba(${236 + Math.round(rnd() * 14)},${206 + Math.round(rnd() * 16)},${148 + Math.round(rnd() * 20)},.92)`; g.beginPath(); g.ellipse(x, y, s * 1.35, s, a, 0, 6.29); g.fill(); };
-  const curl = (x, y, r, a) => { g.lineWidth = .8; g.strokeStyle = 'rgba(250,228,180,.9)'; g.beginPath(); g.arc(x, y, r, a, a + 4.2); g.stroke(); g.strokeStyle = 'rgba(90,56,22,.35)'; g.beginPath(); g.arc(x + .5, y + .6, r, a + 2, a + 4.2); g.stroke(); };
-  g.save();
-  for (let d = 0; d <= len; d += 2.2) for (const side of [1, -1]) { if (rnd() < .35) continue;
-    const o = side * rx * (.95 + rnd() * .6), x = A[0] + ux * d + nx * o, y = A[1] + uy * d + ny * o * (ry / rx);
-    if (rnd() < .12) curl(x, y, 1.2 + rnd() * 1.2, rnd() * 6.3); else clump(x, y, .7 + rnd() * 1.3, rnd() * 3); }
-  if (!m.open) for (let i = 0; i < 22; i++) { const a = (rnd() - .5) * 2.3, r = 1 + rnd() * .55, x = B[0] + (ux * Math.cos(a) - uy * Math.sin(a)) * rx * r, y = B[1] + (uy * Math.cos(a) + ux * Math.sin(a)) * ry * r * 1.6;
-    if (rnd() < .15) curl(x, y, 1.4 + rnd(), rnd() * 6.3); else clump(x, y, 1 + rnd() * 1.8, rnd() * 3); }
-  g.restore();
+  const along = (rnd, wMin, wMax, off, jit, step = 2.5) => { const path = new Path2D(); for (let d = 0; d <= Math.max(len, .1); d += step) { const w = wMin + rnd() * (wMax - wMin), o = off + (rnd() - .5) * jit;
+    const cx = A[0] + ux * d + nx * o * rx, cy = A[1] + uy * d + ny * o * ry; path.moveTo(cx + rx * w, cy); path.ellipse(cx, cy, rx * w, ry * w * 1.3, 0, 0, 6.29); } return path; };
+  const fl = SAND.floor, fr = SAND.ctx;
+  if (SAW_MODE === 'scuff' || SAW_MODE === 'heap') {   // only a scuff: darker where the dust was wiped, its edges feathered, nothing heaped
+    const path = along(seedOf(m.seed), .7, 1.0, 0, .5); fl.save(); fl.globalCompositeOperation = 'destination-out'; fl.fill(path); fl.globalCompositeOperation = 'source-over';
+    fl.filter = 'blur(3px)'; fl.fillStyle = `rgba(180,128,80,${(.5 * deep).toFixed(2)})`; fl.fill(path); fl.filter = 'none'; fl.restore();
+    if (SAW_MODE === 'scuff' || !done || m.open || len < 1) return;
+    // heap: what the base shoved is a soft mound of real grain in front of it, nothing along the sides
+    const rh = seedOf(`${m.seed}h`), heap = new Path2D(); for (let i = 0; i < 11; i++) { const a = (rh() - .5) * 2, r = .95 + rh() * .25, x = B[0] + (ux * Math.cos(a) - uy * Math.sin(a)) * rx * r, y = B[1] + (uy * Math.cos(a) + ux * Math.sin(a)) * ry * r * 1.7, w = (.28 + rh() * .22) * rx; heap.moveTo(x + w, y); heap.ellipse(x, y, w, w * .7, 0, 0, 6.29); }
+    const pat = sawPattern(fr); fr.save(); fr.filter = 'blur(2.2px)'; fr.translate(1.3, 1.8); fr.fillStyle = 'rgba(70,40,14,.32)'; fr.fill(heap); fr.restore();
+    fr.save(); fr.filter = 'blur(.6px)'; fr.clip(heap); if (pat) { fr.filter = 'brightness(1.15)'; fr.drawImage(pat, -2, -2, SAND.w, SAND.h); } else { fr.fillStyle = 'rgba(244,212,150,.9)'; fr.fill(heap); } fr.restore(); return; }
+  // plow / grain: the floor shows in the track; the sawdust is pushed up in soft banks on both sides and a heap in front.
+  const trough = along(seedOf(m.seed), .62, .82, 0, .25);
+  fl.save(); fl.globalCompositeOperation = 'destination-out'; fl.fill(trough); fl.globalCompositeOperation = 'source-over';
+  fl.filter = 'blur(1.2px)'; fl.fillStyle = `rgba(150,96,52,${Math.min(.85, .7 * deep).toFixed(2)})`; fl.fill(trough); fl.filter = 'none'; fl.restore();
+  if (!done && SAW_MODE !== 'grain') return;
+  const banks = new Path2D(); const rb = seedOf(`${m.seed}b`); for (const side of [1, -1]) banks.addPath(along(rb, .3, .5, side * 1.08, .2, 3));
+  if (done && !m.open) { const rh = seedOf(`${m.seed}h`); for (let i = 0; i < 9; i++) { const a = (i / 8 - .5) * 2.4, x = B[0] + (ux * Math.cos(a) - uy * Math.sin(a)) * rx * 1.05, y = B[1] + (uy * Math.cos(a) + ux * Math.sin(a)) * ry * 1.6, w = (.35 + rh() * .2) * rx; banks.moveTo(x + w, y); banks.ellipse(x, y, w, w * .75, 0, 0, 6.29); } }
+  fr.save();
+  // a soft shadow under the banks, then the banks themselves: real sawdust grain lifted (grain), or a pale soft heap (plow), lit from the top left
+  fr.filter = 'blur(2.5px)'; fr.translate(1.6, 2); fr.fillStyle = 'rgba(60,34,12,.35)'; fr.fill(banks); fr.translate(-1.6, -2); fr.filter = 'none';
+  const pat = SAW_MODE === 'grain' && sawPattern(fr);
+  if (pat) { fr.save(); fr.clip(banks); fr.filter = 'brightness(1.18) contrast(1.05)'; fr.drawImage(pat, -1.2, -1.6, SAND.w, SAND.h); fr.filter = 'none'; fr.restore(); }
+  else { fr.filter = 'blur(1.2px)'; fr.fillStyle = 'rgba(246,214,150,.85)'; fr.fill(banks); fr.filter = 'none'; }
+  fr.save(); fr.clip(banks); fr.filter = 'blur(1.5px)'; fr.translate(-1.4, -1.6); fr.lineWidth = 2; fr.strokeStyle = 'rgba(255,240,205,.55)'; fr.stroke(banks); fr.restore();
+  fr.restore();
 }
 function sandTrack(m, done = true) {
   if (sawdust()) return sawTrack(m, done);
@@ -5507,7 +5513,7 @@ function sandPuff(pt, ux, uy, n = 5, big = false) {
   if (SAND.calm) return;
   for (let i = 0; i < n; i++) { const d = document.createElement('i'), s = (big ? 5 : 3) + Math.random() * (big ? 5 : 3); d.className = 'dust';
     d.style.cssText = `left:${(pt[0] + (Math.random() - .5) * 10).toFixed(1)}px;top:${(pt[1] + (Math.random() - .5) * 4).toFixed(1)}px;width:${s.toFixed(1)}px;height:${s.toFixed(1)}px;--dx:${(ux * 12 + (Math.random() - .5) * 16).toFixed(1)}px;--dy:${(uy * 5 - 5 - Math.random() * 9).toFixed(1)}px`;
-    $('fx').appendChild(d); setTimeout(() => d.remove(), 700); }
+    if (sawdust()) d.classList.add('saw'); $('fx').appendChild(d); setTimeout(() => d.remove(), 900); }
 }
 { const mk = (id) => { const cv = document.createElement('canvas'); cv.id = id; cv.className = 'sandcv'; cv.setAttribute('aria-hidden', 'true'); return cv; }, floor = mk('sandFloor'), fresh = mk('sand');
   $('grid').after(floor, fresh); SAND.floor = floor.getContext('2d'); SAND.ctx = fresh.getContext('2d'); SAND.cv = fresh; new ResizeObserver(sandFit).observe($('board')); }
@@ -5525,7 +5531,11 @@ apply = ((orig) => function (e, anim) {
       if (anim && !SAND.calm) { const res = P.res; mover.style.setProperty('--lean', `${Math.sign(dc) * 6}deg`); mover.classList.add('plough'); clearTimeout(mover._pl);
         mover._pl = setTimeout(() => { mover.classList.remove('plough'); if (P.res !== res || S.step !== 'fight' || !SAND.w) return;
           const B = sandPt([to.col, to.row]), len = Math.hypot(dc * SAND.tw, dr * SAND.th) || 1, ux = dc * SAND.tw / len, uy = dr * SAND.th / len;
-          sandPuff([B[0] + ux * SAND_FOOT[2] * SAND.tw * .9, B[1] + uy * SAND_FOOT[3] * SAND.tw * .9], ux, uy); }, ms); }
+          sandPuff([B[0] + ux * SAND_FOOT[2] * SAND.tw * .9, B[1] + uy * SAND_FOOT[3] * SAND.tw * .9], ux, uy, sawdust() ? 9 : 5); }, ms);
+        // In sawdust it lifts the whole way, not only where he stops: little puffs off the base as it slides, drifting back the way he came.
+        if (sawdust()) { const A0 = sandPt([from.col, from.row]), B0 = sandPt([to.col, to.row]), L = Math.hypot(B0[0] - A0[0], B0[1] - A0[1]) || 1, vx = (B0[0] - A0[0]) / L, vy = (B0[1] - A0[1]) / L, k = Math.max(2, Math.round(L / 14));
+          for (let i = 1; i <= k; i++) setTimeout(() => { if (P.res !== res || !SAND.w) return; const t = sandEase(i / (k + 1)), x = A0[0] + (B0[0] - A0[0]) * t, y = A0[1] + (B0[1] - A0[1]) * t;
+            for (const side of [1, -1]) sandPuff([x + side * -vy * SAND_FOOT[2] * SAND.tw, y + side * vx * SAND_FOOT[3] * SAND.tw], -vx * .5 + side * -vy * .6, -vy * .5 + side * vx * .4, 2); }, ms * i / (k + 1)); } }
     }
   } else if (e.kind === 'attack' && e.outcome === 'miss' && P.state.get(e.tid)) {
     if (anim) { const v = posOf(e.tid); sfxPlay('swish', .03, (r, t) => sndSwish(r, t, { pan: sfxAcross(v.col) })); }
