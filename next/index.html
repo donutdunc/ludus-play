@@ -2239,6 +2239,13 @@ body:not(.free) #muster .meter .top .info { white-space: normal; min-width: 0; l
 .tscen button { text-align: left; min-height: 46px; padding: 8px 14px; font: 600 15px/1.2 var(--f-ui); } .tscen button[aria-pressed="true"] { border-color: var(--gold); }
 /* The fee line reads at arm's length and grows leftward, clear of the + button. */
 .piece.frow .ph .bc small.fee { display: flex; justify-content: flex-end; font-size: 11px; height: 11px; margin: 2px 0 0; letter-spacing: 0; color: var(--ink-2); }
+/* A long name with five stars (Warboss Urgat) ran over his HP. The line is held to its column: what he is gives way first, then the name's tail; the stars always show. */
+#muster .frow.slim .pn { min-width: 0; overflow: hidden; }
+#muster .frow.slim .pn .pnm { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#muster .frow.slim .pn small { flex: 0 1000 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#muster .frow.slim .pn .rst { flex: none; }
+#muster .frow.slim .pn .rst { font-size: 10px; letter-spacing: -1px; align-self: center; }
+#muster .frow.slim .pn .pnm.lng { font-size: 15px; letter-spacing: -.01em; }
 </style>
 
 <div class="wrap">
@@ -4880,7 +4887,7 @@ const costSplit = (u) => { const total = cost(u), body = Math.min(total, E.billO
 function fighterRow(f, r, { inSquad = false, cant = false, add = false, hire = null } = {}) {
   const u = unitOf(f), c = cost(u) + (hire?.fee ?? 0), kit = E.loadoutOf(f);
   return `<div class="piece frow slim ${add ? '' : 'view'} ${inSquad ? 'in' : ''}"><div class="ph">${tokenSvg(lookOf(u), { side: 0, bare: true })}
-      <button class="info" data-f="${f.id}"><span class="pn"><span class="pnm">${f.name}</span>${E.UNITS[f.template].name === f.name ? '' : `<small>${E.UNITS[f.template].name}</small>`}<em class="rst">${'★'.repeat(M(f).stars)}</em></span><span class="pk"><b class="ktag">${kit.name}</b></span><span class="mini side"><span><b>${Math.round(r.stats.hp)}</b><i>HP</i></span><span><b>${Math.round(r.stats.atk + r.weapon.damage)}</b><i>DMG</i></span></span></button>
+      <button class="info" data-f="${f.id}"><span class="pn"><span class="pnm${f.name.length > 11 ? ' lng' : ''}">${f.name}</span>${E.UNITS[f.template].name === f.name ? '' : `<small>${E.UNITS[f.template].name}</small>`}<em class="rst">${'★'.repeat(M(f).stars)}</em></span><span class="pk"><b class="ktag">${kit.name}</b></span><span class="mini side"><span><b>${Math.round(r.stats.hp)}</b><i>HP</i></span><span><b>${Math.round(r.stats.atk + r.weapon.damage)}</b><i>DMG</i></span></span></button>
       <span class="bc${hire ? ' hired' : ''}" style="${cant ? 'opacity:.5' : ''}">${c}${hire ? `<small class="fee${hire.fee ? '' : ' off'}">${hire.fee ? `+${hire.fee} fee` : 'no fee'}</small>` : ''}</span>
       ${add ? `<button class="add" data-toggle="${f.id}" ${cant ? 'disabled' : ''} aria-pressed="${inSquad}" aria-label="${inSquad ? 'Take' : 'Put'} ${f.name} ${inSquad ? 'out of' : 'in'} the squad">${inSquad ? '✓' : '+'}</button>` : ''}</div></div>`;
 }
@@ -4958,7 +4965,7 @@ const KIT_NUMS = [
   ['Block', (r) => (r.gift?.blockAll ? -1 : Math.round(r.block * 100)), (v) => `Block ${v}%`, 'Chance to block a hit that lands. A blocked hit deals half damage.'],
   ['Pierce', (r) => Math.round((r.weapon.armorPierce ?? 0) * 100), (v) => `Pierce ${v}%`, 'The share of the target\'s armor his hits ignore.'],
   ['Crit', (r) => Math.round(r.stats.crit + (r.weapon.critBonus ?? 0)), (v) => `Crit ${v}%`, 'Chance that a hit is a critical hit.'],
-  ['On hit', (r) => (r.weapon.onHit ? `${r.weapon.onHit.status} ${Math.round(r.weapon.onHit.chance * 100)}` : ''), (v) => { const [st, c] = String(v).split(' '); return `${st[0].toUpperCase()}${st.slice(1)} ${c}%`; }, 'Chance that a hit leaves this on the target.'],
+  ['On hit', (r) => (r.weapon.onHit ? `${r.weapon.onHit.status} ${Math.round(r.weapon.onHit.chance * 100)}` : ''), (v) => { if (!v) return 'nothing'; const [st, c] = String(v).split(' '); return `${st[0].toUpperCase()}${st.slice(1)} ${c}%`; }, 'Chance that a hit leaves this on the target.'],
 ];
 const kitSame = (pairs) => { const out = new Set(); for (const [k, get] of KIT_NUMS) if (new Set(pairs.map(([kr]) => get(kr))).size <= 1) out.add(k); return out; };
 /** A kit's keys. The first kit is the base: it shows only its own rules. Every other kit shows its rules and only the numbers that differ from the base, as the change (20 Nov). */
@@ -5019,7 +5026,7 @@ function renderFighter() {
     <button id="edDone" class="fx-close" aria-label="Close">✕</button>
     <div class="fhead">
       <div class="fport ${art ? '' : 'none'}" data-fam="${t.faction}">${art ? `<img src="${art}" alt="">` : ''}${frameSvg(t.faction, f.id)}${tokenSvg(lookOf(u), { side: 0, bare: true })}</div>
-      <div class="fwho"><div class="fname">${f.name}</div><div class="funit">${t.name}</div></div>
+      <div class="fwho"><div class="fname">${f.name}</div><div class="funit">${t.name === f.name ? (M(f).title ?? '') : t.name}</div></div>
       <div class="fcost"><span class="fstars">${'★'.repeat(M(f).stars)}</span><b>${total}</b></div>
     </div>
     ${tiles}
@@ -6231,7 +6238,9 @@ function fitBoardNow() {
   if (!arena || arena.hidden || !document.body.matches('.fighting, .forming, .matchup')) { b.style.width = ''; b.style.marginTop = ''; for (const l of [document.querySelector('.fightbar'), $('transport')]) if (l) l.style.width = ''; return; }
   b.style.width = ''; b.style.marginTop = '';
   const cs = getComputedStyle(b), [aw, ah] = (cs.aspectRatio || '').split('/').map(parseFloat), ratio = aw && ah ? aw / ah : b.offsetWidth / Math.max(1, b.offsetHeight);
-  const vh = Math.round(window.visualViewport?.height || innerHeight), top0 = b.getBoundingClientRect().top + scrollY, mt = parseFloat(cs.marginTop) || 0;
+  /* One screen size, kept (27 Nov). The live view can report short for a moment (a sheet closing, a scroll settling) and the board was fitted to that:
+     a third-size board and a squeezed Fight plate. It is fitted to the tallest view this phone has shown, the same height the home is drawn at. */
+  const vh = Math.max(Math.round(window.visualViewport?.height || innerHeight), Math.round(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--appH')) || 0)), top0 = b.getBoundingClientRect().top + scrollY, mt = parseFloat(cs.marginTop) || 0;
   const bar = [$('spot')].filter((e) => e && e.offsetHeight && getComputedStyle(e).display !== 'none').map((e) => e.getBoundingClientRect().bottom + scrollY);
   const lintel = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--inset')) + 22 || 0;
   const want = Math.max(top0, (bar.length ? Math.max(...bar) : lintel) + BOARD_GAP + BOARD_FRAME), shift = Math.max(0, Math.round(want - top0));
