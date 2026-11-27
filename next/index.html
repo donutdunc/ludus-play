@@ -2246,6 +2246,10 @@ body:not(.free) #muster .meter .top .info { white-space: normal; min-width: 0; l
 #muster .frow.slim .pn .rst { flex: none; }
 #muster .frow.slim .pn .rst { font-size: 10px; letter-spacing: -1px; align-self: center; }
 #muster .frow.slim .pn .pnm.lng { font-size: 15px; letter-spacing: -.01em; }
+
+/* The floor fits the pieces, not the other way round (27 Nov, art/STYLE.md). The Cellar's sawdust was as warm and as bright as the wooden pieces
+   standing on it. It is dimmed to a middle value and drained of about half its colour, so light warm pieces and dark cool ones both stand off it. */
+html.floors-painted body .board#board[data-arena="dregs"] { background-image: linear-gradient(rgba(44,40,44,.46), rgba(44,40,44,.46)), linear-gradient(rgba(128,128,128,.45), rgba(128,128,128,.45)), var(--floor-cellar) !important; background-blend-mode: normal, saturation, normal !important; }
 </style>
 
 <div class="wrap">
@@ -3172,6 +3176,8 @@ function renderLegend() {
 // One look now: the turned set on sand, painted portraits in the close-up. The mosaic and painted renderers are kept but not offered.
 const LOOKS = [['lino', 'Counters', 'Carved pieces on sand']];
 // A trial: both sides in their own family's set, with the base alone saying whose a piece is (instead of light against dark).
+/* How their painted pieces are toned against yours: saturation, then red, green, blue. */
+const FOE_TONE = window.FOE_TONE ?? [.55, .5, .5, .56];   /* near-ebony (27 Nov): side is read from the piece, like a chess set; see art/STYLE.md */
 let OWN_SETS = false; try { OWN_SETS = localStorage.getItem('ludus-ownsets') === '1'; } catch (e) { /* off */ }
 document.documentElement.dataset.sets = OWN_SETS ? 'own' : 'chess';
 // ---------- Faces ----------
@@ -3659,7 +3665,7 @@ function tokenStand(u, opts) {
     <path d="${band}" fill="#14110e" stroke="#14110e" stroke-width="2.6" stroke-linejoin="round"/>
     <g clip-path="url(#${id})">${opts.bare ? `<rect x="${50 - rx}" y="${cy}" width="${2 * rx}" height="24" fill="${opts.side === 1 ? '#3a322b' : '#b9ab8c'}"/>` : `<rect x="${50 - rx}" y="${cy}" width="${(2 * rx * hp).toFixed(1)}" height="24" fill="${opts.side === 1 ? '#e0573f' : '#8fd36a'}"/><g fill="#14110e">${ticks}</g>`}</g>
     <ellipse cx="50" cy="${cy}" rx="${rx}" ry="${ry}" fill="${edge}" stroke="${OWN_SETS && !opts.bare ? (opts.side === 1 ? '#8c2413' : '#2f6b1c') : '#14110e'}" stroke-width="${OWN_SETS && !opts.bare ? 3.4 : 2}"/>${u.adorn || stars < 2 ? '' : `<ellipse cx="50" cy="${cy}" rx="${rx - 2.6}" ry="${ry - 1.5}" fill="none" stroke="${[0, 0, '#6b5a45', '#b5532a', '#aeb4bb', '#e2b53e'][stars]}" stroke-width="${stars >= 3 ? 3.4 : 2}"/>${stars >= 5 ? `<ellipse cx="50" cy="${cy}" rx="${rx - 7.4}" ry="${ry - 3.4}" fill="none" stroke="#e2b53e" stroke-width="1.6"/>` : ''}`}
-    ${PAINTED(u) && !opts.dead && opts.side === 1 && !OWN_SETS ? `<filter id="${id}d" color-interpolation-filters="sRGB"><feColorMatrix type="saturate" values=".9"/><feComponentTransfer><feFuncR type="linear" slope=".74"/><feFuncG type="linear" slope=".68"/><feFuncB type="linear" slope=".66"/></feComponentTransfer></filter>` : ''}${PAINTED(u) && !opts.dead ? `<image ${opts.side === 1 && !OWN_SETS ? `filter="url(#${id}d)" ` : ''}href="${PAINTED(u)}" x="${50 - 36 * k}" y="${cy + ry - 150 * k}" width="${72 * k}" height="${150 * k}" preserveAspectRatio="xMidYMax meet"/>` : ''}<g transform="translate(50 130) scale(${k.toFixed(3)}) translate(-50 -130)"${PAINTED(u) && !opts.dead ? ' display="none"' : ''}>${icon ? `<g filter="url(#${u.faction === 'riffraff' ? 'carved' : 'hewn'})">${setPiece(u, opts.dead ? 'dead' : undefined, opts.side)}</g>` : setPiece(u, opts.dead ? 'dead' : undefined, opts.side, true)}</g></svg>`;
+    ${PAINTED(u) && !opts.dead && opts.side === 1 && !OWN_SETS ? `<filter id="${id}d" color-interpolation-filters="sRGB"><feColorMatrix type="saturate" values="${FOE_TONE[0]}"/><feComponentTransfer><feFuncR type="linear" slope="${FOE_TONE[1]}"/><feFuncG type="linear" slope="${FOE_TONE[2]}"/><feFuncB type="linear" slope="${FOE_TONE[3]}"/></feComponentTransfer></filter>` : ''}${PAINTED(u) && !opts.dead ? `<image ${opts.side === 1 && !OWN_SETS ? `filter="url(#${id}d)" ` : ''}href="${PAINTED(u)}" x="${50 - 36 * k}" y="${cy + ry - 150 * k}" width="${72 * k}" height="${150 * k}" preserveAspectRatio="xMidYMax meet"/>` : ''}<g transform="translate(50 130) scale(${k.toFixed(3)}) translate(-50 -130)"${PAINTED(u) && !opts.dead ? ' display="none"' : ''}>${icon ? `<g filter="url(#${u.faction === 'riffraff' ? 'carved' : 'hewn'})">${setPiece(u, opts.dead ? 'dead' : undefined, opts.side)}</g>` : setPiece(u, opts.dead ? 'dead' : undefined, opts.side, true)}</g></svg>`;
 }
 /** A fallen piece: knocked over in the sand, on a stain. */
 function tokenFallen(u) {
