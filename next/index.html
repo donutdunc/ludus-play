@@ -2213,6 +2213,21 @@ body:not(.free) #muster .meter .top .info { white-space: normal; min-width: 0; l
   #muster .frow.slim .ph { grid-template-columns: 28px minmax(0, 1fr) 38px 42px; gap: 4px; }
   #muster .frow.slim .pn .pnm { font-size: 16px; }
 }
+
+/* Cleanup pass, 27 Nov. Measured at 395 x 858 with the clock strip on.
+   The drill dots sat on the box's top edge (the button had no padding of its own): they stand inside it now, the three lines centred. */
+.train.one button { justify-content: center; padding: 10px 12px; }
+/* A card docked at the top started under the lintel, which is 22px deeper than the clock strip: its portrait and X were cut. */
+.drill.top { padding-top: calc(var(--lintel, env(safe-area-inset-top, 0px)) + 10px); }
+/* Two long names over a blow: each gives way by its own share, so neither is cut to a letter ("The Undertaker < G..."). */
+.spot .who:not(.kick) { display: flex; justify-content: center; align-items: baseline; } .spot .who:not(.kick) b { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; } .spot .who .dir { flex: none; }
+/* The hired count on the squad screen stays on one line beside the bill. */
+#muster .nw { white-space: nowrap; }
+/* A long family name (Mercenaries, Gladiators) fits its gutter in the yard, not over the first piece. */
+.hrank small.lg { letter-spacing: .04em; font-size: 9px; }
+/* No orphaned last word under the horn. */
+#hallSpeak, #hallNote, .pitch { text-wrap: balance; }
+.kit { column-gap: 14px; }
 </style>
 
 <div class="wrap">
@@ -4577,7 +4592,7 @@ function yardHtml(at) {
   const hero = fams.length === 1 && G.doctores.length === 1;
   const ranks = fams.map((k) => { const docs = G.doctores.filter((id) => E.DOCTORE_BY_ID[id].faction === k);
     const men = seen.filter((f) => M(f).faction === k && f.id !== tr?.fid).sort((x, y) => M(y).stars - M(x).stars || x.name.localeCompare(y.name));
-    return `<div class="hrank" data-n="${men.length}" data-docs="${docs.length}">${hero ? '' : `<span class="heads"><span class="faces">${docs.map((id) => `<button class="hdoc" data-doc="${id}" aria-label="${E.DOCTORE_BY_ID[id].name}">${docFace(id)}</button>`).join('')}</span><span class="hname"><small>${E.FACTIONS[k].name.replace(/^The /, '')}</small></span></span>`}<span class="line">${men.map(piece).join('')}</span></div>`; }).join('');
+    return `<div class="hrank" data-n="${men.length}" data-docs="${docs.length}">${hero ? '' : `<span class="heads"><span class="faces">${docs.map((id) => `<button class="hdoc" data-doc="${id}" aria-label="${E.DOCTORE_BY_ID[id].name}">${docFace(id)}</button>`).join('')}</span><span class="hname"><small${E.FACTIONS[k].name.replace(/^The /, '').length > 9 ? ' class="lg"' : ''}>${E.FACTIONS[k].name.replace(/^The /, '')}</small></span></span>`}<span class="line">${men.map(piece).join('')}</span></div>`; }).join('');
   const tf = tr && fighterById(tr.fid), hotPost = at.k === 'post';
   const posts = inSight('training') ? `<div class="hposts"><small>Drill<br>post</small><button class="hpost${hotPost ? ' hot' : ''}" id="homePost" aria-label="${tf ? `${tf.name} is drilling` : 'The drill post is empty'}">${POLE}${tf ? `<span class="hp">${tokenSvg(lookOf(unitOf(tf)), { side: 0, bare: true })}</span><span class="hchip" id="yardClock">${clock(tr.doneAt - Date.now())}</span>` : `<span class="hchip${hotPost ? ' go' : ' dim'}">Empty</span>`}</button></div>` : '';
   return { html: ranks + posts, hero, rest };
@@ -4801,7 +4816,7 @@ renderMeter = ((orig) => function () {
   const fam = E.DOCTORE_BY_ID[S.myDoc]?.faction, info = $('meter').querySelector('.info');
   // It counts the hired men from outside his family, and only Mercenaries come from outside now. A school with none to hire is not shown it.
   if (info && fam && !E.FACTIONS[fam].neutral) { const k = S.mine.units.filter((u) => E.fieldable(S.myDoc, u.template) === 'neutral').length, any = G.fighters.some((f) => E.fieldable(S.myDoc, f.template) === 'neutral');
-    info.innerHTML = any ? `Mercenaries <span class="nw"><b>${k}</b> / 3</span>` : ''; info.classList.toggle('full', k >= 3); }
+    info.innerHTML = any ? `<span class="nw">Hired <b>${k}</b> / 3</span>` : ''; info.classList.toggle('full', k >= 3); }
 })(renderMeter);
 function renderRosterScreen() {
   const rumour = nextDoctore();
@@ -4890,7 +4905,9 @@ function frameSvg(fam, seed) {
   return `<svg class="fframe" viewBox="0 0 ${W} ${H}" aria-hidden="true"><path d="M0,0 h96 v120 h-96 Z ${hole}" fill-rule="evenodd" fill="url(#g-bone0)" stroke="#150c06" stroke-width="1.6"/><rect x="3.5" y="3.5" width="89" height="113" fill="none" stroke="#b0793c" stroke-width="1"/></svg>`;
 }
 let sheetTab = 'kit';
-function openFighter(fid) { sheetTab = 'kit'; sheetFid = fid; { const f = fighterById(fid); if (f) { f.kitsSeen = E.kitsOpen(f); saveG(); } } S.editing = null; $('edit').hidden = false; $('scrim2').hidden = false; $('scrim2').onclick = closeEdit; renderFighter(); }
+function openFighter(fid) { sheetTab = 'kit'; sheetFid = fid; { const f = fighterById(fid); if (f) { f.kitsSeen = E.kitsOpen(f); saveG(); } } S.editing = null; $('edit').hidden = false; $('scrim2').hidden = false; $('scrim2').onclick = closeEdit; renderFighter(); $('edit').scrollTop = 0; shutFollows(); }
+/* A long sheet scrolls, and its X used to scroll away with the portrait. It rides the scroll now, so the way out is always in the same corner. */
+function shutFollows() { const e = $('edit'), x = $('edDone'); if (!e || !x) return; const put = () => { x.style.transform = e.scrollTop ? `translateY(${e.scrollTop}px)` : ''; }; e.onscroll = put; put(); }
 // A kit row is its name and four fixed slots, in this order: weapon, armor, off hand, family rule. No sentence fills a slot; the name carries the flavor.
 const kkey = (cls, kind, label, tag, body, num) => `<i class="kkey ${cls}" data-kk="${encodeURIComponent(JSON.stringify([kind, label, body, num ?? '']))}">${label}${tag ? `<u>${tag}</u>` : ''}</i>`;
 /** A kit has no gear to list: its row says only the numbers that differ from the fighter's other kits, then what the kit does. */
