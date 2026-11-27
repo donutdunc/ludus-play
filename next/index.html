@@ -2250,6 +2250,16 @@ body:not(.free) #muster .meter .top .info { white-space: normal; min-width: 0; l
 /* The floor fits the pieces, not the other way round (27 Nov, art/STYLE.md). The Cellar's sawdust was as warm and as bright as the wooden pieces
    standing on it. It is dimmed to a middle value and drained of about half its colour, so light warm pieces and dark cool ones both stand off it. */
 html.floors-painted body .board#board[data-arena="dregs"] { background-image: linear-gradient(rgba(44,40,44,.46), rgba(44,40,44,.46)), linear-gradient(rgba(128,128,128,.45), rgba(128,128,128,.45)), var(--floor-cellar) !important; background-blend-mode: normal, saturation, normal !important; }
+/* The doctore on the squad screen (27 Nov): his portrait was a 44px stamp. On a phone with the height for it he gets a 64px portrait,
+   his name over his family, his twist at the right. Short phones keep the compact row. */
+@media (min-height: 760px) {
+  body.mustering .docbox:has(#docPort), body.mustering .docbox.says:has(#docPort) { grid-template-columns: 64px minmax(0, 1fr); column-gap: 12px; }
+  body.mustering #docPort, body.mustering .docbox:not(.says) #docPort, body.mustering .docbox.says #docPort { width: 64px; height: 64px; }
+  body.mustering .docbox:has(#docPort) #docRow { height: 64px; padding: 0 12px; }
+  body.mustering #docRow .docsel span { flex-direction: column; align-items: flex-start; gap: 3px; }
+  body.mustering #docRow .docsel span b { font-size: 19px; line-height: 1.05; }
+}
+@media (min-height: 760px) { body.mustering #docRow .docsel span b { font-size: 17.5px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; } body.mustering #docRow .docsel span { min-width: 0; } body.mustering #docRow .docsel { min-width: 0; overflow: hidden; } }
 </style>
 
 <div class="wrap">
