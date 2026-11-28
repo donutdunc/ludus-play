@@ -2305,6 +2305,176 @@ html.floors-painted body .board#board[data-arena="dregs"] { background-image: li
 #card .pc-head .fcost { position: static; align-self: start; padding: 2px 0 0; } #card .pc-head .fcost b { font-size: 26px; white-space: nowrap; }
 #card .pc-name { font-size: 24px; line-height: 1.05; overflow-wrap: anywhere; }
 #card .pc-name { font-size: 21px; overflow-wrap: normal; } #card .pc-cls { white-space: nowrap; } #card .pc-head { column-gap: 12px; padding-right: 46px; }
+   The fade is gone: no text is made secondary by greying it or by an opacity on its row. Secondary text is a clear warm bone (--ink-2,
+   --ink-3), a size or a weight down. A STATE (cannot afford, not yours yet) may dim the art or the frame; its text still passes 3:1.
+   Nothing a player reads is under 13px (12px for an uppercase tracked caption, 15px for Marcellus SC). No box changes size: where a
+   larger face would grow a line, the line is restructured. Every rule here is prefixed `:root body` so it wins over the older layers
+   above it without !important; fix a look here, not by adding another override further up. */
+:root { --ink-2: #d3c6ae; --ink-3: #c4b69c; }
+/* -- the squad screen and the Barracks: rows at full strength; in the squad is a warm ground, not a brighter row -- */
+:root body #muster .piece.frow.slim { opacity: 1; }
+:root body #muster .piece.frow.slim.in { background: linear-gradient(90deg, rgba(226,181,62,.13), rgba(226,181,62,.04)); box-shadow: inset 3px 0 0 var(--gold); }
+:root body #muster .piece.frow.slim.cant .ph > svg, :root body #muster .piece.frow.slim.cant .ktag { opacity: .6; }
+:root body #muster .piece.frow.slim.cant .bc { color: #b79a52; }
+:root body #muster .frow.slim .ph .add:disabled { opacity: 1; color: var(--ink-3); border: 1.5px dashed rgba(242,234,216,.4); border-radius: 50%; width: 40px; height: 40px; min-height: 40px; font: 400 26px/1 var(--f-display); text-shadow: none; animation: none; }
+:root body .frow.slim .pn { flex-wrap: wrap; height: 1.3em; overflow: hidden; align-content: flex-start; }
+:root body .frow.slim .pn .pnm { flex: 0 1 auto; overflow: visible; text-overflow: clip; white-space: nowrap; }
+:root body .frow.slim .pn .pnm.lng { font-size: 15px; }
+:root body .frow.slim .pn .rst { order: 0; font-size: 11px; letter-spacing: -1px; color: var(--gold); align-self: center; flex: none; }
+:root body .frow.slim .pn small { flex: none; overflow: visible; white-space: nowrap; font-size: 13.5px; color: var(--ink-2); }
+:root body .frow.slim .info .mini.side i, :root body #muster .frow.slim .mini i { font-size: 12px; letter-spacing: .07em; color: var(--ink-2); }
+:root body .frow.slim .pk .ktag { background: linear-gradient(#d2ab78, #b38a55); color: #1c1006 !important; font-size: 14px; letter-spacing: .01em; text-overflow: clip; box-shadow: 0 0 0 1px #3a2412, inset 0 1px 0 rgba(255,240,210,.35); }
+:root body .piece.frow .ph .bc small.fee { font-size: 12.5px; height: 12.5px; letter-spacing: .02em; color: var(--ink-2); }
+:root body .piece.frow .ph .bc small.fee.off { color: var(--gold); }
+:root body h3.rfam, :root body .tscen small, :root body #wayPick > small, :root body .speaker .say b, :root body .nc-top .say b { font-size: 12px; }
+:root body .rtabs button small { font-size: 13px; color: var(--ink-2); }
+:root body #wayPick button b i { font-size: 12px; }
+:root body #muster .meter .top .info .sway { font: italic 600 14px/1.1 var(--f-ui); color: var(--ink-2); }
+:root body #muster .nw, :root body #muster .nw b { font-size: 13px; }
+:root body #docRow .docsel span small { font-size: 12.5px; }
+/* -- the eight numbers, wherever they stand -- */
+:root body .stats.eight .stat span, :root body #card .pc-stat span { font-size: 12px; letter-spacing: .1em; color: var(--ink-2); }
+:root body .stats.eight .stat em { font-size: 12px; }
+/* -- the sheet -- */
+:root body .kit b .ktg, :root body #gal .gkit b i { font-size: 12px; }
+:root body .kit .kway, :root body #gal .gkit .kway { font-size: 12px; line-height: 14px; top: -8px; opacity: 1; }
+:root body .kits.coll .kit .kway { opacity: 1; }
+:root body [data-kit]:not([aria-pressed="true"]) .kkey { opacity: 1; }
+:root body .kkey, :root body #gal .gkit .kkey { font-size: 14px; }
+:root body .kkey u, :root body #gal .gkit .kkey u { font-size: 13px; }
+:root body .frow2 > span { font-size: 12.5px; color: var(--ink-2); }
+:root body .frow2 > b.dim { color: var(--ink-2); }
+:root body .tiers button.buy:disabled { opacity: 1; color: var(--ink-3); } :root body .tiers button.buy i { font-size: 13px; }
+:root body .train button small, :root body .train.one small { font-size: 13px; color: var(--ink-2); }
+:root body .ftabs button { font-size: 12.5px; } :root body .ftabs button i { font-size: 13px; }
+/* -- the gallery -- */
+:root body #gal .gsec, :root body #gal .gjob b, :root body #gal .gpath b i, :root body #gal .gkit u, :root body #gal .gtiers > span { font-size: 12.5px; }
+:root body #gal .gfam i { font-size: 12px; }
+:root body #gal .gpath small, :root body #gal .gkit em small, :root body #gal p.gnote { font-size: 13px; color: var(--ink-2); }
+:root body #gal .gdoc b em { font-size: 12px; }
+:root body #gal .gline button { opacity: 1; } :root body #gal .gline button:not(.own) svg { opacity: .5; }
+:root body #gal .gline button i { font-size: 13px; color: #2a1a08; } :root body #gal .gline button:not(.own) i { color: #4a3214; }
+/* -- tester tools -- */
+:root body table.pace td { font-size: 13px; } :root body table.pace th { font-size: 12px; }
+/* -- home -- */
+:root body .hposts small { font-size: 12px; line-height: 1.2; letter-spacing: .12em; color: #3a2408; }
+:root body .hpost .hchip { font-size: 13px; height: 18px; line-height: 18px; }
+:root body .hchip.dim { background: rgba(40,24,8,.14); color: #2e1c06; }
+:root body .hplq .k { font-size: 12px; } :root body .hplq em { font-size: 13.5px; color: #cdb98f; text-overflow: clip; }
+/* -- the Calls, the Patron -- */
+:root body .coll button.dark { opacity: 1; } :root body .coll button.dark .mark { opacity: .5; }
+:root body .coll button b { font-size: 15px; } :root body .coll button i { font-size: 13px; color: var(--ink-2); }
+:root body .hornodds, :root body .hornfav, :root body .hornodds b, :root body .hornfav b { font-size: 13px; }
+:root body .rcard .rfav, :root body .rcard .rfav b, :root body .rcard.glory .rm b { font-size: 13px; }
+:root body .pq-h span, :root body .pq-w small { font-size: 13px; color: var(--ink-2); }
+:root body .dfb span { font-size: 13px; }
+/* -- the board: plaque, plates, piece cards -- */
+:root body .spot .shade i { font-size: 12px; }
+:root body .spot[data-arena="dregs"] .shade i { color: #6a4610; }
+:root body #veil .vtx i { font-size: 12px; }
+:root body .drill .dn small { font-size: 13px; color: var(--ink-2); } :root body .drill .dgo small { font-size: 13px; }
+:root body.fighting #transport #playPause small, :root body .transport #playPause small { font-size: 13px; opacity: 1; }
+:root body .spot .shade i, :root body .spot[data-arena="dregs"] .shade i { color: #e2b95a; } :root body .spot .shade.held i { color: #5a3a0c; }
+:root body #card .stats.eight .stat span, :root body #card .stat span { font-size: 12px; color: var(--ink-2); }
+:root body #card .pc-kit h3 { font-size: 12.5px; color: var(--ink-2) !important; }
+:root body .hposts small { color: #221302; font-weight: 700; }
+:root body #homeDoors .hdoor b, :root body .hdoor b { position: relative; z-index: 2; font-size: 15px; letter-spacing: 0; line-height: 15px; text-shadow: 0 1px 2px #0d0a07, 0 0 6px rgba(13,10,7,.9); }
+:root body .kinpool.inlay i { font-size: 12px; letter-spacing: .12em; color: #d9c08a !important; }
+:root body .spot .mid .sm { font-size: 13px; }
+
+:root body .spot[data-arena] .shade.held i, :root body .spot .shade.held i { color: #5a3a0c; }
+:root body #veil .vtx span { color: #e3d3b0; }
+:root body .piece.frow .ph .bc small.fee { font-size: 13px; height: 13px; }
+:root body .frow.slim .pk .ktag { width: auto; min-width: 156px; max-width: 100%; padding: 1px 8px 2px; }
+:root body .stats.eight .stat em { font-size: 13px; }
+/* the sheet never reaches under the lintel: it is as tall as the screen below the strip, less a gap */
+:root body .edit { box-sizing: border-box; max-height: calc(100% - var(--lintel) - 10px); }
+/* the plates' words stay at the display face's floor on a narrow phone; the plate itself does not change */
+:root body.forming .fightbar #fight, :root body.fighting #transport #playPause { font-size: 15px !important; }
+:root body #muster .frow.slim .ph .bc.w3, :root body .frow.slim .ph .bc.w3 { font-size: 16px; letter-spacing: -.02em; }
+:root body .frow.slim .pk .ktag { box-sizing: border-box; width: auto; min-width: min(156px, 100%); max-width: 100%; }
+:root body .frow.slim .pn { height: 22px; line-height: 22px; } :root body .frow.slim .pn > * { line-height: 22px; }
+:root body .frow.slim .pk .ktag.lng { font-size: 13px; letter-spacing: 0; padding: 1px 6px 2px; }
+:root body #gal .gpath small { color: var(--ink-2); }
+:root body #gal .gline button.own i { color: #1c1006; font-weight: 700; }
+
+/* ======== THE FIGHTER, ONE OBJECT (27 Nov, look; PROPOSAL) ========
+   Sheet: portrait and who he is; the four numbers that decide a fight, and the other four on one line; then what holds in every kit, once;
+   then a card per kit with only what is its own; then tier and training as captioned sections like the kits. The piece card on the board,
+   the fight card and the gallery page use the same stat block and the same kit split. */
+/* the stat block */
+:root body .stats.sx { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
+:root body .stats.sx .sxbig { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+:root body .stats.sx .stat { position: relative; min-height: 54px; padding: 6px 2px; display: grid; align-content: center; justify-items: center; gap: 3px; border-radius: 8px; background: rgba(0,0,0,.28); border: 1px solid rgba(239,230,208,.14); color: var(--ink); }
+:root body .stats.sx .stat b { font: 700 22px/1 var(--f-ui); color: var(--ink); font-variant-numeric: tabular-nums; }
+:root body .stats.sx .stat span { font: 600 12px/1 var(--f-ui); letter-spacing: .1em; color: var(--ink-2); }
+:root body .stats.sx .stat em { position: absolute; top: 3px; right: 5px; font: 700 12px/1 var(--f-ui); font-style: normal; }
+:root body .stats.sx .sxmore { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+:root body .stats.sx .stat.sm { min-height: 30px; padding: 0 8px; display: flex; align-items: baseline; justify-content: center; gap: 6px; background: none; border: 0; border-bottom: 1px solid rgba(239,230,208,.12); border-radius: 0; }
+:root body .stats.sx .stat.sm b { font: 700 16px/30px var(--f-ui); } :root body .stats.sx .stat.sm span { font: 600 12px/30px var(--f-ui); }
+:root body .stats.sx .stat.sm em { position: static; font-size: 12px; }
+:root body .stats.sx .stat.up { border-color: var(--bone); } :root body .stats.sx .stat.up em { color: var(--bone); }
+:root body .stats.sx .stat.down { border-color: #b5392c; } :root body .stats.sx .stat.down b, :root body .stats.sx .stat.down em { color: #ef7a68; }
+:root body #card .stats.sx, :root body .drill .stats.sx { margin: 6px 0; } :root body #card .stats.sx .stat:not(.sm), :root body .drill .stats.sx .stat:not(.sm) { min-height: 48px; } :root body #card .stats.sx .stat b, :root body .drill .stats.sx .stat:not(.sm) b { font-size: 20px; }
+/* the head */
+:root body .fhead { grid-template-columns: 96px minmax(0, 1fr); gap: 16px; padding-right: 44px; }
+:root body .fhead .fwho { padding-top: 4px; display: flex; flex-direction: column; gap: 4px; }
+:root body .fhead .fname { font-size: 28px; line-height: 1.05; overflow-wrap: anywhere; }
+:root body .fhead .funit { font: 500 16px/1.25 var(--f-ui); color: var(--ink-2); margin: 0; }
+:root body .fhead .fcost { padding: 6px 0 0; flex-direction: row; align-items: baseline; justify-content: flex-start; gap: 14px; text-align: left; }
+:root body .fhead .fcost .fstars { font-size: 19px; letter-spacing: .06em; color: var(--gold); }
+:root body .fhead .fcost b { font-size: 34px; }
+/* sections: a caption on its own line over the full width, the way the kits have always been */
+:root body .fsec { display: flex; flex-direction: column; gap: 8px; padding: 12px 0 0; margin-top: 4px; border-top: 1px solid var(--line); }
+:root body .fsec-h { margin: 0; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font: 600 12.5px/1.2 var(--f-ui); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); }
+:root body .fsec-h span { font: 500 14px/1.25 var(--f-ui); letter-spacing: 0; text-transform: none; color: var(--ink-2); text-align: right; } :root body .fsec-h span.gold { color: var(--gold); }
+:root body .fsec .tiers { margin: 0; } :root body .fsec .train.one { margin: 0; }
+:root body .fsec.beat-here { box-shadow: 0 0 0 1px var(--gold); border-radius: 8px; border-top-color: transparent; padding: 10px 8px 8px; margin: 4px -8px 0; }
+:root body .fsec .ftabs { margin: 0; }
+/* what holds in every kit */
+:root body .fall { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 8px 10px; border-radius: 10px; background: rgba(0,0,0,.22); }
+:root body .fall-h { flex: 0 0 100%; font: 600 12px/1.2 var(--f-ui); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
+:root body .fall-t { font: 500 14px/1.2 var(--f-ui); color: var(--ink); }
+:root body .fall-w { display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border: 1px solid var(--bone); border-radius: 4px; font: 600 12.5px/1 var(--f-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--bone); }
+:root body .fall-t::before { content: ''; }
+/* a kit card: name and price on one line, one plain line of what it does, then its own ability and the numbers it changes */
+:root body .kits { gap: 8px; margin: 0; }
+:root body .kit.kc { display: flex; flex-direction: column; align-items: stretch; gap: 5px; min-height: 0; padding: 10px 12px 11px; text-align: left; border: 1px solid var(--line); border-radius: 10px; background: rgba(0,0,0,.2); box-shadow: none; }
+:root body .kit.kc.worn { border-color: var(--bone); box-shadow: inset 0 0 0 1px var(--bone); background: var(--stone-3); }
+:root body .kit.kc .kc-top { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+:root body .kit.kc .kc-name { flex: 0 1 auto; min-width: 0; font: 400 19px/1.15 var(--f-display); color: var(--ink); white-space: normal; display: block; }
+:root body .kit.kc .kc-rule { flex: none; font: 600 12px/1 var(--f-ui); font-style: normal; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
+:root body .kit.kc .kc-price { margin-left: auto; flex: none; grid-row: auto; font: 24px/1 var(--f-display); font-style: normal; color: var(--gold); white-space: nowrap; }
+:root body .kit.kc .kc-line { display: block; font: 500 15px/1.3 var(--f-ui); color: var(--ink); grid-column: auto; }
+:root body .kit.kc .kkeys { margin: 2px 0 0; grid-column: auto; }
+:root body .kit.kc .kkey.gear { border-color: transparent; padding: 0 4px; color: var(--ink-2); }
+:root body .kit.kc.worn::after { content: 'Worn'; position: absolute; top: -8px; left: 12px; padding: 0 6px; border-radius: 4px; background: var(--bone); color: #1b1713; font: 700 11.5px/16px var(--f-ui); letter-spacing: .1em; text-transform: uppercase; }
+:root body .kit.kc .kway { left: auto; right: 12px; }
+:root body .kits.coll .kit.kc.locked { background: rgba(0,0,0,.28); border-style: dashed; }
+:root body .kits.coll .kit.kc.locked .kc-price::before { display: none; } :root body .kits.coll .kit.kc .kc-price { font-size: 18px; }
+:root body .kit.kc .kc-wait { display: block; }
+:root body .fhead .fcost { flex-wrap: wrap; row-gap: 2px; } :root body .fhead .fcost .ffee { flex: 0 0 100%; font: 600 13px/1.2 var(--f-ui); color: var(--ink-2); } :root body .fhead .fcost .ffee.off { color: var(--gold); }
+/* the piece card and the fight card, as the sheet */
+:root body #card .pc-head { grid-template-columns: auto minmax(0, 1fr); padding-right: 44px; column-gap: 12px; }
+:root body #card .pc-name { font-size: 21px; line-height: 1.08; overflow-wrap: normal; }
+:root body #card .pc-cls { font: 500 14px/1.25 var(--f-ui); color: var(--ink-2); white-space: normal; }
+:root body #card .pc-meta { display: flex; align-items: baseline; gap: 12px; margin-top: 2px; }
+:root body #card .pc-meta .pc-stars { color: var(--gold); font-size: 16px; letter-spacing: .04em; }
+:root body #card .pc-meta .fcost { position: static; padding: 0; display: block; text-align: left; } :root body #card .pc-meta .fcost b { font-size: 24px; }
+:root body .pk-kit { margin-top: 6px; cursor: default; } :root body .pk-kit .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+:root body #card .pc-kit { margin: 0; } :root body #card .pc-kit .chip, :root body .drill .pk-kit .chip { font-size: 14px; }
+:root body .stats.sx .stat em { font-size: 13px; }
+:root body #card .pc-meta { flex-wrap: wrap; row-gap: 0; }
+@media (max-width: 385px) { :root body #card .pc-face { width: 64px; height: 64px; } :root body #card .pc-name { font-size: 19px; } }
+:root body #gal .gkits { display: flex; flex-direction: column; gap: 8px; } :root body #gal .kit.kc .kc-price small { display: block; margin-top: 2px; font: 600 13px/1 var(--f-ui); color: var(--ink-2); text-align: right; }
+:root body #gal .kit.kc .kc-price { display: flex; flex-direction: column; align-items: flex-end; } :root body .kit.kc .kc-lock { text-decoration: none; font: 600 12px/1.2 var(--f-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
+:root body #gal .kit.kc.worn::after { content: 'Shown'; }
+:root body #gal .kit.kc .kc-price { display: inline-flex; flex-direction: row; align-items: baseline; gap: 5px; } :root body #gal .kit.kc .kc-price small { display: inline; margin: 0; }
+:root body #gal .gtiers { flex-wrap: wrap; } :root body #gal .gtiers > span { flex: 0 0 100%; font: 600 12.5px/1.2 var(--f-ui); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-2); }
+:root body .kit.kc .kkey { opacity: 1; }
+/* sizes held (measured against rebuild): the Calls card and the gallery's name plates keep their height with the larger type */
+:root body .rcard .rfav { line-height: 1.25; } :root body #gal .gline button i { line-height: 1; }
+=======
 /* A pool spent (28 Nov, proposal). The man who spent it glows in the pool's colour on his own effect layer, under the piece; a short mark runs to him
    from the counter. The bar names what was bought in the same colour. Bright inks on the board, deep ones on the parchment bar. */
 .pay-kin { --pay: #f0c446; --pay-ink: #8a5a00; } .pay-swarm { --pay: #e0a858; --pay-ink: #7a4a10; } .pay-spite { --pay: #a6dc62; --pay-ink: #3d6a14; }
@@ -2339,6 +2509,30 @@ html.floors-painted body .board#board[data-arena="dregs"] { background-image: li
 .kinpool.painted .plines b { width: auto; height: auto; background: none; box-shadow: none; border-radius: 0; font: 700 11px/1 var(--f-ui); font-variant-numeric: lining-nums; color: #e8dcc0; text-shadow: 0 1px 0 #000, 0 0 3px #000, 0 0 6px #000; }
 .kinpool.painted .plines b.got { color: #a89878; text-decoration: line-through; } .kinpool.painted .plines b.next { color: var(--pay); }
 .kinpool.inlay em.lnum { min-width: 2ch; text-align: left; } .kinpool.inlay em.lnum.idle { visibility: hidden; }   /* (28 Nov, proposal) the count past ten keeps its room */
+
+/* ======== THE LOOK STANDARD (27 Nov, ui/LOOK.md; checked by scripts/look_check.mjs) =/* ---- the fight, read at arm's length (27 Nov, look; from the orchestrator's review) ---- */
+/* the bar: a step is the quietest thing it says; blows and paid-for effects keep the big type */
+:root body .spot .act.dim { font: 600 15px/1.2 var(--f-ui); letter-spacing: .02em; text-transform: none; color: #4a3418; }
+/* the pool counter: a size up, so its name and its count read from the hand. A line in the pool is a ringed peg, the next one in the pool's colour, not a 2px tick */
+:root body .kinpool.inlay { height: 22px !important; gap: 9px; padding: 0 12px 0 11px; }
+:root body .kinpool.inlay i { font-size: 13px; letter-spacing: .1em; }
+:root body .kinpool.inlay .lpegs { gap: 4px; } :root body .kinpool.inlay .lpegs b { width: 9px; height: 9px; }
+:root body .kinpool.inlay .lpegs b.ln::after { display: none; }
+:root body .kinpool.inlay .lpegs b.ln { box-shadow: 0 0 0 1.5px #b9a172; }
+:root body .kinpool.inlay .lpegs b.ln.next { box-shadow: 0 0 0 2px var(--pay, #e2b53e), 0 0 6px var(--pay, #e2b53e); }
+/* the result card: clean (nothing of the board shows through it), one hierarchy and one alignment, the crest and its lines centred together */
+:root body .board > #spoils.crestcard { z-index: 6; background: radial-gradient(ellipse 70% 40% at 50% 38%, rgba(70,48,20,.55), transparent 70%), #0d0906; justify-content: center; padding: 18px 18px 22px; }
+:root body #spoils.crestcard .rest { margin-top: 18px; gap: 7px; align-items: center; text-align: center; }
+:root body #spoils.crestcard .rest > p, :root body #spoils.crestcard .rest > .planline, :root body #spoils.crestcard .rest > .gains > li:not(.joinbox):not(.joins):not(.says) { margin: 0; text-align: center; font: 500 15px/1.3 var(--f-ui); color: var(--ink); }
+:root body #spoils.crestcard .rest b { font-weight: 600; } :root body #spoils.crestcard .rest > p b, :root body #spoils.crestcard .rest .gains b { color: var(--gold); }
+:root body #spoils.crestcard #lookBack { margin-top: 20px; color: var(--ink-2); }
+/* the squad's way is a tab on the bill card's top edge, on one line, like a kit's way on its card: it no longer wraps between the bill and the buttons */
+:root body #muster .meter .top .info .sway { position: absolute; top: -10px; left: 14px; display: block; max-width: none; height: 18px; padding: 0 8px; border: 1px solid var(--bone); border-radius: 4px; background: #1b1713; font: 600 12.5px/16px var(--f-ui); font-style: normal; letter-spacing: .08em; text-transform: uppercase; color: var(--bone); white-space: nowrap; -webkit-line-clamp: unset; overflow: visible; z-index: 2; }
+:root body #muster .meter .top .info:has(.sway) { position: static; }
+/* the kit in a row is a quiet label under the name, no longer the loudest thing in it */
+:root body .frow.slim .pk .ktag { background: rgba(255,236,200,.07); color: var(--ink-2) !important; box-shadow: inset 0 0 0 1px rgba(239,230,208,.22); font-weight: 500; }
+:root body #muster .piece.frow.slim.in .pk .ktag { background: rgba(226,181,62,.16); color: var(--ink) !important; box-shadow: inset 0 0 0 1px rgba(226,181,62,.5); }
+:root body #muster .piece.frow.slim.cant .ph > svg, :root body #muster .piece.frow.slim.cant .ktag { opacity: 1; }
 </style>
 
 <div class="wrap">
@@ -4308,8 +4502,12 @@ function statTiles(r, { st = null, pack = 0, base = null } = {}) {
   if (has('blind')) add('ACC', -pot('blind'), 'Sand in his eyes');
   if (r.gift?.safe) now.DMG = ref.DMG = '–';
   const KEY = { DMG: 'ATK' }, pc = (k) => (k === 'ARMOR' ? '%' : '');
-  return `<div class="stats eight">${Object.keys(now).map((k) => { const d = typeof now[k] === 'number' ? now[k] - ref[k] : 0;
-    return `<button class="stat${d ? (d > 0 ? ' up' : ' down') : ''}" data-stat="${KEY[k] ?? k}"${why[k] ? ` data-why="${why[k].join('. ')}."` : ''}><b>${now[k]}${pc(k)}</b><span>${k}</span>${d ? `<em>${d > 0 ? '+' : '−'}${Math.abs(d)}${pc(k)}</em>` : ''}</button>`; }).join('')}</div>`;
+  /* PROPOSAL (27 Nov, look): the four numbers that decide a fight (what he takes, what he deals, what his armor stops, how often he acts) stand
+     large; accuracy, evasion, move and reach, which differ little between fighters, sit on one quiet line under them. Every number is still
+     there, still tappable, still marked when something changes it. The same block on the sheet, the piece card, the fight card and the gallery. */
+  const one = (k, small) => { const d = typeof now[k] === 'number' ? now[k] - ref[k] : 0;
+    return `<button class="stat${small ? ' sm' : ''}${d ? (d > 0 ? ' up' : ' down') : ''}" data-stat="${KEY[k] ?? k}"${why[k] ? ` data-why="${why[k].join('. ')}."` : ''}>${small ? `<span>${k}</span><b>${now[k]}${pc(k)}</b>` : `<b>${now[k]}${pc(k)}</b><span>${k}</span>`}${d ? `<em>${d > 0 ? '+' : '−'}${Math.abs(d)}${pc(k)}</em>` : ''}</button>`; };
+  return `<div class="stats sx"><div class="sxbig">${['HP', 'DMG', 'ARMOR', 'SPD'].map((k) => one(k)).join('')}</div><div class="sxmore">${['ACC', 'EVA', 'MOVE', 'REACH'].map((k) => one(k, true)).join('')}</div></div>`;
 }
 /** The stat help, with what changed him added on. */
 function wireTiles(root, r) { wireStats(root, r);
@@ -4336,14 +4534,14 @@ function renderDrill() {
       <button id="drillX" aria-label="Close">✕</button></div>
     ${st.alive ? `<div class="dgo"><span>Going for</span><b>${tg?.alive ? tg.name : tg ? `picks again (${tg.name} is down)` : 'nobody yet'}</b>${tg?.alive && st.why ? `<small>${String(st.why).replace(/^Targets?:\s*/i, '').toLowerCase()}</small>` : ''}</div>` : ''}
     ${st.alive ? (kept + stats + crowd || '<div class="dst none"><span>Nothing on him right now.</span></div>') : ''}
-    ${cr ? drillStats(cr.r, st, packOf(team, st.idx, st.side)) + chipsHtml(cr.chips) : ''}`;
+    ${cr ? drillStats(cr.r, st, packOf(team, st.idx, st.side)) + (cr.kit = pieceKit(b, cr.chips)).html : ''}`;
   $('drill').hidden = false;
   $('drillX').onclick = closeDrill;
   // The board never moves (20 Nov). The panel docks at the foot of the screen; if that would cover him or his target, it docks at the top instead.
   { const d = $('drill'); d.classList.remove('top'); const rs = [P.els.get(drillUid), st.alive && tg?.alive ? P.els.get(st.tgt) : null].filter(Boolean).map((el) => el.getBoundingClientRect());
     const low = Math.max(...rs.map((r) => r.bottom)), high = Math.min(...rs.map((r) => r.top)), h = d.getBoundingClientRect().height;
     if (low + 8 > window.innerHeight - h && high - 8 >= h) d.classList.add('top'); }
-  if (cr) { wireTiles($('drill'), cr.r); wireChips($('drill'), cr.chips); }
+  if (cr) { wireTiles($('drill'), cr.r); wireChips($('drill'), cr.kit.chips); }
 }
 $('tokens').addEventListener('click', (ev) => {
   if (S.step !== 'fight' || !P.res) return;
@@ -4920,7 +5118,7 @@ function renderSchool() {
   $('resetSchool').textContent = 'Start a new school'; resetArmed = false;
 }
 /** Set the bar's line as large as fits its slot. Run again once the real faces have loaded: the stand-in is narrower and flatters the fit. */
-function fitSay() { const say = $('nextGo'), p = say?.firstChild; if (!p) return; let fs = 15; p.style.fontSize = ''; p.style.lineHeight = ''; while (fs > 11.5 && p.scrollHeight > say.clientHeight - 6) { fs -= .5; p.style.fontSize = `${fs}px`; p.style.lineHeight = fs < 13.5 ? '1.2' : '1.26'; } }
+function fitSay() { const say = $('nextGo'), p = say?.firstChild; if (!p) return; let fs = 15; p.style.fontSize = ''; p.style.lineHeight = ''; while (fs > 13 && p.scrollHeight > say.clientHeight - 6) { fs -= .5; p.style.fontSize = `${fs}px`; p.style.lineHeight = fs < 13.5 ? '1.2' : '1.26'; } }
 /** What the home shows that can change by itself. When it changes, the home is drawn again; otherwise only the clocks tick. */
 const homeSig = () => { const u = G.under; return `${u ? `${u.ran}:${u.purse}` : '-'}|${errandsBack().length}|${G.patron?.out.length ?? 0}|${G.training?.fid ?? ''}`; };
 setInterval(() => {
@@ -5118,9 +5316,11 @@ const costSplit = (u) => { const total = cost(u), body = Math.min(total, E.billO
     The muster adds the button that puts him in the squad; everything else about him is on his sheet. */
 function fighterRow(f, r, { inSquad = false, cant = false, add = false, hire = null } = {}) {
   const u = unitOf(f), c = cost(u) + (hire?.fee ?? 0), kit = E.loadoutOf(f);
-  return `<div class="piece frow slim ${add ? '' : 'view'} ${inSquad ? 'in' : ''}"><div class="ph">${tokenSvg(lookOf(u), { side: 0, bare: true })}
-      <button class="info" data-f="${f.id}"><span class="pn"><span class="pnm${f.name.length > 11 ? ' lng' : ''}">${f.name}</span>${E.UNITS[f.template].name === f.name ? '' : `<small>${E.UNITS[f.template].name}</small>`}<em class="rst">${'★'.repeat(M(f).stars)}</em></span><span class="pk"><b class="ktag">${kit.name}</b></span><span class="mini side"><span><b>${Math.round(r.stats.hp)}</b><i>HP</i></span><span><b>${Math.round(r.stats.atk + r.weapon.damage)}</b><i>DMG</i></span></span></button>
-      <span class="bc${hire ? ' hired' : ''}" style="${cant ? 'opacity:.5' : ''}">${c}${hire ? `<small class="fee${hire.fee ? '' : ' off'}">${hire.fee ? `+${hire.fee} fee` : 'no fee'}</small>` : ''}</span>
+  return `<div class="piece frow slim ${add ? '' : 'view'} ${inSquad ? 'in' : ''}${cant ? ' cant' : ''}"><div class="ph">${tokenSvg(lookOf(u), { side: 0, bare: true })}
+      <button class="info" data-f="${f.id}"><span class="pn">${(() => { /* a name is never cut (27 Nov, look): an epithet after a comma takes the place of what he is, and what he is, if it does not fit beside the name, drops out whole (it is on his sheet) */
+        const [nm, epi] = f.name.split(', '), kind = epi ?? (E.UNITS[f.template].name === f.name ? '' : E.UNITS[f.template].name);
+        return `<span class="pnm${nm.length > 11 ? ' lng' : ''}">${nm}</span><em class="rst">${'★'.repeat(M(f).stars)}</em>${kind ? `<small>${kind}</small>` : ''}`; })()}</span><span class="pk"><b class="ktag${kit.name.length > 24 ? ' lng' : ''}">${kit.name}</b></span><span class="mini side"><span><b>${Math.round(r.stats.hp)}</b><i>HP</i></span><span><b>${Math.round(r.stats.atk + r.weapon.damage)}</b><i>DMG</i></span></span></button>
+      <span class="bc${hire ? ' hired' : ''}${c >= 100 ? ' w3' : ''}">${c}${hire ? `<small class="fee${hire.fee ? '' : ' off'}">${hire.fee ? `+${hire.fee} fee` : 'no fee'}</small>` : ''}</span>
       ${add ? `<button class="add" data-toggle="${f.id}" ${cant ? 'disabled' : ''} aria-pressed="${inSquad}" aria-label="${inSquad ? 'Take' : 'Put'} ${f.name} ${inSquad ? 'out of' : 'in'} the squad">${inSquad ? '✓' : '+'}</button>` : ''}</div></div>`;
 }
 let rosterTab = 'all';
@@ -5202,7 +5402,7 @@ const KIT_NUMS = [
 const kitSame = (pairs) => { const out = new Set(); for (const [k, get] of KIT_NUMS) if (new Set(pairs.map(([kr]) => get(kr))).size <= 1) out.add(k); return out; };
 /** A kit's keys. The first kit is the base: it shows only its own rules. Every other kit shows its rules and only the numbers that differ from the base, as the change (20 Nov). */
 const KIT_PCT = new Set(['Armor', 'Block', 'Pierce', 'Crit']);
-const kitKeys = (kr, ku, baseR, lent) => { const out = [];
+const kitKeyList = (kr, ku, baseR, lent) => { const out = []; const kkey = (cls, kind, label, tag, body, num) => ({ cls, kind, label, body, num: num ?? '' });
   if (baseR && baseR !== kr) for (const [k, get, label, body] of [...KIT_NUMS, ['Acc', (r) => Math.round(r.stats.acc), (v) => `Acc ${v}`, 'Chance to hit, before his target\'s evasion.'], ['Eva', (r) => Math.round(r.evasion), (v) => `Eva ${v}`, 'Chance to step out of a hit.']]) {
     const v = get(kr), b = get(baseR); if (v === b) continue;
     const text = typeof v === 'number' && typeof b === 'number' && v !== -1 && b !== -1 ? `${k} ${v > b ? '+' : '−'}${Math.abs(v - b)}${KIT_PCT.has(k) ? '%' : ''}` : v === '' || v === -1 ? '' : label(v, kr);
@@ -5217,9 +5417,45 @@ const kitKeys = (kr, ku, baseR, lent) => { const out = [];
   for (const id of kr.traits ?? []) if (FAMILY_TRAITS.has(id)) trait(id, 'makes fam');   // the family's own keyword (the Warren's Pack Tactics, the Legion's Shield Wall) goes with the family rule
   if (kr.gift) for (const k of E.giftKeys(kr.gift)) out.push(kkey(k.kind, '', k.label, '', k.body, ''));   // the rule text says what it grants or consumes; no label above it and no tally below
   for (const id of lent?.traits ?? []) trait(id, 'counts lent'); for (const id of lent?.actives ?? []) move(id, 'counts lent');   // what his doctore lends him, ringed in gold, on every kit he could wear
-  return `<span class="kkeys">${out.join('')}</span>`; };
+  return out; };
+const kkeyOf = (k) => kkey(k.cls, k.kind, k.label, '', k.body, k.num);
+const kitKeys = (kr, ku, baseR, lent) => `<span class="kkeys">${kitKeyList(kr, ku, baseR, lent).map(kkeyOf).join('')}</span>`;
+
 /** Traits that are a family's own rule rather than a kit's ability: every kobold has Pack Tactics, every Legion shield the wall. */
 const FAMILY_TRAITS = new Set(['pack_tactics', 'shield_wall']);
+/* ---- One fighter, one object (27 Nov, look; PROPOSAL). What is true of him in every kit is said once; each kit card carries only
+   what is its own: its name, one plain line of what it does (the description of its own ability, from the data), that ability as a chip
+   unless the chip would only repeat the kit's name, the numbers it changes, its price. The same split on the sheet and the gallery. ---- */
+const kitSplit = (lists, kits, rules) => {
+  const lab = (k) => k.label.toLowerCase(), n = lists.length;
+  const common = n > 1 ? lists[0].filter((k) => !(k.cls === 'gear' && !k.kind) && lists.every((l) => l.some((x) => lab(x) === lab(k)))) : [];
+  const isCommon = (k) => common.some((c) => lab(c) === lab(k));
+  const ways = kits.map((k) => kitWay(k.id)), oneWay = new Set(ways).size === 1 && ways[0] && ways[0] !== 'any' ? ways[0] : '';
+  const oneRule = new Set(rules).size === 1 ? rules[0] : null;
+  const per = lists.map((l, i) => { const seen = new Set(), own = [], gear = [];
+    for (const k of l) { if (isCommon(k) || seen.has(lab(k))) continue; seen.add(lab(k)); (k.cls === 'gear' && !k.kind ? gear : own).push(k); }
+    const named = own.find((k) => lab(k) === kits[i].name.toLowerCase()), main = named ?? own.find((k) => k.kind === 'Move') ?? own.find((k) => k.kind !== 'Keyword');   // Steady is a word about his body, not what the kit does
+    const others = lists.filter((x, j) => j !== i), missing = n > 1 ? [...new Set(others.flatMap((x) => x.filter((k) => k.cls !== 'gear' && !isCommon(k)).map((k) => k.label)))].filter((lb) => !l.some((k) => k.label === lb) && others.every((x) => x.some((k) => k.label === lb))) : [];
+    const line = main ? main.body : missing.length ? `Not ${missing.map((x) => x.toLowerCase()).join(', not ')}.` : '';
+    return { own: own.filter((k) => k !== named), gear, line, way: oneWay ? '' : ways[i], rule: oneRule === null ? rules[i] : '' }; });
+  return { common, per, way: oneWay, rule: oneRule };
+};
+/** The line above the kits: what holds in every kit (his family's rule, his way if every kit shares it, his targeting if it never changes). */
+const everyKitHtml = (sp, n) => (sp.common.length || sp.way || sp.rule ? `<div class="fall"><span class="fall-h">${n > 1 ? 'In every kit' : 'His kit'}</span>${sp.common.map(kkeyOf).join('')}${sp.rule ? `<span class="fall-t">${sp.rule}</span>` : ''}${sp.way ? `<span class="fall-w">${sp.way}</span>` : ''}</div>` : '');
+/** One kit card. `tag` is the button or div, `attrs` its attributes; `tail` what follows the price (a lock, the notches toward it). */
+const kitCardHtml = (k, p, { tag = 'button', attrs = '', price = '', tail = '', worn = false } = {}) => `<${tag} class="kit kc${worn ? ' worn' : ''}" ${attrs}>${p.way && p.way !== 'any' && !p.own.some((k) => k.label.toLowerCase() === p.way.toLowerCase()) ? `<i class="kway">${p.way}</i>` : ''}<span class="kc-top"><b class="kc-name">${k.name}</b>${p.rule ? `<i class="kc-rule">${p.rule}</i>` : ''}<em class="kc-price">${price}</em></span>${p.line ? `<span class="kc-line">${p.line}</span>` : ''}${p.own.length || p.gear.length ? `<span class="kkeys">${[...p.own, ...p.gear].filter((k, i, a) => a.findIndex((x) => x.label.toLowerCase() === k.label.toLowerCase()) === i).map(kkeyOf).join('')}</span>` : ''}${tail}</${tag}>`;
+/** A piece's one kit, the same object as a kit card on the sheet: its name, one plain line (its own ability's description), then its
+ *  abilities and his family's rule as chips, each once, none repeating the kit's name. Returns the html and the chips it shows, for wireChips. */
+function pieceKit(b, chips) {
+  const name = buildOfUnit(b)?.name ?? '', seen = new Set(), list = chips.filter((c) => c.body && !['Role', 'Targeting', 'Status'].includes(c.kind) && !seen.has(c.label.toLowerCase()) && seen.add(c.label.toLowerCase()));
+  // A fighter of a school: his kit is split exactly as his sheet splits it, so the line is the same line.
+  let line = null, order = null; const f = b.fid ? (fighterById?.(b.fid) ?? (E.recruit ? (() => { try { return E.recruit(b.fid); } catch (e) { return null; } })() : null)) : null;
+  if (f) { try { const kits = E.kitsOf(f), pairs = kits.map((k) => { const ku = E.fighterUnit({ ...f, loadout: k.id }); return [E.resolveUnit(ku), ku]; }), i = kits.findIndex((k) => k.id === E.loadoutOf(f).id);
+    const sp = kitSplit(pairs.map(([kr, ku]) => kitKeyList(kr, ku, pairs[0][0])), kits, kits.map(() => '')); if (i >= 0) { line = sp.per[i].line; order = [...sp.per[i].own, ...sp.common].map((k) => k.label.toLowerCase()); } } catch (e) { line = null; } }
+  const named = list.find((c) => c.label.toLowerCase() === name.toLowerCase()), main = line != null ? { body: line } : named ?? list.find((c) => c.k === 'k-move') ?? list.find((c) => /k-trait/.test(c.k) && c.label !== 'Steady') ?? list[0];
+  const rank = (c) => { const k = order ? order.indexOf(c.label.toLowerCase()) : -1; return k < 0 ? 99 : k; }, shown = list.filter((c) => c !== named).sort((x, y) => rank(x) - rank(y));
+  return { chips: shown, html: `<div class="kit kc pk-kit"><span class="kc-top"><b class="kc-name">${name}</b></span>${main ? `<span class="kc-line">${main.body}</span>` : ''}${shown.length ? `<div class="chips">${shown.map((c, i) => `<button class="chip ${c.k}" data-chip="${i}">${c.label}</button>`).join('')}</div>` : ''}</div>` };
+}
 /** Tiers: school-wide, one ladder per kit. Owning a tier of a kit lets every fighter who wears that kit step up to it. */
 const tierKey = (f, kitId) => `${E.loadoutOf({ ...f, loadout: kitId ?? f.loadout }).template}.${kitId ?? f.loadout}`;
 const tierOwned = (f, kitId) => Math.min(E.tierCap(M(f).stars), (G.tiers ?? {})[tierKey(f, kitId)] ?? 1);
@@ -5252,7 +5488,8 @@ function renderFighter() {
   const lent = { traits: r.traits.filter((x) => !kitR.traits.includes(x)), actives: r.actives.filter((x) => !kitR.actives.includes(x)) };
   const kitPairs = E.kitsOf(f).map((b) => { const ku = E.fighterUnit({ ...f, loadout: b.id, tier: Math.min(f.tier ?? 1, tierOwned(f, b.id)) }); return [E.resolveUnit(ku), ku]; }), same = kitSame(kitPairs);
   const kits = E.kitsOf(f).map((b, n) => { const [kr, ku] = kitPairs[n];
-    return { id: b.id, name: b.name, cost: cost(ku), locked: n >= E.kitsOpen(f) ? n : 0, keys: kitKeys(kr, ku, kitPairs[0][0], lent), rule: kr.gift?.safe ? '' : ORDER_HELP[ku.tactic ?? defaultOrder(kr)][0] }; }).filter((k) => !k.locked || inSight('calls'));
+    return { id: b.id, name: b.name, cost: cost(ku), locked: n >= E.kitsOpen(f) ? n : 0, keys: kitKeys(kr, ku, kitPairs[0][0], lent), list: kitKeyList(kr, ku, kitPairs[0][0], lent), rule: kr.gift?.safe ? '' : ORDER_HELP[ku.tactic ?? defaultOrder(kr)][0] }; }).filter((k) => !k.locked || inSight('calls'));
+  const split = kitSplit(kits.map((k) => k.list), kits, kits.map((k) => (k.rule ? `Targets ${k.rule.toLowerCase()}` : 'Stays back'))), part = (k) => split.per[kits.indexOf(k)];
   const art = artOfFighter(f);
   // What the kit changes: the same man unarmed in light armor, against him as he stands.
   // He always wears a kit, so his first kit is his baseline: its price is his price, and the other kits are measured against it.
@@ -5266,24 +5503,25 @@ function renderFighter() {
     <button id="edDone" class="fx-close" aria-label="Close">✕</button>
     <div class="fhead">
       <div class="fport ${art ? '' : 'none'}" data-fam="${t.faction}">${art ? `<img src="${art}" alt="">` : ''}${frameSvg(t.faction, f.id)}${tokenSvg(lookOf(u), { side: 0, bare: true })}</div>
-      <div class="fwho"><div class="fname">${f.name}</div><div class="funit">${t.name === f.name ? (M(f).title ?? '') : t.name}</div></div>
-      <div class="fcost"><span class="fstars">${'★'.repeat(M(f).stars)}</span><b>${total}</b></div>
+      <div class="fwho"><div class="fname">${f.name}</div><div class="funit">${[t.name === f.name ? (M(f).title && M(f).title !== f.name ? M(f).title : '') : t.name, E.FACTIONS[M(f).faction]?.name?.replace(/^The /, '')].filter(Boolean).join(' · ')}</div>
+        <div class="fcost"><span class="fstars">${'★'.repeat(M(f).stars)}</span><b>${total}</b>${(() => { let h = null; try { const sq = { ...S.mine, doctore: G.doctore }; h = E.hireLine(inSquad ? sq : { ...sq, units: [...S.mine.units, u] }, inSquad ? S.mine.units.find((x) => x.fid === f.id) : u); } catch (e) { h = null; } return h ? `<small class="ffee${h.fee ? '' : ' off'}">${h.fee ? `+${h.fee} fee under ${E.DOCTORE_BY_ID[G.doctore]?.name ?? 'this doctore'}` : 'no fee'}</small>` : ''; })()}</div></div>
     </div>
     ${tiles}
     ${(() => { /* Kits he wears vs kits he is collecting (20 Nov): the sheet's Kit tab holds only what he can put on now; a kit still being
          earned (its notches) lives on the Collection tab. Both panes share one grid cell, so switching tabs never changes the sheet's height. */
       const open = kits.filter((k) => !k.locked), shut = kits.filter((k) => k.locked), tab = shut.length ? sheetTab : 'kit', nxt = E.nextKit(f)?.kit.id;
-      const kitPane = `<div class="kits">${open.map((k) => `<button class="kit" data-kit="${k.id}" aria-pressed="${k.id === cur.id}">${wayTag(k.id)}<b>${k.name}<i class="ktg">${k.id === kits[0].id && kits.length > 1 ? 'Base · ' : ''}${k.rule ? `Targets ${k.rule}` : 'Stays back'}</i></b><span></span>${k.keys}<em>${k.cost}</em></button>`).join('')}</div>${kits.length < 2 ? '<small class="kone">His only kit.</small>' : ''}`;
-      const collPane = `<div class="kits coll">${shut.map((k) => `<div class="kit locked">${wayTag(k.id)}<b>${k.name}</b>${k.keys}<span>${k.id === nxt ? tokenBar(f, false, false) : `<i class="kwait">Opens after ${E.kitsOf(f)[k.locked - 1]?.name ?? 'the kit before it'}.</i>`}</span><em>🔒</em></div>`).join('')}</div>`;
-      return `<div class="frow2 kitrow ftabbed${['kit', 'kit:earned'].includes(beatNow()?.need.key) ? ' beat-here' : ''}">
-        ${shut.length ? `<div class="ftabs" role="tablist"><button role="tab" data-ftab="kit" aria-selected="${tab === 'kit'}">Kit</button><button role="tab" data-ftab="coll" aria-selected="${tab === 'coll'}">Collection<i>${shut.length}</i></button></div>` : '<span>Kit</span>'}
+      const kitPane = `<div class="kits">${open.map((k) => kitCardHtml(k, part(k), { attrs: `data-kit="${k.id}" aria-pressed="${k.id === cur.id}"`, price: k.cost, worn: k.id === cur.id })).join('')}</div>`;
+      const collPane = `<div class="kits coll">${shut.map((k) => kitCardHtml(k, part(k), { tag: 'div', attrs: 'aria-disabled="true"', price: '🔒', tail: `<span class="kc-wait">${k.id === nxt ? tokenBar(f, false, false) : `<i class="kwait">Opens after ${E.kitsOf(f)[k.locked - 1]?.name ?? 'the kit before it'}.</i>`}</span>` }).replace('class="kit kc', 'class="kit kc locked')).join('')}</div>`;
+      return `<div class="fsec kitrow ftabbed${['kit', 'kit:earned'].includes(beatNow()?.need.key) ? ' beat-here' : ''}">
+        ${shut.length ? `<div class="ftabs" role="tablist"><button role="tab" data-ftab="kit" aria-selected="${tab === 'kit'}">${open.length > 1 ? 'Kits' : 'Kit'}</button><button role="tab" data-ftab="coll" aria-selected="${tab === 'coll'}">Collection<i>${shut.length}</i></button></div>` : `<h4 class="fsec-h">${open.length > 1 ? 'Kits' : 'His kit'}</h4>`}
+        ${everyKitHtml(split, kits.length)}
         <div class="fpanes"><div class="fpane${tab === 'kit' ? '' : ' off'}">${kitPane}</div>${shut.length ? `<div class="fpane${tab === 'coll' ? '' : ' off'}">${collPane}</div>` : ''}</div></div>`; })()}
     ${tiersOpen() ? (() => { const own = tierOwned(f), capT = E.tierCap(M(f).stars), at = Math.min(f.tier ?? 1, own), next = own < capT ? own + 1 : 0;
-      return `<div class="frow2 tierrow"><span>Tier</span><div class="tiers">${Array.from({ length: own }, (_, k) => `<button data-tier="${k + 1}" aria-pressed="${k + 1 === at}">${E.TIER_NAMES[k + 1]}</button>`).join('')}${next ? `<button class="buy" data-tierbuy="${next}" ${G.denarii >= tierPrice(f, next) ? '' : 'disabled'}>${E.TIER_NAMES[next]}<i>${tierPrice(f, next)}</i></button>` : ''}</div></div>`; })() : ''}
+      return `<div class="fsec tierrow"><h4 class="fsec-h">Tier</h4><div class="tiers">${Array.from({ length: own }, (_, k) => `<button data-tier="${k + 1}" aria-pressed="${k + 1 === at}">${E.TIER_NAMES[k + 1]}</button>`).join('')}${next ? `<button class="buy" data-tierbuy="${next}" ${G.denarii >= tierPrice(f, next) ? '' : 'disabled'}>${E.TIER_NAMES[next]}<i>${tierPrice(f, next)}</i></button>` : ''}</div></div>`; })() : ''}
     ${inSight('training') ? (() => { const tr = G.training, mine = tr && tr.fid === f.id, other = tr && !mine ? G.fighters.find((x) => x.id === tr.fid) : null;
       const lv = f.drill ?? 0, of = E.drillCap(f), full = lv >= of, nx = full ? null : E.nextDrill(f), gain = E.drillGain(f);
       const words = (g) => [['hp', 'HP'], ['atk', 'DMG'], ['spd', 'SPD'], ['acc', 'ACC']].filter(([k]) => g[k]).map(([k, n]) => `+${g[k]} ${n}`).join(' · ');
-      return `<div class="frow2${beatNow()?.need.key === 'train' ? ' beat-here' : ''}"><span>Training</span><b class="${mine ? 'gold' : 'dim'}">${mine ? `In the yard · <i id="trainClock">${clock(tr.doneAt - Date.now())}</i>` : other ? `The yard is busy: ${other.name}, <i id="trainClock">${clock(tr.doneAt - Date.now())}</i>` : full ? 'Fully trained' : 'Costs coin and time. Free on the bill.'}</b>
+      return `<div class="fsec trainrow${beatNow()?.need.key === 'train' ? ' beat-here' : ''}"><h4 class="fsec-h">Training<span class="${mine ? 'gold' : ''}">${mine ? `In the yard · <i id="trainClock">${clock(tr.doneAt - Date.now())}</i>` : other ? `The yard is busy: ${other.name}, <i id="trainClock">${clock(tr.doneAt - Date.now())}</i>` : full ? 'Fully trained' : 'Costs coin and time. Free on the bill.'}</span></h4>
       <div class="train one"><button data-train="1" ${!tr && E.canStartTraining(f, G.denarii) ? '' : 'disabled'}><span class="pips">${pips(lv, of)}</span><span>${full ? `Drill ${of} of ${of}` : `Drill ${lv + 1} of ${of}${words(nx) ? ` <em>${words(nx)}</em>` : ''}`}</span><small>${full ? (words(gain) || 'done') : `${ICON_DEN}${E.trainPrice(f)} · ${clock(E.trainSeconds(f) * 1000)}${lv && words(gain) ? ` · so far ${words(gain)}` : ''}`}</small></button></div></div>`; })() : ''}
     <select id="fLoadout" hidden>${builds.map((b) => `<option value="${b.id}" ${b.id === cur.id ? 'selected' : ''}>${b.name}</option>`).join('')}</select>
 `;
@@ -5393,8 +5631,10 @@ function renderGallery() {
       ${statTiles(r)}
       <div class="gsec">Kits</div>
       <div class="gtiers"><span>Tier</span>${Array.from({ length: capT }, (_, k) => `<button data-gtier="${k + 1}" aria-pressed="${k + 1 === tier}">${E.TIER_NAMES[k + 1]}</button>`).join('')}</div>
-      <div class="gkits">${kits.map((b, n) => { const [kr, ku] = gPairs[n], c = cost(ku), locked = n >= open;
-        return `<button class="gkit" data-kit="${b.id}" aria-pressed="${b.id === pick}">${wayTag(b.id)}<b>${b.name}<i>${n === 0 && kits.length > 1 ? 'Base · ' : ''}${kr.gift?.safe ? 'Stays back' : `Targets ${ORDER_HELP[ku.tactic ?? defaultOrder(kr)][0]}`}</i></b>${kitKeys(kr, ku, gPairs[0][0])}<em>${c}${c !== first ? `<small>${c > first ? '+' : '−'}${Math.abs(c - first)}</small>` : ''}</em>${locked ? `<u>Opens at ${E.kitTokens(n)} token${E.kitTokens(n) > 1 ? 's' : ''}</u>` : ''}</button>`; }).join('')}</div>
+      ${(() => { /* the kits as the sheet draws them (27 Nov, look; PROPOSAL): what holds in every kit once, then each kit's own */
+        const lists = gPairs.map(([kr, ku]) => kitKeyList(kr, ku, gPairs[0][0])), sp = kitSplit(lists, kits, gPairs.map(([kr, ku]) => (kr.gift?.safe ? 'Stays back' : `Targets ${ORDER_HELP[ku.tactic ?? defaultOrder(kr)][0].toLowerCase()}`)));
+        return `${everyKitHtml(sp, kits.length)}<div class="gkits">${kits.map((b, n) => { const c = cost(gPairs[n][1]), locked = n >= open;
+          return kitCardHtml(b, sp.per[n], { attrs: `data-kit="${b.id}" aria-pressed="${b.id === pick}"`, worn: b.id === pick, price: `${c}${c !== first ? `<small>${c > first ? '+' : '−'}${Math.abs(c - first)}</small>` : ''}`, tail: locked ? `<u class="kc-lock">Opens at ${E.kitTokens(n)} token${E.kitTokens(n) > 1 ? 's' : ''}</u>` : '' }); }).join('')}</div>`; })()}
       ${slots ? `<div class="gsec">Pieces beside the kit · ${worn.length} of ${slots}</div><div class="grelics">${Object.keys(E.RELIC_KINDS).map((kind) => `<div class="grk"><i>${RELIC_MARK[kind]}${E.RELIC_KINDS[kind]}</i>${E.RELICS.filter((x) => x.kind === kind).map((x) => { const on = worn.includes(x.id), add = on ? 0 : cost({ ...E.fighterUnit(f), relics: [...worn.filter((id) => E.RELIC_BY_ID[id].kind !== kind), x.id] }) - cost({ ...E.fighterUnit(f), relics: worn.filter((id) => E.RELIC_BY_ID[id].kind !== kind) }); return `<button class="grelic" data-relic="${x.id}" aria-pressed="${on}"><b>${x.name}</b><span>${x.body}</span>${on ? '' : `<em>+${add}</em>`}</button>`; }).join('')}</div>`).join('')}</div>` : ''}
       <div class="gsec">Fights under</div><p class="gunder">${leads.join(', ')}</p>`;
   }
@@ -5710,7 +5950,7 @@ function fightDone(res) {
     P.spoils = `      ${foeWord && !voiceJoin ? foeTalk(foeWord) : ''}
       ${!won ? lossRead(again ? b0 : null, onBeat && done.length ? b0.hint : null, !!(onBeat && b0?.lock)) : ''}
       ${gains.length ? `<ul class="gains">${gains.join('')}</ul>` : ''}
-      ${!nx && afford.length && won ? `<p>You can sound a ${afford.join(' or a ')}.</p>` : ''}   ${''/* no Next line: what comes next is Magnus's to say, at home (20 Nov) */}
+      ${!nx && afford.length && won && !newCalls.length ? `<p>You can sound a ${afford.join(' or a ')}.</p>` : ''}   ${''/* no Next line: what comes next is Magnus's to say, at home (20 Nov) */}
 `.trim();
     P.again = again;
   }
@@ -6737,6 +6977,18 @@ $('playPause').onclick = () => (P.playing && !P.stepping ? pause() : (pause(), p
 $('stepBack').setAttribute('aria-label', 'Back one step'); $('stepFwd').setAttribute('aria-label', 'Forward one step');
 // After a step onto the last beat the fight is not closed yet: Play and the step forward stay live until it is.
 setFightUi = ((orig) => function () { orig(); if (P.stepping && P.playing && S.step === 'fight' && P.res) { const pp = $('playPause'); pp.innerHTML = pp.innerHTML.replace(/^Pause/, 'Play'); } if (S.step !== 'fight' || !P.res) return; const open = S.mode !== 'done'; if (open && !P.playing) $('playPause').disabled = false; if (open) $('stepFwd').disabled = false; })(setFightUi);
+
+/* The piece card on the board is the same object as the sheet (27 Nov, look; PROPOSAL): who he is and what he is on two lines, his stars and
+   price on the third (the price never sits on a long name or under the X), the same stat block, his kit as the sheet draws a kit card. */
+renderCard = ((orig) => function () { orig(); if (!S.sel) return; const card = $('card'), team = S.sel.side === 0 ? S.mine : S.theirs, b = team.units[S.sel.i]; if (!b) return;
+  const head = card.querySelector('.pc-head'), cls = head?.querySelector('.pc-cls'), cost = head?.querySelector(':scope > .fcost');
+  if (cls) { const t = tpl(b), kind = t.name && t.name !== b.name && !b.name.startsWith(t.name) ? t.name : '', fam = (E.FACTIONS[t.faction]?.name ?? '').replace(/^The /, '');
+    cls.innerHTML = [kind, fam].filter(Boolean).join(' · '); const meta = document.createElement('div'); meta.className = 'pc-meta'; meta.innerHTML = `<span class="pc-stars">${'★'.repeat(starsOf(b))}</span>`; if (cost) { meta.appendChild(cost); } cls.after(meta); }
+  const kit = card.querySelector('.pc-kit'); if (kit) { const pk = pieceKit(b, chipsFor(b, team).chips); kit.innerHTML = pk.html; wireChips(kit, pk.chips); }
+})(renderCard);
+/* Painter's order on the board (27 Nov, look): a piece nearer the bottom of the board stands in front of the one behind it, whichever side
+   it is on and whenever it moves; before, every rival piece was drawn over every one of yours because it came later in the page. */
+place = ((orig) => function (el, row, col) { orig(el, row, col); if (el?.classList?.contains('tok')) el.style.zIndex = String(10 + Math.round(row)); })(place);
 </script>
 
 <script>if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));</script>
